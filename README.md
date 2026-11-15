@@ -2,6 +2,8 @@
 
 A terminal interface for viewing Slurm jobs, their details, and account shares.
 
+**Project status:** Progress by milestone: https://github.com/users/underwoo/projects/1
+
 ## Requirements
 
 - Slurm **25.11 or newer**, with JSON output available from `squeue`, `sacct`, `scontrol`, `sshare`, and `sacctmgr`.
