@@ -204,6 +204,19 @@ func TestFooterFitsAndKeepsHelpLast(t *testing.T) {
 	}
 }
 
+func TestPriorityFooterDropsNavigationBeforeActions(t *testing.T) {
+	actions := []string{"tab views", "/ filter", "s sort", "c columns", "enter details", "x cancel", "h hold", "R requeue", "e edit", "r refresh", "u scope", "q quit", "^T s messages", "↑/↓ move", "space page", "G bottom", "1G top"}
+	line := fitFooter(40, actions)
+	for _, priority := range actions[:3] {
+		if !strings.Contains(line, priority) {
+			t.Fatalf("higher-priority action %q was dropped: %q", priority, line)
+		}
+	}
+	if strings.Contains(line, "↑/↓ move") || !strings.HasSuffix(line, "? help") {
+		t.Fatalf("footer retained navigation before help or failed to reserve help: %q", line)
+	}
+}
+
 func TestFilterSmartCase(t *testing.T) {
 	insensitive, err := compileFilter("alpha")
 	if err != nil {

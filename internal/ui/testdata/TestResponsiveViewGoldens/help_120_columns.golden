@@ -4,7 +4,7 @@ JobID        Name       │ Key bindings                                        
 ──────────── ───────────│ Navigation                                                           │── ─────── ─────────────
 12345        sample-job │ ↑/k              select previous                                     │   —       node-01
 Queue: 1 jobs           │ ↓/j              select next                                         │
-↑/↓ move  space page  G │ b/^b/M-v/PgUp    page up                                             │cycle  q quit  ? help
+tab views  / filter  s s│ b/^b/M-v/PgUp    page up                                             │fresh  u scope  ? help
                         │ space/^v/^f/PgDn page down                                           │
                         │ 0-9              motion count                                        │
                         │ gg/1G/Home/M-<   top                                                 │

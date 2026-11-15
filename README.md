@@ -66,6 +66,7 @@ The **Queue** view shows active jobs. **Recent** shows jobs that completed withi
 | --- | --- |
 | `Tab`, `Shift+Tab` | Cycle through views |
 | `Ctrl+T`, then `1`/`2` | Jump to Queue or Recent; the prefix is configurable |
+| `Ctrl+T`, then `s` | Open the status and error message log |
 | `↑`/`↓`, `j`/`k` | Move the selection or scroll details |
 | `Space`, `Ctrl+V`, `Ctrl+F`, `PgDn` | Page down |
 | `b`, `Ctrl+B`, `Alt+V`, `PgUp` | Page up |
@@ -88,6 +89,8 @@ The **Queue** view shows active jobs. **Recent** shows jobs that completed withi
 | `q`, `Ctrl+C` | Quit |
 
 Job details include summary, requested and allocated resources, timing, paths, accounting steps when available, and reason/dependency information. Active jobs are queried with `scontrol`; Recent jobs use `sacct`.
+
+The message log keeps the latest 200 status and error messages, newest first. Repeated consecutive messages are grouped with a `×N` count. Use the same navigation motions to scroll it; `Esc`, `q`, or the tab prefix followed by `s` closes it.
 
 The filter uses Go's RE2 regular-expression syntax. Lowercase patterns match without regard to case; adding an uppercase letter makes the pattern case-sensitive. The filter applies to the rendered values of visible columns in both views.
 

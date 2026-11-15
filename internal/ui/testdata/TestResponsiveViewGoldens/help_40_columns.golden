@@ -4,7 +4,7 @@ Jo│ Key bindings                     │d…
 ──│ Navigation                       │──
 12│ ↑/k              select previous │d…
 Qu│ ↓/j              select next     │
-↑/│ b/^b/M-v/PgUp    page up         │
+ta│ b/^b/M-v/PgUp    page up         │
   │ space/^v/^f/PgDn page down       │
   │ 0-9              motion count    │
   │ gg/1G/Home/M-<   top             │

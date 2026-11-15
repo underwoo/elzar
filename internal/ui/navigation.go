@@ -22,15 +22,7 @@ func (a *App) handleNavigationKey(msg tea.KeyMsg) (tea.Cmd, bool) {
 		a.navigationWarning = ""
 		if keyString == a.options.TabPrefix {
 			prefixPassthrough = true
-		} else if len(keyString) == 1 && keyString[0] >= '1' && keyString[0] <= '9' {
-			switch keyString {
-			case "1":
-				a.tab = registry.QueueTab
-				a.leaveDetailForTabSwitch()
-			case "2":
-				a.tab = registry.RecentTab
-				a.leaveDetailForTabSwitch()
-			}
+		} else if a.runTabPrefixCommand(keyString) {
 			return nil, true
 		} else {
 			return nil, true // any other key cancels the prefix sequence
@@ -42,6 +34,7 @@ func (a *App) handleNavigationKey(msg tea.KeyMsg) (tea.Cmd, bool) {
 		if !a.prefixWarned {
 			if conflict := prefixConflict(a.options.TabPrefix); conflict != "" {
 				a.navigationWarning = "tab prefix shadows " + conflict
+				a.addMessage(a.navigationWarning, messageError)
 				a.prefixWarned = true
 			}
 		}
@@ -116,6 +109,42 @@ func (a *App) handleNavigationKey(msg tea.KeyMsg) (tea.Cmd, bool) {
 		a.clearNavigationPrefix()
 	}
 	return nil, false
+}
+
+// runTabPrefixCommand dispatches commands that follow the configured tab
+// prefix. Keeping this as a small table makes adding the Accounts tab later a
+// single entry rather than another special case in key handling.
+func (a *App) runTabPrefixCommand(command string) bool {
+	for _, item := range a.tabPrefixCommands() {
+		if item.key == command {
+			item.run()
+			return true
+		}
+	}
+	return false
+}
+
+type tabPrefixCommand struct {
+	key         string
+	description string
+	run         func()
+}
+
+func (a *App) tabPrefixCommands() []tabPrefixCommand {
+	return []tabPrefixCommand{
+		{key: "1", description: "queue view", run: func() {
+			a.tab = registry.QueueTab
+			a.leaveDetailForTabSwitch()
+		}},
+		{key: "2", description: "recent view", run: func() {
+			a.tab = registry.RecentTab
+			a.leaveDetailForTabSwitch()
+		}},
+		{key: "s", description: "messages", run: func() {
+			a.showMessages = true
+			a.messageScroll = 0
+		}},
+	}
 }
 
 func countDigit(msg tea.KeyMsg) (rune, bool) {
