@@ -56,6 +56,8 @@ type App struct {
 	columnWarning      string
 	queueCursor        int
 	recentCursor       int
+	queueScroll        int
+	recentScroll       int
 	queueLoading       bool
 	recentLoading      bool
 	queueError         error
@@ -125,6 +127,7 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		a.width, a.height = msg.Width, msg.Height
 		a.filterInput.Width = max(1, msg.Width-35)
+		a.keepAllCursorsVisible()
 	case tea.KeyMsg:
 		return a, a.handleKey(msg)
 	case tickMsg:
@@ -146,6 +149,7 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				a.queueCursor = restoreCursor(oldQueue, a.visibleQueue(), a.queueCursor)
 			}
 			a.lastRefresh = msg.at
+			a.keepAllCursorsVisible()
 		}
 	case recentResult:
 		a.recentLoading = false
@@ -164,6 +168,7 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				a.recentCursor = restoreCursor(oldRecent, a.visibleRecent(), a.recentCursor)
 			}
 			a.lastRefresh = msg.at
+			a.keepAllCursorsVisible()
 		}
 	case detailResult:
 		if msg.request != a.detailRequest {
@@ -270,9 +275,9 @@ func (a *App) handleListKey(msg tea.KeyMsg) tea.Cmd {
 	case key.Matches(msg, appKeys.down):
 		a.moveCursor(1)
 	case key.Matches(msg, appKeys.pageUp):
-		a.moveCursor(-a.pageSize())
+		a.pageCursor(-a.pageSize())
 	case key.Matches(msg, appKeys.pageDown):
-		a.moveCursor(a.pageSize())
+		a.pageCursor(a.pageSize())
 	case key.Matches(msg, appKeys.refresh):
 		return tea.Batch(a.startQueueFetch(), a.startRecentFetch())
 	case key.Matches(msg, appKeys.scope):
@@ -340,9 +345,9 @@ func (a *App) handleDetailKey(msg tea.KeyMsg) tea.Cmd {
 	case key.Matches(msg, appKeys.down):
 		a.detailScroll++
 	case key.Matches(msg, appKeys.pageUp):
-		a.detailScroll = max(0, a.detailScroll-a.pageSize())
+		a.detailScroll = max(0, a.detailScroll-a.detailPageSize())
 	case key.Matches(msg, appKeys.pageDown):
-		a.detailScroll += a.pageSize()
+		a.detailScroll += a.detailPageSize()
 	case key.Matches(msg, appKeys.allFields):
 		a.showAllFields = !a.showAllFields
 		a.detailScroll = 0
@@ -484,6 +489,7 @@ func (a *App) refreshAfterClusterColumnChange(oldQueue, oldRecent []model.Job) {
 	a.recomputeRecentFilter()
 	a.queueCursor = restoreCursor(oldQueue, a.visibleQueue(), a.queueCursor)
 	a.recentCursor = restoreCursor(oldRecent, a.visibleRecent(), a.recentCursor)
+	a.keepAllCursorsVisible()
 }
 
 func (a *App) refreshColumnWarnings() {
@@ -553,6 +559,7 @@ func (a *App) savePickedColumns() {
 	a.recomputeRecentFilter()
 	a.queueCursor = restoreCursor(oldQueue, a.visibleQueue(), a.queueCursor)
 	a.recentCursor = restoreCursor(oldRecent, a.visibleRecent(), a.recentCursor)
+	a.keepAllCursorsVisible()
 	a.mode = modeList
 }
 
@@ -599,6 +606,7 @@ func (a *App) applyPickedSort() {
 		a.recomputeQueueFilter()
 		a.queueCursor = restoreCursor(oldQueue, a.visibleQueue(), a.queueCursor)
 	}
+	a.keepAllCursorsVisible()
 	a.mode = modeList
 }
 
@@ -667,6 +675,7 @@ func (a *App) applyFilter(pattern string) {
 	a.recomputeRecentFilter()
 	a.queueCursor = restoreCursor(oldQueue, a.visibleQueue(), a.queueCursor)
 	a.recentCursor = restoreCursor(oldRecent, a.visibleRecent(), a.recentCursor)
+	a.keepAllCursorsVisible()
 }
 
 func (a *App) clearFilter() {
@@ -679,6 +688,7 @@ func (a *App) clearFilter() {
 	a.filteredQueue, a.filteredRecent = nil, nil
 	a.queueCursor = restoreCursor(oldQueue, a.queueJobs, a.queueCursor)
 	a.recentCursor = restoreCursor(oldRecent, a.recentJobs, a.recentCursor)
+	a.keepAllCursorsVisible()
 }
 
 func (a *App) hasFilterDraft() bool {
@@ -735,12 +745,12 @@ func (a *App) handlePickerKey(msg tea.KeyMsg) tea.Cmd {
 			a.picker.Move(-1)
 		case key.Matches(msg, appKeys.down):
 			a.picker.Move(1)
+		case key.Matches(msg, appKeys.toggle):
+			a.picker.Toggle()
 		case key.Matches(msg, appKeys.pageUp):
 			a.picker.Move(-a.pageSize())
 		case key.Matches(msg, appKeys.pageDown):
 			a.picker.Move(a.pageSize())
-		case key.Matches(msg, appKeys.toggle):
-			a.picker.Toggle()
 		case key.Matches(msg, appKeys.moveUp):
 			a.picker.MoveItem(-1)
 		case key.Matches(msg, appKeys.moveDown):
@@ -866,11 +876,7 @@ func (a *App) View() string {
 
 	columns := a.displayedColumns()
 	widths := fitWidths(columns, width)
-	tableHeight := a.height - 5
-	if tableHeight <= 0 {
-		tableHeight = 20
-	}
-	a.renderTable(&out, columns, widths, jobs, cursor, tableHeight)
+	a.renderTable(&out, columns, widths, jobs, cursor, a.tableHeight(), a.activeScroll())
 
 	status := fmt.Sprintf("%s: %d jobs", tabName, len(jobs))
 	if a.filterStatusVisible() {
@@ -1014,7 +1020,7 @@ func truncateLine(line string, width int) string {
 	return ansi.Truncate(line, width, "…")
 }
 
-func (a *App) renderTable(out *strings.Builder, columns []registry.Column, widths []int, jobs []model.Job, cursor, tableHeight int) {
+func (a *App) renderTable(out *strings.Builder, columns []registry.Column, widths []int, jobs []model.Job, cursor, tableHeight, scroll int) {
 	now := a.clock()
 	for i, column := range columns {
 		if i > 0 {
@@ -1038,10 +1044,7 @@ func (a *App) renderTable(out *strings.Builder, columns []registry.Column, width
 		out.WriteString("(no jobs)\n")
 		return
 	}
-	start := 0
-	if cursor >= rowCapacity {
-		start = cursor - rowCapacity + 1
-	}
+	start := max(0, min(scroll, max(0, len(jobs)-rowCapacity)))
 	end := min(len(jobs), start+rowCapacity)
 	for row := start; row < end; row++ {
 		var line strings.Builder
@@ -1161,13 +1164,93 @@ func (a *App) moveCursor(delta int) {
 		return
 	}
 	*cursor = max(0, min(len(jobs)-1, *cursor+delta))
+	a.keepActiveCursorVisible()
 }
 
 func (a *App) pageSize() int {
-	if a.height <= 5 {
+	return a.tableRowCapacity()
+}
+
+func (a *App) detailPageSize() int {
+	if a.height <= 0 {
 		return 1
 	}
-	return a.height - 5
+	return max(1, a.height-2)
+}
+
+func (a *App) tableHeight() int {
+	height := a.height - 5
+	if height <= 0 {
+		return 20
+	}
+	return height
+}
+
+func (a *App) tableRowCapacity() int {
+	return max(1, a.tableHeight()-2)
+}
+
+func (a *App) activeScroll() int {
+	if a.tab == registry.RecentTab {
+		return a.recentScroll
+	}
+	return a.queueScroll
+}
+
+func (a *App) activeScrollPointer() *int {
+	if a.tab == registry.RecentTab {
+		return &a.recentScroll
+	}
+	return &a.queueScroll
+}
+
+func (a *App) activeJobsAndCursor() ([]model.Job, *int) {
+	if a.tab == registry.RecentTab {
+		return a.visibleRecent(), &a.recentCursor
+	}
+	return a.visibleQueue(), &a.queueCursor
+}
+
+func (a *App) keepActiveCursorVisible() {
+	jobs, cursor := a.activeJobsAndCursor()
+	keepCursorVisible(jobs, cursor, a.activeScrollPointer(), a.tableRowCapacity())
+}
+
+func (a *App) keepAllCursorsVisible() {
+	keepCursorVisible(a.visibleQueue(), &a.queueCursor, &a.queueScroll, a.tableRowCapacity())
+	keepCursorVisible(a.visibleRecent(), &a.recentCursor, &a.recentScroll, a.tableRowCapacity())
+}
+
+func keepCursorVisible(jobs []model.Job, cursor, scroll *int, rowCapacity int) {
+	if len(jobs) == 0 {
+		*cursor, *scroll = 0, 0
+		return
+	}
+	rowCapacity = max(1, rowCapacity)
+	*cursor = max(0, min(len(jobs)-1, *cursor))
+	maxScroll := max(0, len(jobs)-rowCapacity)
+	*scroll = max(0, min(maxScroll, *scroll))
+	if *cursor < *scroll {
+		*scroll = *cursor
+	} else if *cursor >= *scroll+rowCapacity {
+		*scroll = *cursor - rowCapacity + 1
+	}
+	*scroll = max(0, min(maxScroll, *scroll))
+}
+
+func (a *App) pageCursor(delta int) {
+	jobs, cursor := a.activeJobsAndCursor()
+	if len(jobs) == 0 {
+		*cursor = 0
+		*a.activeScrollPointer() = 0
+		return
+	}
+	page := a.tableRowCapacity()
+	row := *cursor - a.activeScroll()
+	*cursor = max(0, min(len(jobs)-1, *cursor+delta))
+	maxScroll := max(0, len(jobs)-page)
+	*a.activeScrollPointer() = max(0, min(maxScroll, *cursor-row))
+	a.keepActiveCursorVisible()
 }
 
 func restoreCursor(oldJobs, newJobs []model.Job, oldCursor int) int {
