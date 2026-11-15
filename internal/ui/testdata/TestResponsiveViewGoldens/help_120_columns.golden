@@ -2,11 +2,11 @@ Slurm TUI  scope: me
 [Queue]  Recent         ╭──────────────────────────────────────────────────────────────────────╮
 JobID        Name       │ Key bindings                                                         │m… Nodes   NodeList(Rea…
 ──────────── ───────────│ Navigation                                                           │── ─────── ─────────────
-12345        sample-job │ ↑/k   select previous                                                │   —       node-01
-Queue: 1 jobs           │ ↓/j   select next                                                    │
-enter details  / filter │ pgup  page up                                                        │
-                        │ pgdn  page down                                                      │
-                        │ enter details                                                        │
+12345        sample-job │ ↑/k              select previous                                     │   —       node-01
+Queue: 1 jobs           │ ↓/j              select next                                         │
+enter details  / filter │ b/^b/M-v/PgUp    page up                                             │
+                        │ space/^v/^f/PgDn page down                                           │
+                        │ enter            details                                             │
                         │ View                                                                 │
                         │ tab next view                                                        │
                         │ 1   queue view                                                       │

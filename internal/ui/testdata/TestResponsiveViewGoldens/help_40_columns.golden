@@ -2,11 +2,11 @@ Slurm TUI  scope: me
 [Q╭──────────────────────────────────╮
 Jo│ Key bindings                     │d…
 ──│ Navigation                       │──
-12│ ↑/k   select previous            │d…
-Qu│ ↓/j   select next                │
-en│ pgup  page up                    │p
-  │ pgdn  page down                  │
-  │ enter details                    │
+12│ ↑/k              select previous │d…
+Qu│ ↓/j              select next     │
+en│ b/^b/M-v/PgUp    page up         │p
+  │ space/^v/^f/PgDn page down       │
+  │ enter            details         │
   │ View                             │
   │ tab next view                    │
   │ 1   queue view                   │

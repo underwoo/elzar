@@ -470,6 +470,158 @@ func TestSelectedJobSurvivesRefreshAndMissingJobClampsCursor(t *testing.T) {
 	}
 }
 
+func TestListPagingAliasesMoveExactlyOneVisiblePage(t *testing.T) {
+	downKeys := []tea.KeyMsg{
+		{Type: tea.KeySpace, Runes: []rune{' '}},
+		{Type: tea.KeyCtrlV},
+		{Type: tea.KeyCtrlF},
+		{Type: tea.KeyPgDown},
+	}
+	upKeys := []tea.KeyMsg{
+		{Type: tea.KeyRunes, Runes: []rune{'b'}},
+		{Type: tea.KeyCtrlB},
+		{Type: tea.KeyRunes, Runes: []rune{'v'}, Alt: true},
+		{Type: tea.KeyPgUp},
+	}
+	for _, down := range downKeys {
+		t.Run("down "+down.String(), func(t *testing.T) {
+			app := newPagingTestApp()
+			app.moveCursor(2)
+			app.Update(down)
+			if app.queueCursor != 7 || app.queueScroll != 5 || app.queueCursor-app.queueScroll != 2 {
+				t.Fatalf("page down cursor/offset = %d/%d, want cursor 7, offset 5, same screen row 2", app.queueCursor, app.queueScroll)
+			}
+		})
+	}
+	for _, up := range upKeys {
+		t.Run("up "+up.String(), func(t *testing.T) {
+			app := newPagingTestApp()
+			app.queueCursor, app.queueScroll = 7, 5
+			app.Update(up)
+			if app.queueCursor != 2 || app.queueScroll != 0 {
+				t.Fatalf("page up cursor/offset = %d/%d, want cursor 2, offset 0", app.queueCursor, app.queueScroll)
+			}
+			app.Update(up)
+			if app.queueCursor != 0 || app.queueScroll != 0 {
+				t.Fatalf("page up did not clamp at top: cursor/offset = %d/%d", app.queueCursor, app.queueScroll)
+			}
+		})
+	}
+	app := newPagingTestApp()
+	app.moveCursor(100)
+	app.Update(downKeys[3])
+	if app.queueCursor != 19 || app.queueScroll != 15 {
+		t.Fatalf("page down did not clamp at bottom: cursor/offset = %d/%d", app.queueCursor, app.queueScroll)
+	}
+}
+
+func TestListHighlightMovesBeforeViewportScrolls(t *testing.T) {
+	app := newPagingTestApp()
+	app.moveCursor(4)
+	if app.queueCursor != 4 || app.queueScroll != 0 {
+		t.Fatalf("cursor at bottom visible row = %d/%d, want 4/0", app.queueCursor, app.queueScroll)
+	}
+	app.moveCursor(1)
+	if app.queueCursor != 5 || app.queueScroll != 1 {
+		t.Fatalf("cursor moving below viewport = %d/%d, want 5/1", app.queueCursor, app.queueScroll)
+	}
+	app.moveCursor(-1)
+	if app.queueCursor != 4 || app.queueScroll != 1 {
+		t.Fatalf("moving highlight back up also moved viewport: cursor/offset = %d/%d, want 4/1", app.queueCursor, app.queueScroll)
+	}
+}
+
+func TestPagingBindingsScrollDetailViewport(t *testing.T) {
+	downKeys := []tea.KeyMsg{{Type: tea.KeySpace, Runes: []rune{' '}}, {Type: tea.KeyCtrlV}, {Type: tea.KeyCtrlF}, {Type: tea.KeyPgDown}}
+	upKeys := []tea.KeyMsg{{Type: tea.KeyRunes, Runes: []rune{'b'}}, {Type: tea.KeyCtrlB}, {Type: tea.KeyRunes, Runes: []rune{'v'}, Alt: true}, {Type: tea.KeyPgUp}}
+	for _, down := range downKeys {
+		app := newPagingTestApp()
+		app.mode = modeDetail
+		app.Update(down)
+		if app.detailScroll != app.detailPageSize() {
+			t.Errorf("detail page down %q moved %d lines, want %d", down.String(), app.detailScroll, app.detailPageSize())
+		}
+	}
+	for _, up := range upKeys {
+		app := newPagingTestApp()
+		app.mode = modeDetail
+		app.detailScroll = 12
+		app.Update(up)
+		if app.detailScroll != max(0, 12-app.detailPageSize()) {
+			t.Errorf("detail page up %q moved to %d, want %d", up.String(), app.detailScroll, max(0, 12-app.detailPageSize()))
+		}
+	}
+}
+
+func TestScrollOffsetTracksSelectionThroughRefreshFilterSortAndResize(t *testing.T) {
+	app := newPagingTestApp()
+	jobs := pagingJobs()
+	for i := range jobs {
+		jobs[i].Name = fmt.Sprintf("a-%02d", jobs[i].ID)
+	}
+	jobs[9].Name = "z-selected"
+	app.queueJobs = jobs
+	app.moveCursor(9)
+	selected := app.queueJobs[app.queueCursor].ID
+	if app.queueScroll != 5 {
+		t.Fatalf("initial scroll offset = %d, want 5", app.queueScroll)
+	}
+
+	reordered := append([]model.Job(nil), jobs...)
+	for left, right := 0, len(reordered)-1; left < right; left, right = left+1, right-1 {
+		reordered[left], reordered[right] = reordered[right], reordered[left]
+	}
+	app.Update(queueResult{scope: slurm.ScopeMe, result: slurm.ListResult{Jobs: reordered}})
+	if app.queueJobs[app.queueCursor].ID != selected || !cursorIsVisible(app, registry.QueueTab) {
+		t.Fatalf("refresh lost selected job or viewport: cursor=%d job=%d offset=%d", app.queueCursor, app.queueJobs[app.queueCursor].ID, app.queueScroll)
+	}
+
+	app.beginSort()
+	app.Update(tea.KeyMsg{Type: tea.KeyDown}) // Name
+	app.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	if app.queueJobs[app.queueCursor].ID != selected || !cursorIsVisible(app, registry.QueueTab) || app.queueCursor != 19 {
+		t.Fatalf("sort lost selection or failed to follow it: cursor=%d job=%d offset=%d", app.queueCursor, app.queueJobs[app.queueCursor].ID, app.queueScroll)
+	}
+
+	app.Update(tea.WindowSizeMsg{Width: 100, Height: 9})
+	if app.queueJobs[app.queueCursor].ID != selected || !cursorIsVisible(app, registry.QueueTab) || app.queueScroll != 18 {
+		t.Fatalf("resize failed to clamp offset around selected job: cursor=%d offset=%d", app.queueCursor, app.queueScroll)
+	}
+
+	app.Update(queueResult{scope: slurm.ScopeMe, result: slurm.ListResult{Jobs: jobs[:12]}})
+	if app.queueJobs[app.queueCursor].ID != selected || !cursorIsVisible(app, registry.QueueTab) || app.queueScroll > 10 {
+		t.Fatalf("shrinking refresh lost selection or failed to clamp offset: cursor=%d job=%d offset=%d", app.queueCursor, app.queueJobs[app.queueCursor].ID, app.queueScroll)
+	}
+
+	app.applyFilter("z-selected")
+	if len(app.visibleQueue()) != 1 || app.visibleQueue()[app.queueCursor].ID != selected || !cursorIsVisible(app, registry.QueueTab) || app.queueScroll != 0 {
+		t.Fatalf("filter lost selected job or left stale offset: jobs=%v cursor=%d offset=%d", app.visibleQueue(), app.queueCursor, app.queueScroll)
+	}
+}
+
+func newPagingTestApp() *App {
+	app := NewWithOptions(nil, Options{Scope: slurm.ScopeMe})
+	app.width, app.height = 100, 12
+	app.queueJobs = pagingJobs()
+	return app
+}
+
+func pagingJobs() []model.Job {
+	jobs := make([]model.Job, 20)
+	for i := range jobs {
+		jobs[i] = model.Job{ID: int64(i + 1), Name: fmt.Sprintf("job-%02d", i+1)}
+	}
+	return jobs
+}
+
+func cursorIsVisible(app *App, tab registry.Tab) bool {
+	jobs, cursor, scroll := app.visibleQueue(), app.queueCursor, app.queueScroll
+	if tab == registry.RecentTab {
+		jobs, cursor, scroll = app.visibleRecent(), app.recentCursor, app.recentScroll
+	}
+	return len(jobs) == 0 || (cursor >= scroll && cursor < scroll+app.tableRowCapacity())
+}
+
 func TestQueueAndRecentColumns(t *testing.T) {
 	queueIDs := make(map[string]bool)
 	for _, column := range registry.VisibleColumns(registry.QueueTab) {
