@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/help"
@@ -35,11 +36,16 @@ func (a *App) helpGroups() []helpGroup {
 		}
 	default:
 		prefix := key.NewBinding(key.WithKeys(a.options.TabPrefix), key.WithHelp(formatKeyLabel(a.options.TabPrefix), "tab prefix"))
-		prefixQueue := key.NewBinding(key.WithKeys("1"), key.WithHelp(formatKeyLabel(a.options.TabPrefix)+" 1", "queue view"))
-		prefixRecent := key.NewBinding(key.WithKeys("2"), key.WithHelp(formatKeyLabel(a.options.TabPrefix)+" 2", "recent view"))
+		prefixCommands := make([]key.Binding, 0, len(a.tabPrefixCommands()))
+		for _, command := range a.tabPrefixCommands() {
+			prefixCommands = append(prefixCommands, key.NewBinding(key.WithKeys(command.key), key.WithHelp(formatKeyLabel(a.options.TabPrefix)+" "+command.key, command.description)))
+		}
+		viewBindings := []key.Binding{appKeys.tab, appKeys.shiftTab, prefix}
+		viewBindings = append(viewBindings, prefixCommands...)
+		viewBindings = append(viewBindings, appKeys.filter, appKeys.sort, appKeys.columns)
 		return []helpGroup{
 			{title: "Navigation", bindings: []key.Binding{appKeys.up, appKeys.down, appKeys.pageUp, appKeys.pageDown, appKeys.count, appKeys.top, appKeys.bottom, appKeys.enter}},
-			{title: "View", bindings: []key.Binding{appKeys.tab, appKeys.shiftTab, prefix, prefixQueue, prefixRecent, appKeys.filter, appKeys.sort, appKeys.columns}},
+			{title: "View", bindings: viewBindings},
 			{title: "Job actions", bindings: []key.Binding{appKeys.cancel, appKeys.hold, appKeys.requeue, appKeys.edit}},
 			{title: "App", bindings: []key.Binding{appKeys.refresh, appKeys.scope, appKeys.help, appKeys.quit}},
 		}
@@ -82,6 +88,64 @@ func (a *App) renderHelpOverlay(width, height int) (string, int, int) {
 		Render(strings.Join(content, "\n"))
 	panelHeight := lipgloss.Height(panel)
 	return panel, lipgloss.Width(panel), max(0, (height-panelHeight)/2)
+}
+
+func (a *App) renderMessagesOverlay(width, height int) (string, int, int) {
+	if height <= 0 {
+		height = 24
+	}
+	panelWidth := min(max(1, width-4), 72)
+	innerWidth := max(1, panelWidth-4)
+	lines := a.messageLines(innerWidth)
+	visibleRows := max(1, height-6)
+	maxScroll := max(0, len(lines)-visibleRows)
+	a.messageScroll = min(max(0, a.messageScroll), maxScroll)
+	end := min(len(lines), a.messageScroll+visibleRows)
+	content := []string{titleStyle.Render("Status and error messages")}
+	if len(lines) == 0 {
+		content = append(content, mutedStyle.Render("No messages yet"))
+	} else {
+		content = append(content, lines[a.messageScroll:end]...)
+	}
+	content = append(content, mutedStyle.Render("j/k PgUp/Dn • close q/esc/"+a.statusMessageHint()))
+	for i := range content {
+		content[i] = ansi.Truncate(content[i], innerWidth, "…")
+	}
+	panel := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		Padding(0, 1).
+		Width(innerWidth + 2).
+		Render(strings.Join(content, "\n"))
+	panelHeight := lipgloss.Height(panel)
+	return panel, lipgloss.Width(panel), max(0, (height-panelHeight)/2)
+}
+
+func (a *App) messageLines(width int) []string {
+	if width < 1 {
+		return nil
+	}
+	var lines []string
+	for i := len(a.messageLog) - 1; i >= 0; i-- {
+		entry := a.messageLog[i]
+		level := "INFO"
+		style := mutedStyle
+		if entry.Level == messageError {
+			level = "ERROR"
+			style = errorStyle
+		}
+		text := fmt.Sprintf("[%s] %s: %s", entry.At.Local().Format("15:04:05"), level, entry.Text)
+		if entry.Count > 1 {
+			text += fmt.Sprintf(" ×%d", entry.Count)
+		}
+		wrapped := strings.Split(ansi.Wrap(text, max(1, width-2), " "), "\n")
+		for lineIndex, line := range wrapped {
+			if lineIndex > 0 {
+				line = "  " + line
+			}
+			lines = append(lines, style.Render(line))
+		}
+	}
+	return lines
 }
 
 func compositeOverlay(background, panel string, width, panelWidth, panelTop int) string {

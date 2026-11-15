@@ -8,4 +8,4 @@ JobID       Name        User        Account     Partition  QOS       State      
 34818463    job-04      user-02     account-03  partition… qos-01    RUNNING     20:22:13/1… 1       node-03    
 34818476    job-05      user-02     account-03  partition… qos-01    RUNNING     20:21:33/1… 1       node-05    
 Queue: 5 jobs
-↑/↓ move  space page  G bottom  1G top  enter details  x cancel  h hold  R requeue  e edit  tab cycle  ? help
+tab views  / filter  s sort  c columns  enter details  x cancel  h hold  R requeue  e edit  r refresh  ? help

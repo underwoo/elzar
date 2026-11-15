@@ -130,6 +130,10 @@ func TestEveryModeFitsFortyColumnsAtTwelveRows(t *testing.T) {
 			a.editDiff = []string{strings.Repeat("before and after value", 8)}
 		},
 		"help": func(a *App) { a.showHelp = true },
+		"messages": func(a *App) {
+			a.showMessages = true
+			a.addMessage("long refresh error: "+strings.Repeat("details ", 20), messageError)
+		},
 	}
 	for name, setup := range tests {
 		t.Run(name, func(t *testing.T) {
@@ -201,6 +205,19 @@ func TestFooterFitsAndKeepsHelpLast(t *testing.T) {
 	}
 	if got := fitFooter(4, []string{"enter details"}); got != "?" {
 		t.Fatalf("too narrow footer = %q, want ?", got)
+	}
+}
+
+func TestPriorityFooterDropsNavigationBeforeActions(t *testing.T) {
+	actions := []string{"tab views", "/ filter", "s sort", "c columns", "enter details", "x cancel", "h hold", "R requeue", "e edit", "r refresh", "u scope", "q quit", "^T s messages", "↑/↓ move", "space page", "G bottom", "1G top"}
+	line := fitFooter(40, actions)
+	for _, priority := range actions[:3] {
+		if !strings.Contains(line, priority) {
+			t.Fatalf("higher-priority action %q was dropped: %q", priority, line)
+		}
+	}
+	if strings.Contains(line, "↑/↓ move") || !strings.HasSuffix(line, "? help") {
+		t.Fatalf("footer retained navigation before help or failed to reserve help: %q", line)
 	}
 }
 

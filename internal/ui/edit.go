@@ -55,6 +55,7 @@ func (a *App) focusEditField(index int) {
 func (a *App) submitEditForm() {
 	if !validTimeLimit(a.editInputs[0].Value()) {
 		a.editError = "invalid TimeLimit; use MM, MM:SS, HH:MM:SS, D-HH[:MM[:SS]], or UNLIMITED"
+		a.addMessage(a.editError, messageError)
 		return
 	}
 	labels := []string{"TimeLimit", "Name", "Comment"}
@@ -69,7 +70,7 @@ func (a *App) submitEditForm() {
 	if len(a.editDiff) == 0 {
 		a.editConfirm = false
 		a.mode = a.editReturn
-		a.actionStatus = "no changes for " + a.editJob.DisplayID()
+		a.setActionStatus("no changes for " + a.editJob.DisplayID())
 		return
 	}
 	a.editError = ""

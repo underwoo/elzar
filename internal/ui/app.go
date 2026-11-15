@@ -49,6 +49,10 @@ type App struct {
 	navigationWarning  string
 	showHelp           bool
 	helpScroll         int
+	showMessages       bool
+	messageScroll      int
+	messagePrefixG     bool
+	messageLog         []statusMessage
 	tab                registry.Tab
 	scope              slurm.Scope
 	queueJobs          []model.Job
@@ -148,6 +152,9 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return a, a.startQueueFetch()
 		}
 		a.queueError = msg.err
+		if msg.err != nil {
+			a.addMessage("Queue refresh failed: "+msg.err.Error(), messageError)
+		}
 		if msg.err == nil {
 			oldQueue, oldRecent := a.visibleQueue(), a.visibleRecent()
 			a.queueJobs = msg.result.Jobs
@@ -167,6 +174,9 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return a, a.startRecentFetch()
 		}
 		a.recentError = msg.err
+		if msg.err != nil {
+			a.addMessage("Recent refresh failed: "+msg.err.Error(), messageError)
+		}
 		if msg.err == nil {
 			oldQueue, oldRecent := a.visibleQueue(), a.visibleRecent()
 			a.recentJobs = msg.result.Jobs
@@ -185,6 +195,9 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			break
 		}
 		a.detailError = msg.err
+		if msg.err != nil {
+			a.addMessage("Job detail failed: "+msg.err.Error(), messageError)
+		}
 		if msg.err == nil {
 			detail := msg.detail
 			a.detail = &detail
@@ -195,22 +208,22 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		if msg.err != nil && a.editAfterDetail {
 			a.editAfterDetail = false
-			a.actionStatus = "could not load job for edit: " + msg.err.Error()
+			a.setActionStatus("could not load job for edit: " + msg.err.Error())
 			a.mode = modeList
 		}
 	case actionResult:
 		if msg.err != nil {
-			a.actionStatus = "action failed: " + msg.err.Error()
+			a.setActionStatus("action failed: " + msg.err.Error())
 			break
 		}
-		a.actionStatus = msg.action.pastTense() + " " + msg.job.DisplayID()
+		a.setActionStatus(msg.action.pastTense() + " " + msg.job.DisplayID())
 		return a, tea.Batch(a.startQueueFetch(), a.startRecentFetch())
 	case editResult:
 		if msg.err != nil {
-			a.actionStatus = "edit failed: " + msg.err.Error()
+			a.setActionStatus("edit failed: " + msg.err.Error())
 			break
 		}
-		a.actionStatus = "updated " + msg.job.DisplayID()
+		a.setActionStatus("updated " + msg.job.DisplayID())
 		commands := []tea.Cmd{a.startQueueFetch(), a.startRecentFetch()}
 		if a.editReturn == modeDetail {
 			a.detail = nil
@@ -223,6 +236,10 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (a *App) handleKey(msg tea.KeyMsg) tea.Cmd {
+	if a.showMessages {
+		a.handleMessagesKey(msg)
+		return nil
+	}
 	if a.showHelp {
 		switch {
 		case key.Matches(msg, appKeys.help), key.Matches(msg, appKeys.back):
@@ -321,7 +338,7 @@ func (a *App) handleListKey(msg tea.KeyMsg) tea.Cmd {
 			a.detailError, a.detail = nil, nil
 			a.detailRequest++
 			if a.runner == nil {
-				a.actionStatus = "could not load job for edit: slurm runner is unavailable"
+				a.setActionStatus("could not load job for edit: slurm runner is unavailable")
 				return nil
 			}
 			a.editAfterDetail = true
@@ -511,6 +528,7 @@ func (a *App) refreshColumnWarnings() {
 	}
 	if len(unknown) != 0 {
 		a.columnWarning = "unknown column IDs skipped: " + strings.Join(uniqueStrings(unknown), ", ")
+		a.addMessage(a.columnWarning, messageError)
 	}
 }
 
@@ -550,6 +568,7 @@ func (a *App) savePickedColumns() {
 	}
 	if err := config.SaveColumns(a.options.ConfigPath, queue, recent); err != nil {
 		a.columnWarning = "could not save columns: " + err.Error()
+		a.addMessage(a.columnWarning, messageError)
 		a.mode = modeList
 		return
 	}
@@ -671,6 +690,7 @@ func (a *App) applyFilter(pattern string) {
 	compiled, err := compileFilter(pattern)
 	if err != nil {
 		a.filterError = err
+		a.addMessage("Filter error: "+err.Error(), messageError)
 		return
 	}
 	oldQueue, oldRecent := a.visibleQueue(), a.visibleRecent()
@@ -788,21 +808,21 @@ func (a *App) handleConfirmKey(msg tea.KeyMsg) tea.Cmd {
 		if msg.Type == tea.KeyRunes && string(msg.Runes) == "y" {
 			a.editConfirm = false
 			a.mode = a.editReturn
-			a.actionStatus = "updating " + a.editJob.DisplayID() + "…"
+			a.setActionStatus("updating " + a.editJob.DisplayID() + "…")
 			return a.runJobEdit()
 		}
 		a.mode = modeForm
 		a.editConfirm = false
-		a.actionStatus = "edit aborted; form retained"
+		a.setActionStatus("edit aborted; form retained")
 		return nil
 	}
 	if msg.Type == tea.KeyRunes && string(msg.Runes) == "y" {
 		a.mode = a.confirmReturn
-		a.actionStatus = a.confirmAction.presentTense() + " " + a.confirmJob.DisplayID() + "…"
+		a.setActionStatus(a.confirmAction.presentTense() + " " + a.confirmJob.DisplayID() + "…")
 		return a.runJobAction(a.confirmAction, a.confirmJob)
 	}
 	a.mode = a.confirmReturn
-	a.actionStatus = a.confirmAction.presentTense() + " " + a.confirmJob.DisplayID() + " aborted"
+	a.setActionStatus(a.confirmAction.presentTense() + " " + a.confirmJob.DisplayID() + " aborted")
 	return nil
 }
 
@@ -845,6 +865,13 @@ func (a *App) View() string {
 		background := a.View()
 		a.showHelp = true
 		panel, panelWidth, panelTop := a.renderHelpOverlay(width, a.height)
+		return fitOutput(compositeOverlay(background, panel, width, panelWidth, panelTop), width)
+	}
+	if a.showMessages {
+		a.showMessages = false
+		background := a.View()
+		a.showMessages = true
+		panel, panelWidth, panelTop := a.renderMessagesOverlay(width, a.height)
 		return fitOutput(compositeOverlay(background, panel, width, panelWidth, panelTop), width)
 	}
 	var out strings.Builder
@@ -929,19 +956,20 @@ func (a *App) View() string {
 	if nav := a.navigationStatus(); nav != "" {
 		status = nav + "  " + status
 	}
+	status = fitStatusLine(status, width, a.statusMessageHint())
 	if sourceErr != nil || otherErr != nil || a.filterError != nil || a.columnWarning != "" || a.navigationWarning != "" || strings.HasPrefix(a.actionStatus, "action failed:") || strings.HasPrefix(a.actionStatus, "edit failed:") {
 		fmt.Fprintln(&out, errorStyle.Render(status))
 	} else {
 		fmt.Fprintln(&out, mutedStyle.Render(status))
 	}
-	fmt.Fprint(&out, mutedStyle.Render(fitFooter(width, []string{"↑/↓ move", "space page", "G bottom", "1G top", "enter details", "x cancel", "h hold", "R requeue", "e edit", "tab cycle", "q quit"})))
+	fmt.Fprint(&out, mutedStyle.Render(fitFooter(width, []string{"tab views", "/ filter", "s sort", "c columns", "enter details", "x cancel", "h hold", "R requeue", "e edit", "r refresh", "u scope", "q quit", a.statusMessageHint() + " messages", "↑/↓ move", "space page", "G bottom", "1G top"})))
 	return fitOutput(out.String(), width)
 }
 
 func (a *App) renderDetail(out *strings.Builder, width int) {
 	fmt.Fprintf(out, "%s\n", titleStyle.Render("Job detail: "+a.detailJob.DisplayID()))
 	if a.detail == nil && a.detailError != nil {
-		fmt.Fprintln(out, errorStyle.Render("Could not load job details: "+a.detailError.Error()))
+		fmt.Fprintln(out, errorStyle.Render(fitStatusLine("Could not load job details: "+a.detailError.Error(), width, a.statusMessageHint())))
 	} else if a.detail == nil {
 		fmt.Fprintln(out, "Loading job details…")
 	} else {
@@ -958,12 +986,12 @@ func (a *App) renderDetail(out *strings.Builder, width int) {
 		}
 	}
 	if a.actionStatus != "" {
-		fmt.Fprintln(out, mutedStyle.Render(a.actionStatus))
+		fmt.Fprintln(out, mutedStyle.Render(fitStatusLine(a.actionStatus, width, a.statusMessageHint())))
 	}
 	if nav := a.navigationStatus(); nav != "" {
 		fmt.Fprintln(out, errorStyle.Render(nav))
 	}
-	fmt.Fprintln(out, mutedStyle.Render(fitFooter(width, []string{"↑/↓ move", "space page", "G bottom", "1G top", "a all", "x cancel", "h hold", "R requeue", "e edit", "esc back", "q quit"})))
+	fmt.Fprintln(out, mutedStyle.Render(fitFooter(width, []string{"esc back", "x cancel", "h hold", "R requeue", "e edit", "a all fields", "q quit", a.statusMessageHint() + " messages", "↑/↓ scroll", "space page", "G bottom", "1G top"})))
 }
 
 func (a *App) detailContentLines(width int) []string {
