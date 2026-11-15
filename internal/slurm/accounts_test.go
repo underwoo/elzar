@@ -29,7 +29,7 @@ func accountFixture(t *testing.T, name string) []byte {
 	return data
 }
 func TestSharesFixtures(t *testing.T) {
-	for _, name := range []string{"site-01_shares", "site-02_shares", "site-03_shares", "sharsite-01_all"} {
+	for _, name := range []string{"site-01_shares", "site-02_shares", "site-03_shares", "shares_all"} {
 		t.Run(name, func(t *testing.T) {
 			r := &accountRunner{data: accountFixture(t, name)}
 			got, err := ListShares(context.Background(), r)
@@ -60,7 +60,7 @@ func TestSharesFixtures(t *testing.T) {
 			if !user || !account {
 				t.Fatal("missing user/account rows")
 			}
-			if name == "sharsite-01_all" && len(clusters) != 4 {
+			if name == "shares_all" && len(clusters) != 4 {
 				t.Fatalf("clusters: %v", clusters)
 			}
 		})
@@ -185,7 +185,7 @@ func TestExecRunnerRetainsPartialOutput(t *testing.T) {
 	}
 }
 func TestSharesWarningsAndValues(t *testing.T) {
-	data := `{"meta":{"slurm":{"version":"25.11.8","cluster":"local"}},"warnings":[{"description":"limited data"}],"shares":{"shares":[{"name":"a","type":["ASSOCIATION"],"shares":{"set":true,"number":10},"sharsite-01_normalized":{"set":true,"number":0.25},"usage":9007199254740993,"effective_usage":{"set":false},"fairshare":{"factor":{"set":true,"number":0.3},"level":{"infinite":true}}}]}}`
+	data := `{"meta":{"slurm":{"version":"25.11.8","cluster":"local"}},"warnings":[{"description":"limited data"}],"shares":{"shares":[{"name":"a","type":["ASSOCIATION"],"shares":{"set":true,"number":10},"shares_normalized":{"set":true,"number":0.25},"usage":9007199254740993,"effective_usage":{"set":false},"fairshare":{"factor":{"set":true,"number":0.3},"level":{"infinite":true}}}]}}`
 	got, err := ListShares(context.Background(), &accountRunner{data: []byte(data)})
 	if err != nil || len(got.Shares) != 1 || len(got.Warnings) != 1 {
 		t.Fatalf("%+v %v", got, err)

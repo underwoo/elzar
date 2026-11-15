@@ -6,7 +6,7 @@ identity map across all input files. Raw inputs remain outside the repository.
 - `site-01_*`: Slurm 26.05.4 / data_parser v0.0.45; 16 user associations.
 - `site-02_*`: Slurm 26.05.2 / v0.0.45; empty association response.
 - `site-03_*`: Slurm 25.11.8 / v0.0.44; empty association response.
-- `sharsite-01_all.json`: four `CLUSTER:`-delimited documents from the multi-cluster
+- `shares_all.json`: four `CLUSTER:`-delimited documents from the multi-cluster
   capture. It deliberately is not a single JSON document.
 
 Share rows are trimmed by the scrubber, retaining users and account ancestry.
