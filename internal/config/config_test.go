@@ -145,3 +145,37 @@ func TestInvalidDurationIsRejected(t *testing.T) {
 		t.Fatal("zero refresh interval was accepted")
 	}
 }
+
+func TestAccountSettingsAndColumnPreservation(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "config.toml")
+	source := "# keep this\n[accounts]\nclusters = \"c1,c2\"\nrefresh_interval = \"7m\"\n\n[columns]\naccounts = [\"account\", \"you\"]\n"
+	if err := os.WriteFile(path, []byte(source), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	settings, err := LoadFile(path)
+	if err != nil || settings.AccountClusters != "c1,c2" || settings.AccountRefreshInterval != 7*time.Minute || len(settings.AccountColumns) != 2 {
+		t.Fatalf("%+v %v", settings, err)
+	}
+	if err := SaveColumns(path, []string{"job_id"}, []string{"name"}); err != nil {
+		t.Fatal(err)
+	}
+	settings, err = LoadFile(path)
+	if err != nil || len(settings.AccountColumns) != 2 {
+		t.Fatalf("lost accounts columns: %+v %v", settings, err)
+	}
+	got, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.HasPrefix(string(got), "# keep this\n[accounts]\nclusters = \"c1,c2\"\nrefresh_interval = \"7m\"\n") {
+		t.Fatal("accounts table changed")
+	}
+	for _, value := range []string{"refresh_interval = \"0s\"", "refresh_interval = 1", "clusters = [\"c1\"]"} {
+		if err := os.WriteFile(path, []byte("[accounts]\n"+value), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := LoadFile(path); err == nil {
+			t.Fatalf("accepted %s", value)
+		}
+	}
+}

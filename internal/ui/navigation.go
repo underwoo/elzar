@@ -269,6 +269,9 @@ func formatKeyLabel(value string) string {
 }
 
 func prefixConflict(prefix string) string {
+	if prefix == "M" {
+		return "cluster selector"
+	}
 	bindings := []struct {
 		binding key.Binding
 		name    string

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
+
 	"slurmtui/internal/config"
 	"slurmtui/internal/model"
 	"slurmtui/internal/registry"

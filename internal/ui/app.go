@@ -1207,8 +1207,6 @@ func (a *App) otherData() (string, []model.Job, int, bool, error) {
 	return "Recent", a.visibleRecent(), a.recentCursor, a.recentLoading, a.recentError
 }
 
-func (a *App) toggleTab() { a.toggleTabKey("tab") }
-
 func (a *App) moveCursor(delta int) {
 	if a.tab == registry.AccountsTab {
 		a.accounts.cursor += delta

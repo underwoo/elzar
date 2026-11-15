@@ -56,7 +56,7 @@ func AccountColumns() []AccountColumn {
 	}
 	usage := text("raw_usage", "RawUsage", 14, func(r model.AccountRow) string { return fmt.Sprint(r.RawUsage) })
 	usage.Compare = func(a, b model.AccountRow) int { return cmp.Compare(a.RawUsage, b.RawUsage) }
-	return []AccountColumn{
+	columns := []AccountColumn{
 		text("cluster", "Cluster", 12, func(r model.AccountRow) string { return r.Cluster }),
 		text("account", "Account", 18, func(r model.AccountRow) string { return r.Account }),
 		text("parent", "Parent", 18, func(r model.AccountRow) string { return r.Parent }),
@@ -67,6 +67,18 @@ func AccountColumns() []AccountColumn {
 		float("level", "Level", func(r model.AccountRow) model.OptionalFloat { return r.Level }),
 		text("qos", "QOS", 20, func(r model.AccountRow) string { return strings.Join(r.QOS, ",") }),
 	}
+	for i := range columns {
+		if columns[i].ID == "fairshare" {
+			value := columns[i].Value
+			columns[i].Value = func(r model.AccountRow) string {
+				if r.You == "" {
+					return ""
+				}
+				return value(r)
+			}
+		}
+	}
+	return columns
 }
 func AccountColumnsForIDs(ids []string) ([]AccountColumn, []string) {
 	all := AccountColumns()

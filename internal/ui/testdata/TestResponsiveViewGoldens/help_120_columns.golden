@@ -1,5 +1,5 @@
 Slurm TUI  scope: me
-[Queue]  Recent         ╭──────────────────────────────────────────────────────────────────────╮
+[Queue]  Recent  Account╭──────────────────────────────────────────────────────────────────────╮
 JobID        Name       │ Key bindings                                                         │m… Nodes   NodeList(Rea…
 ──────────── ───────────│ Navigation                                                           │── ─────── ─────────────
 12345        sample-job │ ↑/k              select previous                                     │   —       node-01
