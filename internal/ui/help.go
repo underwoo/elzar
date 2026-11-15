@@ -18,7 +18,7 @@ func (a *App) helpGroups() []helpGroup {
 	switch a.mode {
 	case modeDetail:
 		return []helpGroup{
-			{title: "Navigation", bindings: []key.Binding{appKeys.scroll, appKeys.pageUp, appKeys.pageDown, appKeys.back}},
+			{title: "Navigation", bindings: []key.Binding{appKeys.scroll, appKeys.pageUp, appKeys.pageDown, appKeys.count, appKeys.top, appKeys.bottom, appKeys.back}},
 			{title: "View", bindings: []key.Binding{appKeys.allFields}},
 			{title: "Job actions", bindings: []key.Binding{appKeys.cancel, appKeys.hold, appKeys.requeue, appKeys.edit}},
 			{title: "App", bindings: []key.Binding{appKeys.help, appKeys.quit}},
@@ -34,9 +34,12 @@ func (a *App) helpGroups() []helpGroup {
 			{title: "App", bindings: []key.Binding{appKeys.help, appKeys.quit}},
 		}
 	default:
+		prefix := key.NewBinding(key.WithKeys(a.options.TabPrefix), key.WithHelp(formatKeyLabel(a.options.TabPrefix), "tab prefix"))
+		prefixQueue := key.NewBinding(key.WithKeys("1"), key.WithHelp(formatKeyLabel(a.options.TabPrefix)+" 1", "queue view"))
+		prefixRecent := key.NewBinding(key.WithKeys("2"), key.WithHelp(formatKeyLabel(a.options.TabPrefix)+" 2", "recent view"))
 		return []helpGroup{
-			{title: "Navigation", bindings: []key.Binding{appKeys.up, appKeys.down, appKeys.pageUp, appKeys.pageDown, appKeys.enter}},
-			{title: "View", bindings: []key.Binding{appKeys.tab, appKeys.queue, appKeys.recent, appKeys.filter, appKeys.sort, appKeys.columns}},
+			{title: "Navigation", bindings: []key.Binding{appKeys.up, appKeys.down, appKeys.pageUp, appKeys.pageDown, appKeys.count, appKeys.top, appKeys.bottom, appKeys.enter}},
+			{title: "View", bindings: []key.Binding{appKeys.tab, appKeys.shiftTab, prefix, prefixQueue, prefixRecent, appKeys.filter, appKeys.sort, appKeys.columns}},
 			{title: "Job actions", bindings: []key.Binding{appKeys.cancel, appKeys.hold, appKeys.requeue, appKeys.edit}},
 			{title: "App", bindings: []key.Binding{appKeys.refresh, appKeys.scope, appKeys.help, appKeys.quit}},
 		}

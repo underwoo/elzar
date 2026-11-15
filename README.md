@@ -64,9 +64,14 @@ The **Queue** view shows active jobs. **Recent** shows jobs that completed withi
 
 | Key | Action |
 | --- | --- |
-| `Tab`, `1`, `2` | Switch between Queue and Recent (`1` for Queue, `2` for Recent) |
-| `↑`/`↓`, `j`/`k` | Select a job |
-| `PgUp`/`PgDn` | Move through the list or scroll job details |
+| `Tab`, `Shift+Tab` | Cycle through views |
+| `Ctrl+T`, then `1`/`2` | Jump to Queue or Recent; the prefix is configurable |
+| `↑`/`↓`, `j`/`k` | Move the selection or scroll details |
+| `Space`, `Ctrl+V`, `Ctrl+F`, `PgDn` | Page down |
+| `b`, `Ctrl+B`, `Alt+V`, `PgUp` | Page up |
+| `N` then motion | Repeat a motion N times (for example `5j`, `3 Space`) |
+| `gg`, `1G`, `Home`, `<`, `Alt+<` | Jump to the top |
+| `G`, `End`, `>`, `Alt+>` | Jump to the bottom |
 | `Enter` | Open details for the selected job |
 | `/` | Open the live regular-expression filter (Enter keeps it; Esc clears it) |
 | `s` | Sort by a visible column; selecting the current column flips direction |
@@ -79,7 +84,7 @@ The **Queue** view shows active jobs. **Recent** shows jobs that completed withi
 | `a` | Show or hide the raw All fields section in job details |
 | `r` | Refresh the job lists |
 | `u` | Toggle between your jobs and all visible users' jobs |
-| `?` | Show or hide the help line |
+| `?` | Show or hide the key help overlay |
 | `q`, `Ctrl+C` | Quit |
 
 Job details include summary, requested and allocated resources, timing, paths, accounting steps when available, and reason/dependency information. Active jobs are queried with `scontrol`; Recent jobs use `sacct`.
@@ -114,11 +119,16 @@ refresh_interval = "15s"
 recent_window = "1h"
 default_scope = "me"
 
+[keys]
+tab_prefix = "ctrl+t"
+
 [columns]
 queue = ["job_id", "name", "user", "account", "partition", "qos", "state", "elapsed_limit", "nodes", "node_reason"]
 recent = ["job_id", "name", "user", "account", "partition", "qos", "state", "elapsed_limit", "nodes", "node_reason", "end"]
 ```
 
 `default_scope` can be `"me"` or `"all"`. If the file is missing, these defaults apply. Invalid values produce an error at startup. Command-line options override the file; `--all` selects the all-users scope.
+
+The optional `[keys]` table sets the key used before a digit to jump directly to a view. `tab_prefix` accepts a Bubble Tea key string such as `"ctrl+t"`, `"ctrl+y"`, or `"alt+x"`. The default is `ctrl+t`.
 
 The optional `[columns]` table stores visible column IDs in display order. The column picker updates only this table and preserves the rest of the file. Unknown IDs are skipped with a status-line warning.

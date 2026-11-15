@@ -17,8 +17,7 @@ type appKeyMap struct {
 	moveDown  key.Binding
 	save      key.Binding
 	tab       key.Binding
-	queue     key.Binding
-	recent    key.Binding
+	shiftTab  key.Binding
 	up        key.Binding
 	down      key.Binding
 	pageUp    key.Binding
@@ -29,6 +28,9 @@ type appKeyMap struct {
 	enter     key.Binding
 	back      key.Binding
 	allFields key.Binding
+	top       key.Binding
+	bottom    key.Binding
+	count     key.Binding
 }
 
 var appKeys = appKeyMap{
@@ -46,8 +48,7 @@ var appKeys = appKeyMap{
 	moveDown:  key.NewBinding(key.WithKeys("J"), key.WithHelp("J", "move column down")),
 	save:      key.NewBinding(key.WithKeys("w"), key.WithHelp("w", "save columns")),
 	tab:       key.NewBinding(key.WithKeys("tab"), key.WithHelp("tab", "next view")),
-	queue:     key.NewBinding(key.WithKeys("1"), key.WithHelp("1", "queue view")),
-	recent:    key.NewBinding(key.WithKeys("2"), key.WithHelp("2", "recent view")),
+	shiftTab:  key.NewBinding(key.WithKeys("shift+tab"), key.WithHelp("shift+tab", "previous view")),
 	up:        key.NewBinding(key.WithKeys("up", "k"), key.WithHelp("↑/k", "select previous")),
 	down:      key.NewBinding(key.WithKeys("down", "j"), key.WithHelp("↓/j", "select next")),
 	pageUp:    key.NewBinding(key.WithKeys("pgup", "b", "ctrl+b", "alt+v"), key.WithHelp("b/^b/M-v/PgUp", "page up")),
@@ -58,4 +59,7 @@ var appKeys = appKeyMap{
 	enter:     key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter", "details")),
 	back:      key.NewBinding(key.WithKeys("esc"), key.WithHelp("esc", "back")),
 	allFields: key.NewBinding(key.WithKeys("a"), key.WithHelp("a", "all fields")),
+	top:       key.NewBinding(key.WithKeys("g", "gg", "1G", "home", "<", "alt+<"), key.WithHelp("gg/1G/Home/M-<", "top")),
+	bottom:    key.NewBinding(key.WithKeys("G", "end", ">", "alt+>"), key.WithHelp("G/End/M->", "bottom")),
+	count:     key.NewBinding(key.WithKeys("0", "1", "2", "3", "4", "5", "6", "7", "8", "9"), key.WithHelp("0-9", "motion count")),
 }

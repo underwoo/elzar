@@ -31,6 +31,7 @@ type Options struct {
 	ConfigPath      string
 	QueueColumns    []string
 	RecentColumns   []string
+	TabPrefix       string
 }
 
 type App struct {
@@ -40,6 +41,12 @@ type App struct {
 
 	width, height      int
 	mode               mode
+	navCount           int
+	navCountActive     bool
+	navG               bool
+	tabPrefixPending   bool
+	prefixWarned       bool
+	navigationWarning  string
 	showHelp           bool
 	helpScroll         int
 	tab                registry.Tab
@@ -101,6 +108,9 @@ func NewWithOptions(runner slurm.Runner, options Options) *App {
 	}
 	if options.Scope != slurm.ScopeAll {
 		options.Scope = slurm.ScopeMe
+	}
+	if options.TabPrefix == "" {
+		options.TabPrefix = "ctrl+t"
 	}
 	clock := options.Clock
 	if clock == nil {
@@ -229,6 +239,11 @@ func (a *App) handleKey(msg tea.KeyMsg) tea.Cmd {
 		}
 		return nil
 	}
+	if a.mode == modeList || a.mode == modeDetail {
+		if cmd, handled := a.handleNavigationKey(msg); handled {
+			return cmd
+		}
+	}
 	if key.Matches(msg, appKeys.help) && a.mode != modeFilter && a.mode != modeForm && a.mode != modeConfirm {
 		a.showHelp = true
 		a.helpScroll = 0
@@ -264,12 +279,8 @@ func (a *App) handleListKey(msg tea.KeyMsg) tea.Cmd {
 		if a.hasFilterDraft() {
 			a.clearFilter()
 		}
-	case key.Matches(msg, appKeys.tab):
+	case key.Matches(msg, appKeys.tab) || msg.String() == "shift+tab":
 		a.toggleTab()
-	case key.Matches(msg, appKeys.queue):
-		a.tab = registry.QueueTab
-	case key.Matches(msg, appKeys.recent):
-		a.tab = registry.RecentTab
 	case key.Matches(msg, appKeys.up):
 		a.moveCursor(-1)
 	case key.Matches(msg, appKeys.down):
@@ -340,14 +351,9 @@ func (a *App) handleDetailKey(msg tea.KeyMsg) tea.Cmd {
 		a.showAllFields = false
 		a.detailScroll = 0
 		a.detailRequest++
-	case key.Matches(msg, appKeys.up):
-		a.detailScroll = max(0, a.detailScroll-1)
-	case key.Matches(msg, appKeys.down):
-		a.detailScroll++
-	case key.Matches(msg, appKeys.pageUp):
-		a.detailScroll = max(0, a.detailScroll-a.detailPageSize())
-	case key.Matches(msg, appKeys.pageDown):
-		a.detailScroll += a.detailPageSize()
+	case key.Matches(msg, appKeys.tab) || msg.String() == "shift+tab":
+		a.toggleTab()
+		a.leaveDetailForTabSwitch()
 	case key.Matches(msg, appKeys.allFields):
 		a.showAllFields = !a.showAllFields
 		a.detailScroll = 0
@@ -920,12 +926,15 @@ func (a *App) View() string {
 	if a.editError != "" {
 		status += "  " + a.editError
 	}
-	if sourceErr != nil || otherErr != nil || a.filterError != nil || a.columnWarning != "" || strings.HasPrefix(a.actionStatus, "action failed:") || strings.HasPrefix(a.actionStatus, "edit failed:") {
+	if nav := a.navigationStatus(); nav != "" {
+		status = nav + "  " + status
+	}
+	if sourceErr != nil || otherErr != nil || a.filterError != nil || a.columnWarning != "" || a.navigationWarning != "" || strings.HasPrefix(a.actionStatus, "action failed:") || strings.HasPrefix(a.actionStatus, "edit failed:") {
 		fmt.Fprintln(&out, errorStyle.Render(status))
 	} else {
 		fmt.Fprintln(&out, mutedStyle.Render(status))
 	}
-	fmt.Fprint(&out, mutedStyle.Render(fitFooter(width, []string{"enter details", "/ filter", "s sort", "x cancel", "e edit", "tab views", "r refresh", "q quit"})))
+	fmt.Fprint(&out, mutedStyle.Render(fitFooter(width, []string{"↑/↓ move", "space page", "G bottom", "1G top", "enter details", "x cancel", "h hold", "R requeue", "e edit", "tab cycle", "q quit"})))
 	return fitOutput(out.String(), width)
 }
 
@@ -936,23 +945,7 @@ func (a *App) renderDetail(out *strings.Builder, width int) {
 	} else if a.detail == nil {
 		fmt.Fprintln(out, "Loading job details…")
 	} else {
-		lines := make([]string, 0, 64)
-		for _, section := range registry.DetailSections() {
-			if section.ID == "all" && !a.showAllFields {
-				continue
-			}
-			if section.Applies != nil && !section.Applies(*a.detail) {
-				continue
-			}
-			lines = append(lines, "", titleStyle.Render(section.Title))
-			for _, line := range section.Render(*a.detail, a.clock(), a.options.Location) {
-				if section.ID == "summary" && strings.HasPrefix(line, "Comment: ") {
-					lines = append(lines, wrapCommentLine(line, width)...)
-				} else {
-					lines = append(lines, strings.Split(line, "\n")...)
-				}
-			}
-		}
+		lines := a.detailContentLines(width)
 		available := max(1, a.height-2)
 		if a.height <= 0 {
 			available = 20
@@ -967,7 +960,34 @@ func (a *App) renderDetail(out *strings.Builder, width int) {
 	if a.actionStatus != "" {
 		fmt.Fprintln(out, mutedStyle.Render(a.actionStatus))
 	}
-	fmt.Fprintln(out, mutedStyle.Render(fitFooter(width, []string{"↑/↓ scroll", "a all fields", "x cancel", "h hold/release", "R requeue", "e edit", "esc back", "q quit"})))
+	if nav := a.navigationStatus(); nav != "" {
+		fmt.Fprintln(out, errorStyle.Render(nav))
+	}
+	fmt.Fprintln(out, mutedStyle.Render(fitFooter(width, []string{"↑/↓ move", "space page", "G bottom", "1G top", "a all", "x cancel", "h hold", "R requeue", "e edit", "esc back", "q quit"})))
+}
+
+func (a *App) detailContentLines(width int) []string {
+	if a.detail == nil {
+		return nil
+	}
+	lines := make([]string, 0, 64)
+	for _, section := range registry.DetailSections() {
+		if section.ID == "all" && !a.showAllFields {
+			continue
+		}
+		if section.Applies != nil && !section.Applies(*a.detail) {
+			continue
+		}
+		lines = append(lines, "", titleStyle.Render(section.Title))
+		for _, line := range section.Render(*a.detail, a.clock(), a.options.Location) {
+			if section.ID == "summary" && strings.HasPrefix(line, "Comment: ") {
+				lines = append(lines, wrapCommentLine(line, width)...)
+			} else {
+				lines = append(lines, strings.Split(line, "\n")...)
+			}
+		}
+	}
+	return lines
 }
 
 func wrapCommentLine(line string, width int) []string {

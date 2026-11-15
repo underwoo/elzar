@@ -48,6 +48,7 @@ func main() {
 		ConfigPath:      settings.Path,
 		QueueColumns:    settings.QueueColumns,
 		RecentColumns:   settings.RecentColumns,
+		TabPrefix:       settings.TabPrefix,
 	}), tea.WithAltScreen())
 	if _, err := program.Run(); err != nil {
 		fmt.Fprintln(os.Stderr, "slurmtui:", err)

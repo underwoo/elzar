@@ -4,4 +4,4 @@ JobID        Name         User         Account      Partition  QOS       State  
 ──────────── ──────────── ──────────── ──────────── ────────── ───────── ──────────── ──────────── ─────── ─────────────
 12345        sample-job   tester       science      compute              RUNNING      1:00:00/—    —       node-01      
 Queue: 1 jobs
-enter details  / filter  s sort  x cancel  e edit  tab views  r refresh  q quit  ? help
+↑/↓ move  space page  G bottom  1G top  enter details  x cancel  h hold  R requeue  e edit  tab cycle  q quit  ? help

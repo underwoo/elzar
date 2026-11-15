@@ -27,11 +27,12 @@ type Settings struct {
 	DefaultScope    slurm.Scope
 	QueueColumns    []string
 	RecentColumns   []string
+	TabPrefix       string
 	Path            string
 }
 
 func Defaults() Settings {
-	return Settings{RefreshInterval: DefaultRefreshInterval, RecentWindow: DefaultRecentWindow, DefaultScope: slurm.ScopeMe}
+	return Settings{RefreshInterval: DefaultRefreshInterval, RecentWindow: DefaultRecentWindow, DefaultScope: slurm.ScopeMe, TabPrefix: "ctrl+t"}
 }
 
 // Load reads XDG_CONFIG_HOME/slurmtui/config.toml, falling back to the
@@ -107,7 +108,59 @@ func LoadFile(path string) (Settings, error) {
 			settings.RecentColumns = stringValues(values)
 		}
 	}
+	if rawKeys, ok := document["keys"].(map[string]any); ok {
+		if value, exists := rawKeys["tab_prefix"]; exists {
+			prefix, ok := value.(string)
+			if !ok || !validKeyString(prefix) {
+				return Settings{}, fmt.Errorf("config %s:%d: keys.tab_prefix must be a valid Bubble Tea key string", path, keyLine(data, "tab_prefix"))
+			}
+			if prefix == "space" {
+				prefix = " "
+			}
+			settings.TabPrefix = prefix
+		}
+	}
 	return settings, nil
+}
+
+func validKeyString(value string) bool {
+	if value == " " {
+		return true
+	}
+	if value == "" || strings.TrimSpace(value) != value {
+		return false
+	}
+	return validBaseKeyString(value)
+}
+
+func validBaseKeyString(value string) bool {
+	if len([]rune(value)) == 1 {
+		return true
+	}
+	known := map[string]bool{
+		"tab": true, "enter": true, "esc": true, "space": true, "backspace": true, "delete": true, "insert": true,
+		"up": true, "down": true, "left": true, "right": true, "home": true, "end": true, "pgup": true, "pgdown": true,
+		"shift+tab": true, "ctrl+home": true, "ctrl+end": true, "shift+home": true, "shift+end": true,
+		"ctrl+shift+home": true, "ctrl+shift+end": true, "ctrl+pgup": true, "ctrl+pgdown": true,
+		"ctrl+up": true, "ctrl+down": true, "ctrl+left": true, "ctrl+right": true,
+		"shift+up": true, "shift+down": true, "shift+left": true, "shift+right": true,
+		"ctrl+shift+up": true, "ctrl+shift+down": true, "ctrl+shift+left": true, "ctrl+shift+right": true,
+		"ctrl+@": true, "ctrl+\\": true, "ctrl+]": true, "ctrl+^": true, "ctrl+_": true,
+	}
+	for i := 1; i <= 20; i++ {
+		known[fmt.Sprintf("f%d", i)] = true
+	}
+	if known[value] {
+		return true
+	}
+	if strings.HasPrefix(value, "ctrl+") {
+		key := strings.TrimPrefix(value, "ctrl+")
+		return len(key) == 1 && key[0] >= 'a' && key[0] <= 'z' || known[value]
+	}
+	if strings.HasPrefix(value, "alt+") {
+		return validBaseKeyString(strings.TrimPrefix(value, "alt+"))
+	}
+	return false
 }
 
 func stringValues(values []any) []string {
