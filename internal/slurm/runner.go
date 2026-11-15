@@ -37,12 +37,12 @@ func (r ExecRunner) Run(ctx context.Context, name string, args ...string) ([]byt
 	if err != nil {
 		message := strings.TrimSpace(stderr.String())
 		if ctx.Err() != nil {
-			return nil, fmt.Errorf("%s timed out after %s: %w", name, timeout, ctx.Err())
+			return output, fmt.Errorf("%s timed out after %s: %w", name, timeout, ctx.Err())
 		}
 		if message != "" {
-			return nil, fmt.Errorf("%s %s: %w: %s", name, strings.Join(args, " "), err, message)
+			return output, fmt.Errorf("%s %s: %w: %s", name, strings.Join(args, " "), err, message)
 		}
-		return nil, fmt.Errorf("%s %s: %w", name, strings.Join(args, " "), err)
+		return output, fmt.Errorf("%s %s: %w", name, strings.Join(args, " "), err)
 	}
 	return output, nil
 }

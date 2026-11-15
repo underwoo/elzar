@@ -1,0 +1,34 @@
+{
+  "associations": [],
+  "errors": [],
+  "meta": {
+    "client": {
+      "group": "group-02",
+      "source": "/tmp/slurmtui-fixture/path-02",
+      "user": "user-01"
+    },
+    "command": [
+      "./job.sh",
+      "./job.sh",
+      "./job.sh",
+      "./job.sh",
+      "./job.sh"
+    ],
+    "plugin": {
+      "accounting_storage": "accounting_storage/slurmdbd",
+      "data_parser": "data_parser/v0.0.45",
+      "name": "",
+      "type": ""
+    },
+    "slurm": {
+      "cluster": "cluster-07",
+      "release": "26.05.2",
+      "version": {
+        "major": "26",
+        "micro": "2",
+        "minor": "05"
+      }
+    }
+  },
+  "warnings": []
+}

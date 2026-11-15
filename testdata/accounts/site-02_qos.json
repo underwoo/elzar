@@ -1,0 +1,617 @@
+{
+  "errors": [],
+  "meta": {
+    "client": {
+      "group": "group-02",
+      "source": "/tmp/slurmtui-fixture/path-02",
+      "user": "user-01"
+    },
+    "command": [
+      "./job.sh",
+      "./job.sh",
+      "./job.sh",
+      "./job.sh"
+    ],
+    "plugin": {
+      "accounting_storage": "accounting_storage/slurmdbd",
+      "data_parser": "data_parser/v0.0.45",
+      "name": "",
+      "type": ""
+    },
+    "slurm": {
+      "cluster": "cluster-07",
+      "release": "26.05.2",
+      "version": {
+        "major": "26",
+        "micro": "2",
+        "minor": "05"
+      }
+    }
+  },
+  "qos": [
+    {
+      "flags": [],
+      "id": 1,
+      "limits": {
+        "factor": {
+          "infinite": true,
+          "number": 0.0,
+          "set": false
+        },
+        "grace_time": 0,
+        "max": {
+          "accruing": {
+            "per": {
+              "account": {
+                "infinite": true,
+                "number": 0,
+                "set": false
+              },
+              "user": {
+                "infinite": true,
+                "number": 0,
+                "set": false
+              }
+            }
+          },
+          "active_jobs": {
+            "accruing": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            },
+            "count": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            }
+          },
+          "jobs": {
+            "active_jobs": {
+              "per": {
+                "account": {
+                  "infinite": true,
+                  "number": 0,
+                  "set": false
+                },
+                "user": {
+                  "infinite": true,
+                  "number": 0,
+                  "set": false
+                }
+              }
+            },
+            "count": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            },
+            "per": {
+              "account": {
+                "infinite": true,
+                "number": 0,
+                "set": false
+              },
+              "user": {
+                "infinite": true,
+                "number": 0,
+                "set": false
+              }
+            }
+          },
+          "tres": {
+            "minutes": {
+              "per": {
+                "account": [],
+                "job": [],
+                "qos": [],
+                "user": []
+              },
+              "total": []
+            },
+            "per": {
+              "account": [],
+              "job": [],
+              "node": [],
+              "user": []
+            },
+            "total": []
+          },
+          "wall_clock": {
+            "per": {
+              "job": {
+                "infinite": true,
+                "number": 0,
+                "set": false
+              },
+              "qos": {
+                "infinite": true,
+                "number": 0,
+                "set": false
+              }
+            }
+          }
+        },
+        "min": {
+          "priority_threshold": {
+            "infinite": true,
+            "number": 0,
+            "set": false
+          },
+          "tres": {
+            "per": {
+              "job": []
+            }
+          }
+        }
+      },
+      "name": "qos-02",
+      "preempt": {
+        "exempt_time": {
+          "infinite": true,
+          "number": 0,
+          "set": false
+        },
+        "list": [],
+        "mode": [
+          "DISABLED"
+        ]
+      },
+      "priority": {
+        "infinite": false,
+        "number": 0,
+        "set": true
+      },
+      "usage_factor": {
+        "infinite": false,
+        "number": 1.0,
+        "set": true
+      },
+      "usage_threshold": {
+        "infinite": true,
+        "number": 0.0,
+        "set": false
+      }
+    },
+    {
+      "flags": [],
+      "id": 3,
+      "limits": {
+        "factor": {
+          "infinite": true,
+          "number": 0.0,
+          "set": false
+        },
+        "grace_time": 0,
+        "max": {
+          "accruing": {
+            "per": {
+              "account": {
+                "infinite": true,
+                "number": 0,
+                "set": false
+              },
+              "user": {
+                "infinite": true,
+                "number": 0,
+                "set": false
+              }
+            }
+          },
+          "active_jobs": {
+            "accruing": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            },
+            "count": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            }
+          },
+          "jobs": {
+            "active_jobs": {
+              "per": {
+                "account": {
+                  "infinite": true,
+                  "number": 0,
+                  "set": false
+                },
+                "user": {
+                  "infinite": false,
+                  "number": 40,
+                  "set": true
+                }
+              }
+            },
+            "count": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            },
+            "per": {
+              "account": {
+                "infinite": true,
+                "number": 0,
+                "set": false
+              },
+              "user": {
+                "infinite": true,
+                "number": 0,
+                "set": false
+              }
+            }
+          },
+          "tres": {
+            "minutes": {
+              "per": {
+                "account": [],
+                "job": [],
+                "qos": [],
+                "user": []
+              },
+              "total": []
+            },
+            "per": {
+              "account": [],
+              "job": [
+                {
+                  "count": 1,
+                  "id": 1,
+                  "name": "",
+                  "type": "cpu"
+                }
+              ],
+              "node": [],
+              "user": []
+            },
+            "total": []
+          },
+          "wall_clock": {
+            "per": {
+              "job": {
+                "infinite": true,
+                "number": 0,
+                "set": false
+              },
+              "qos": {
+                "infinite": true,
+                "number": 0,
+                "set": false
+              }
+            }
+          }
+        },
+        "min": {
+          "priority_threshold": {
+            "infinite": true,
+            "number": 0,
+            "set": false
+          },
+          "tres": {
+            "per": {
+              "job": []
+            }
+          }
+        }
+      },
+      "name": "qos-11",
+      "preempt": {
+        "exempt_time": {
+          "infinite": true,
+          "number": 0,
+          "set": false
+        },
+        "list": [],
+        "mode": [
+          "DISABLED"
+        ]
+      },
+      "priority": {
+        "infinite": false,
+        "number": 0,
+        "set": true
+      },
+      "usage_factor": {
+        "infinite": false,
+        "number": 1.0,
+        "set": true
+      },
+      "usage_threshold": {
+        "infinite": true,
+        "number": 0.0,
+        "set": false
+      }
+    },
+    {
+      "flags": [],
+      "id": 39,
+      "limits": {
+        "factor": {
+          "infinite": true,
+          "number": 0.0,
+          "set": false
+        },
+        "grace_time": 0,
+        "max": {
+          "accruing": {
+            "per": {
+              "account": {
+                "infinite": true,
+                "number": 0,
+                "set": false
+              },
+              "user": {
+                "infinite": true,
+                "number": 0,
+                "set": false
+              }
+            }
+          },
+          "active_jobs": {
+            "accruing": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            },
+            "count": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            }
+          },
+          "jobs": {
+            "active_jobs": {
+              "per": {
+                "account": {
+                  "infinite": true,
+                  "number": 0,
+                  "set": false
+                },
+                "user": {
+                  "infinite": false,
+                  "number": 27,
+                  "set": true
+                }
+              }
+            },
+            "count": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            },
+            "per": {
+              "account": {
+                "infinite": true,
+                "number": 0,
+                "set": false
+              },
+              "user": {
+                "infinite": true,
+                "number": 0,
+                "set": false
+              }
+            }
+          },
+          "tres": {
+            "minutes": {
+              "per": {
+                "account": [],
+                "job": [],
+                "qos": [],
+                "user": []
+              },
+              "total": []
+            },
+            "per": {
+              "account": [],
+              "job": [],
+              "node": [],
+              "user": []
+            },
+            "total": []
+          },
+          "wall_clock": {
+            "per": {
+              "job": {
+                "infinite": true,
+                "number": 0,
+                "set": false
+              },
+              "qos": {
+                "infinite": true,
+                "number": 0,
+                "set": false
+              }
+            }
+          }
+        },
+        "min": {
+          "priority_threshold": {
+            "infinite": true,
+            "number": 0,
+            "set": false
+          },
+          "tres": {
+            "per": {
+              "job": []
+            }
+          }
+        }
+      },
+      "name": "qos-12",
+      "preempt": {
+        "exempt_time": {
+          "infinite": true,
+          "number": 0,
+          "set": false
+        },
+        "list": [],
+        "mode": [
+          "DISABLED"
+        ]
+      },
+      "priority": {
+        "infinite": false,
+        "number": 0,
+        "set": true
+      },
+      "usage_factor": {
+        "infinite": false,
+        "number": 1.0,
+        "set": true
+      },
+      "usage_threshold": {
+        "infinite": true,
+        "number": 0.0,
+        "set": false
+      }
+    },
+    {
+      "flags": [],
+      "id": 40,
+      "limits": {
+        "factor": {
+          "infinite": true,
+          "number": 0.0,
+          "set": false
+        },
+        "grace_time": 0,
+        "max": {
+          "accruing": {
+            "per": {
+              "account": {
+                "infinite": true,
+                "number": 0,
+                "set": false
+              },
+              "user": {
+                "infinite": true,
+                "number": 0,
+                "set": false
+              }
+            }
+          },
+          "active_jobs": {
+            "accruing": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            },
+            "count": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            }
+          },
+          "jobs": {
+            "active_jobs": {
+              "per": {
+                "account": {
+                  "infinite": true,
+                  "number": 0,
+                  "set": false
+                },
+                "user": {
+                  "infinite": false,
+                  "number": 113,
+                  "set": true
+                }
+              }
+            },
+            "count": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            },
+            "per": {
+              "account": {
+                "infinite": true,
+                "number": 0,
+                "set": false
+              },
+              "user": {
+                "infinite": true,
+                "number": 0,
+                "set": false
+              }
+            }
+          },
+          "tres": {
+            "minutes": {
+              "per": {
+                "account": [],
+                "job": [],
+                "qos": [],
+                "user": []
+              },
+              "total": []
+            },
+            "per": {
+              "account": [],
+              "job": [],
+              "node": [],
+              "user": []
+            },
+            "total": []
+          },
+          "wall_clock": {
+            "per": {
+              "job": {
+                "infinite": true,
+                "number": 0,
+                "set": false
+              },
+              "qos": {
+                "infinite": true,
+                "number": 0,
+                "set": false
+              }
+            }
+          }
+        },
+        "min": {
+          "priority_threshold": {
+            "infinite": true,
+            "number": 0,
+            "set": false
+          },
+          "tres": {
+            "per": {
+              "job": []
+            }
+          }
+        }
+      },
+      "name": "qos-13",
+      "preempt": {
+        "exempt_time": {
+          "infinite": true,
+          "number": 0,
+          "set": false
+        },
+        "list": [],
+        "mode": [
+          "DISABLED"
+        ]
+      },
+      "priority": {
+        "infinite": false,
+        "number": 0,
+        "set": true
+      },
+      "usage_factor": {
+        "infinite": false,
+        "number": 1.0,
+        "set": true
+      },
+      "usage_threshold": {
+        "infinite": true,
+        "number": 0.0,
+        "set": false
+      }
+    }
+  ],
+  "warnings": []
+}

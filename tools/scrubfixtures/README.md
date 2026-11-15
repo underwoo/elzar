@@ -16,3 +16,18 @@ It replaces user and group names and IDs, accounts, work keys, job names, site
 labels, node names, paths, scripts, command lines, comments, and free-form
 extra text with deterministic fixture values. Keep raw dumps outside the
 repository; only commit the scrubber's output.
+
+For account samples, put the labelled command captures (`*.out`) and the
+multi-cluster capture named `sshare-all.out` in one private directory:
+
+```sh
+go run ./tools/scrubfixtures -input-dir /private/samples -output-dir testdata/accounts
+```
+
+Files are processed in sorted order with one shared identity map. Output filenames
+use sequential `site-01`, `site-02`, etc. labels instead of input site names. The tool
+splits command-labelled documents and preserves anonymized `CLUSTER:` headers.
+It retains the first few share rows, user rows, and their ancestor accounts,
+while omitting large share TRES arrays and QOS descriptions. Association and
+QOS references use the same names across files. Partition captures are skipped
+until partition fixtures are needed. Do not include raw samples in git.

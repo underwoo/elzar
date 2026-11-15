@@ -1,0 +1,28 @@
+{
+  "associations": [],
+  "errors": [],
+  "meta": {
+    "client": {
+      "group": "group-03",
+      "source": "/tmp/slurmtui-fixture/path-03",
+      "user": "user-01"
+    },
+    "command": [],
+    "plugin": {
+      "accounting_storage": "accounting_storage/slurmdbd",
+      "data_parser": "data_parser/v0.0.44",
+      "name": "",
+      "type": ""
+    },
+    "slurm": {
+      "cluster": "cluster-08",
+      "release": "25.11.8",
+      "version": {
+        "major": "25",
+        "micro": "8",
+        "minor": "11"
+      }
+    }
+  },
+  "warnings": []
+}
