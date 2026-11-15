@@ -107,7 +107,7 @@ func (a *App) renderMessagesOverlay(width, height int) (string, int, int) {
 	} else {
 		content = append(content, lines[a.messageScroll:end]...)
 	}
-	content = append(content, mutedStyle.Render("j/k • space page • q/esc/"+a.statusMessageHint()+" close"))
+	content = append(content, mutedStyle.Render("j/k PgUp/Dn • close q/esc/"+a.statusMessageHint()))
 	for i := range content {
 		content[i] = ansi.Truncate(content[i], innerWidth, "…")
 	}

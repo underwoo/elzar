@@ -130,6 +130,10 @@ func TestEveryModeFitsFortyColumnsAtTwelveRows(t *testing.T) {
 			a.editDiff = []string{strings.Repeat("before and after value", 8)}
 		},
 		"help": func(a *App) { a.showHelp = true },
+		"messages": func(a *App) {
+			a.showMessages = true
+			a.addMessage("long refresh error: "+strings.Repeat("details ", 20), messageError)
+		},
 	}
 	for name, setup := range tests {
 		t.Run(name, func(t *testing.T) {
