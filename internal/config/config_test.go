@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -46,6 +47,30 @@ func TestLoadFileReadsColumnTables(t *testing.T) {
 	}
 	if settings.RefreshInterval != 22*time.Second || len(settings.QueueColumns) != 2 || settings.QueueColumns[0] != "name" || len(settings.RecentColumns) != 1 || settings.RecentColumns[0] != "end" {
 		t.Fatalf("loaded settings = %+v", settings)
+	}
+}
+
+func TestLoadFileReadsTabPrefix(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "config.toml")
+	if err := os.WriteFile(path, []byte("[keys]\ntab_prefix = \"alt+x\"\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	settings, err := LoadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if settings.TabPrefix != "alt+x" {
+		t.Fatalf("tab prefix = %q, want alt+x", settings.TabPrefix)
+	}
+}
+
+func TestLoadFileRejectsInvalidTabPrefix(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "config.toml")
+	if err := os.WriteFile(path, []byte("[keys]\ntab_prefix = \"not a key\"\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := LoadFile(path); err == nil || !strings.Contains(err.Error(), "keys.tab_prefix") {
+		t.Fatalf("LoadFile error = %v, want invalid tab_prefix error", err)
 	}
 }
 
