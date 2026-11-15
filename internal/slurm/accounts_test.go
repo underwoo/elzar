@@ -29,7 +29,7 @@ func accountFixture(t *testing.T, name string) []byte {
 	return data
 }
 func TestSharesFixtures(t *testing.T) {
-	for _, name := range []string{"es_shares", "gfdl_shares", "ursa_shares", "shares_all"} {
+	for _, name := range []string{"site-01_shares", "site-02_shares", "site-03_shares", "sharsite-01_all"} {
 		t.Run(name, func(t *testing.T) {
 			r := &accountRunner{data: accountFixture(t, name)}
 			got, err := ListShares(context.Background(), r)
@@ -60,14 +60,14 @@ func TestSharesFixtures(t *testing.T) {
 			if !user || !account {
 				t.Fatal("missing user/account rows")
 			}
-			if name == "shares_all" && len(clusters) != 4 {
+			if name == "sharsite-01_all" && len(clusters) != 4 {
 				t.Fatalf("clusters: %v", clusters)
 			}
 		})
 	}
 }
 func TestSharesFailures(t *testing.T) {
-	good := string(accountFixture(t, "es_shares"))
+	good := string(accountFixture(t, "site-01_shares"))
 	empty := `{"shares":{"shares":[]},"meta":{"slurm":{"version":"25.11.8"}}}`
 	cases := []struct {
 		name, data  string
@@ -111,7 +111,7 @@ func TestSharesFailures(t *testing.T) {
 	}
 }
 func TestAccountFixtures(t *testing.T) {
-	for _, site := range []string{"es", "gfdl", "ursa"} {
+	for _, site := range []string{"site-01", "site-02", "site-03"} {
 		t.Run(site, func(t *testing.T) {
 			r := &accountRunner{data: accountFixture(t, site+"_associations")}
 			got, err := ListAssociations(context.Background(), r, "user-01")
@@ -121,7 +121,7 @@ func TestAccountFixtures(t *testing.T) {
 			if !reflect.DeepEqual(r.calls, []string{"sacctmgr --json show assoc user=user-01"}) {
 				t.Fatal(r.calls)
 			}
-			if site == "es" {
+			if site == "site-01" {
 				if len(got.Associations) != 16 {
 					t.Fatal(len(got.Associations))
 				}
@@ -141,7 +141,7 @@ func TestAccountFixtures(t *testing.T) {
 			if !reflect.DeepEqual(r.calls, []string{"sacctmgr --json show qos"}) {
 				t.Fatal(r.calls)
 			}
-			if site == "ursa" && qos.Version.Major != 25 {
+			if site == "site-03" && qos.Version.Major != 25 {
 				t.Fatal(qos.Version)
 			}
 		})
@@ -185,7 +185,7 @@ func TestExecRunnerRetainsPartialOutput(t *testing.T) {
 	}
 }
 func TestSharesWarningsAndValues(t *testing.T) {
-	data := `{"meta":{"slurm":{"version":"25.11.8","cluster":"local"}},"warnings":[{"description":"limited data"}],"shares":{"shares":[{"name":"a","type":["ASSOCIATION"],"shares":{"set":true,"number":10},"shares_normalized":{"set":true,"number":0.25},"usage":9007199254740993,"effective_usage":{"set":false},"fairshare":{"factor":{"set":true,"number":0.3},"level":{"infinite":true}}}]}}`
+	data := `{"meta":{"slurm":{"version":"25.11.8","cluster":"local"}},"warnings":[{"description":"limited data"}],"shares":{"shares":[{"name":"a","type":["ASSOCIATION"],"shares":{"set":true,"number":10},"sharsite-01_normalized":{"set":true,"number":0.25},"usage":9007199254740993,"effective_usage":{"set":false},"fairshare":{"factor":{"set":true,"number":0.3},"level":{"infinite":true}}}]}}`
 	got, err := ListShares(context.Background(), &accountRunner{data: []byte(data)})
 	if err != nil || len(got.Shares) != 1 || len(got.Warnings) != 1 {
 		t.Fatalf("%+v %v", got, err)

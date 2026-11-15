@@ -109,6 +109,7 @@ func scrubDirectory(inputDir, outputDir string) error {
 		return err
 	}
 	cleaner := newScrubber()
+	siteIndex := 0
 	for _, entry := range entries {
 		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".out") {
 			continue
@@ -132,6 +133,7 @@ func scrubDirectory(inputDir, outputDir string) error {
 		if err != nil {
 			return fmt.Errorf("%s: %w", entry.Name(), err)
 		}
+		siteIndex++
 		for _, document := range documents {
 			if len(document.data) == 0 {
 				continue
@@ -147,7 +149,7 @@ func scrubDirectory(inputDir, outputDir string) error {
 			if err := encoder.Encode(value); err != nil {
 				return err
 			}
-			base := strings.TrimSuffix(entry.Name(), ".out")
+			base := fmt.Sprintf("site-%02d", siteIndex)
 			if err := os.WriteFile(filepath.Join(outputDir, base+"_"+document.name+".json"), output.Bytes(), 0o644); err != nil {
 				return err
 			}

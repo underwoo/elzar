@@ -24,7 +24,8 @@ multi-cluster capture named `sshare-all.out` in one private directory:
 go run ./tools/scrubfixtures -input-dir /private/samples -output-dir testdata/accounts
 ```
 
-Files are processed in sorted order with one shared identity map. The tool
+Files are processed in sorted order with one shared identity map. Output filenames
+use sequential `site-01`, `site-02`, etc. labels instead of input site names. The tool
 splits command-labelled documents and preserves anonymized `CLUSTER:` headers.
 It retains the first few share rows, user rows, and their ancestor accounts,
 while omitting large share TRES arrays and QOS descriptions. Association and

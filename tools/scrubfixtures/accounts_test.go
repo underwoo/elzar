@@ -79,14 +79,14 @@ func TestScrubMultiClusterAndDirectory(t *testing.T) {
 	if err := scrubDirectory(in, out); err != nil {
 		t.Fatal(err)
 	}
-	first, err := os.ReadFile(filepath.Join(out, "site_associations.json"))
+	first, err := os.ReadFile(filepath.Join(out, "site-01_associations.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	if err := scrubDirectory(in, out); err != nil {
 		t.Fatal(err)
 	}
-	second, err := os.ReadFile(filepath.Join(out, "site_associations.json"))
+	second, err := os.ReadFile(filepath.Join(out, "site-01_associations.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
