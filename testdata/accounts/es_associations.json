@@ -1,0 +1,1686 @@
+{
+  "associations": [
+    {
+      "account": "account-07",
+      "accounting": [],
+      "cluster": "cluster-02",
+      "comment": "",
+      "default": {
+        "qos": "qos-01"
+      },
+      "flags": [],
+      "id": 30010,
+      "is_default": true,
+      "lineage": "/account-07/account-10/",
+      "max": {
+        "jobs": {
+          "accruing": {
+            "infinite": true,
+            "number": 0,
+            "set": false
+          },
+          "active": {
+            "infinite": true,
+            "number": 0,
+            "set": false
+          },
+          "per": {
+            "accruing": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            },
+            "count": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            },
+            "submitted": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            },
+            "wall_clock": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            }
+          },
+          "total": {
+            "infinite": true,
+            "number": 0,
+            "set": false
+          }
+        },
+        "per": {
+          "account": {
+            "wall_clock": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            }
+          }
+        },
+        "tres": {
+          "group": {
+            "active": [],
+            "minutes": []
+          },
+          "minutes": {
+            "per": {
+              "job": []
+            },
+            "total": []
+          },
+          "per": {
+            "job": [],
+            "node": []
+          },
+          "total": []
+        }
+      },
+      "min": {
+        "priority_threshold": {
+          "infinite": true,
+          "number": 0,
+          "set": false
+        }
+      },
+      "parent_account": "",
+      "partition": "",
+      "priority": {
+        "infinite": true,
+        "number": 0,
+        "set": false
+      },
+      "qos": [
+        "qos-01",
+        "qos-02",
+        "qos-03",
+        "qos-04",
+        "qos-05"
+      ],
+      "shares_raw": 2147483647,
+      "user": "user-01"
+    },
+    {
+      "account": "account-08",
+      "accounting": [],
+      "cluster": "cluster-02",
+      "comment": "",
+      "default": {
+        "qos": "qos-01"
+      },
+      "flags": [],
+      "id": 30012,
+      "is_default": false,
+      "lineage": "/account-08/account-10/",
+      "max": {
+        "jobs": {
+          "accruing": {
+            "infinite": true,
+            "number": 0,
+            "set": false
+          },
+          "active": {
+            "infinite": true,
+            "number": 0,
+            "set": false
+          },
+          "per": {
+            "accruing": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            },
+            "count": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            },
+            "submitted": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            },
+            "wall_clock": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            }
+          },
+          "total": {
+            "infinite": true,
+            "number": 0,
+            "set": false
+          }
+        },
+        "per": {
+          "account": {
+            "wall_clock": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            }
+          }
+        },
+        "tres": {
+          "group": {
+            "active": [],
+            "minutes": []
+          },
+          "minutes": {
+            "per": {
+              "job": []
+            },
+            "total": []
+          },
+          "per": {
+            "job": [],
+            "node": []
+          },
+          "total": []
+        }
+      },
+      "min": {
+        "priority_threshold": {
+          "infinite": true,
+          "number": 0,
+          "set": false
+        }
+      },
+      "parent_account": "",
+      "partition": "",
+      "priority": {
+        "infinite": true,
+        "number": 0,
+        "set": false
+      },
+      "qos": [
+        "qos-01",
+        "qos-02",
+        "qos-03",
+        "qos-04",
+        "qos-05"
+      ],
+      "shares_raw": 2147483647,
+      "user": "user-01"
+    },
+    {
+      "account": "account-07",
+      "accounting": [],
+      "cluster": "cluster-03",
+      "comment": "",
+      "default": {
+        "qos": "qos-01"
+      },
+      "flags": [],
+      "id": 30015,
+      "is_default": true,
+      "lineage": "/account-07/account-10/",
+      "max": {
+        "jobs": {
+          "accruing": {
+            "infinite": true,
+            "number": 0,
+            "set": false
+          },
+          "active": {
+            "infinite": true,
+            "number": 0,
+            "set": false
+          },
+          "per": {
+            "accruing": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            },
+            "count": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            },
+            "submitted": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            },
+            "wall_clock": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            }
+          },
+          "total": {
+            "infinite": true,
+            "number": 0,
+            "set": false
+          }
+        },
+        "per": {
+          "account": {
+            "wall_clock": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            }
+          }
+        },
+        "tres": {
+          "group": {
+            "active": [],
+            "minutes": []
+          },
+          "minutes": {
+            "per": {
+              "job": []
+            },
+            "total": []
+          },
+          "per": {
+            "job": [],
+            "node": []
+          },
+          "total": []
+        }
+      },
+      "min": {
+        "priority_threshold": {
+          "infinite": true,
+          "number": 0,
+          "set": false
+        }
+      },
+      "parent_account": "",
+      "partition": "",
+      "priority": {
+        "infinite": true,
+        "number": 0,
+        "set": false
+      },
+      "qos": [
+        "qos-03",
+        "qos-05",
+        "qos-01",
+        "qos-04",
+        "qos-02"
+      ],
+      "shares_raw": 2147483647,
+      "user": "user-01"
+    },
+    {
+      "account": "account-08",
+      "accounting": [],
+      "cluster": "cluster-03",
+      "comment": "",
+      "default": {
+        "qos": "qos-01"
+      },
+      "flags": [],
+      "id": 30016,
+      "is_default": false,
+      "lineage": "/account-08/account-10/",
+      "max": {
+        "jobs": {
+          "accruing": {
+            "infinite": true,
+            "number": 0,
+            "set": false
+          },
+          "active": {
+            "infinite": true,
+            "number": 0,
+            "set": false
+          },
+          "per": {
+            "accruing": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            },
+            "count": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            },
+            "submitted": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            },
+            "wall_clock": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            }
+          },
+          "total": {
+            "infinite": true,
+            "number": 0,
+            "set": false
+          }
+        },
+        "per": {
+          "account": {
+            "wall_clock": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            }
+          }
+        },
+        "tres": {
+          "group": {
+            "active": [],
+            "minutes": []
+          },
+          "minutes": {
+            "per": {
+              "job": []
+            },
+            "total": []
+          },
+          "per": {
+            "job": [],
+            "node": []
+          },
+          "total": []
+        }
+      },
+      "min": {
+        "priority_threshold": {
+          "infinite": true,
+          "number": 0,
+          "set": false
+        }
+      },
+      "parent_account": "",
+      "partition": "",
+      "priority": {
+        "infinite": true,
+        "number": 0,
+        "set": false
+      },
+      "qos": [
+        "qos-03",
+        "qos-05",
+        "qos-01",
+        "qos-04",
+        "qos-02"
+      ],
+      "shares_raw": 2147483647,
+      "user": "user-01"
+    },
+    {
+      "account": "account-07",
+      "accounting": [],
+      "cluster": "cluster-04",
+      "comment": "",
+      "default": {
+        "qos": "qos-01"
+      },
+      "flags": [],
+      "id": 30017,
+      "is_default": true,
+      "lineage": "/account-07/account-10/",
+      "max": {
+        "jobs": {
+          "accruing": {
+            "infinite": true,
+            "number": 0,
+            "set": false
+          },
+          "active": {
+            "infinite": true,
+            "number": 0,
+            "set": false
+          },
+          "per": {
+            "accruing": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            },
+            "count": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            },
+            "submitted": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            },
+            "wall_clock": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            }
+          },
+          "total": {
+            "infinite": true,
+            "number": 0,
+            "set": false
+          }
+        },
+        "per": {
+          "account": {
+            "wall_clock": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            }
+          }
+        },
+        "tres": {
+          "group": {
+            "active": [],
+            "minutes": []
+          },
+          "minutes": {
+            "per": {
+              "job": []
+            },
+            "total": []
+          },
+          "per": {
+            "job": [],
+            "node": []
+          },
+          "total": []
+        }
+      },
+      "min": {
+        "priority_threshold": {
+          "infinite": true,
+          "number": 0,
+          "set": false
+        }
+      },
+      "parent_account": "",
+      "partition": "",
+      "priority": {
+        "infinite": true,
+        "number": 0,
+        "set": false
+      },
+      "qos": [
+        "qos-03",
+        "qos-05",
+        "qos-01",
+        "qos-04",
+        "qos-02"
+      ],
+      "shares_raw": 2147483647,
+      "user": "user-01"
+    },
+    {
+      "account": "account-08",
+      "accounting": [],
+      "cluster": "cluster-04",
+      "comment": "",
+      "default": {
+        "qos": "qos-01"
+      },
+      "flags": [],
+      "id": 30018,
+      "is_default": false,
+      "lineage": "/account-08/account-10/",
+      "max": {
+        "jobs": {
+          "accruing": {
+            "infinite": true,
+            "number": 0,
+            "set": false
+          },
+          "active": {
+            "infinite": true,
+            "number": 0,
+            "set": false
+          },
+          "per": {
+            "accruing": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            },
+            "count": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            },
+            "submitted": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            },
+            "wall_clock": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            }
+          },
+          "total": {
+            "infinite": true,
+            "number": 0,
+            "set": false
+          }
+        },
+        "per": {
+          "account": {
+            "wall_clock": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            }
+          }
+        },
+        "tres": {
+          "group": {
+            "active": [],
+            "minutes": []
+          },
+          "minutes": {
+            "per": {
+              "job": []
+            },
+            "total": []
+          },
+          "per": {
+            "job": [],
+            "node": []
+          },
+          "total": []
+        }
+      },
+      "min": {
+        "priority_threshold": {
+          "infinite": true,
+          "number": 0,
+          "set": false
+        }
+      },
+      "parent_account": "",
+      "partition": "",
+      "priority": {
+        "infinite": true,
+        "number": 0,
+        "set": false
+      },
+      "qos": [
+        "qos-03",
+        "qos-05",
+        "qos-01",
+        "qos-04",
+        "qos-02"
+      ],
+      "shares_raw": 2147483647,
+      "user": "user-01"
+    },
+    {
+      "account": "account-05",
+      "accounting": [],
+      "cluster": "cluster-05",
+      "comment": "",
+      "default": {
+        "qos": "qos-01"
+      },
+      "flags": [],
+      "id": 30019,
+      "is_default": false,
+      "lineage": "/account-05/account-10/",
+      "max": {
+        "jobs": {
+          "accruing": {
+            "infinite": true,
+            "number": 0,
+            "set": false
+          },
+          "active": {
+            "infinite": true,
+            "number": 0,
+            "set": false
+          },
+          "per": {
+            "accruing": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            },
+            "count": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            },
+            "submitted": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            },
+            "wall_clock": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            }
+          },
+          "total": {
+            "infinite": true,
+            "number": 0,
+            "set": false
+          }
+        },
+        "per": {
+          "account": {
+            "wall_clock": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            }
+          }
+        },
+        "tres": {
+          "group": {
+            "active": [],
+            "minutes": []
+          },
+          "minutes": {
+            "per": {
+              "job": []
+            },
+            "total": []
+          },
+          "per": {
+            "job": [],
+            "node": []
+          },
+          "total": []
+        }
+      },
+      "min": {
+        "priority_threshold": {
+          "infinite": true,
+          "number": 0,
+          "set": false
+        }
+      },
+      "parent_account": "",
+      "partition": "",
+      "priority": {
+        "infinite": true,
+        "number": 0,
+        "set": false
+      },
+      "qos": [
+        "qos-03",
+        "qos-05",
+        "qos-01",
+        "qos-04",
+        "qos-02"
+      ],
+      "shares_raw": 2147483647,
+      "user": "user-01"
+    },
+    {
+      "account": "account-06",
+      "accounting": [],
+      "cluster": "cluster-05",
+      "comment": "",
+      "default": {
+        "qos": "qos-01"
+      },
+      "flags": [],
+      "id": 30020,
+      "is_default": false,
+      "lineage": "/account-06/account-10/",
+      "max": {
+        "jobs": {
+          "accruing": {
+            "infinite": true,
+            "number": 0,
+            "set": false
+          },
+          "active": {
+            "infinite": false,
+            "number": 0,
+            "set": true
+          },
+          "per": {
+            "accruing": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            },
+            "count": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            },
+            "submitted": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            },
+            "wall_clock": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            }
+          },
+          "total": {
+            "infinite": false,
+            "number": 0,
+            "set": true
+          }
+        },
+        "per": {
+          "account": {
+            "wall_clock": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            }
+          }
+        },
+        "tres": {
+          "group": {
+            "active": [],
+            "minutes": []
+          },
+          "minutes": {
+            "per": {
+              "job": []
+            },
+            "total": []
+          },
+          "per": {
+            "job": [],
+            "node": []
+          },
+          "total": []
+        }
+      },
+      "min": {
+        "priority_threshold": {
+          "infinite": true,
+          "number": 0,
+          "set": false
+        }
+      },
+      "parent_account": "",
+      "partition": "",
+      "priority": {
+        "infinite": true,
+        "number": 0,
+        "set": false
+      },
+      "qos": [
+        "qos-03",
+        "qos-05",
+        "qos-01",
+        "qos-04",
+        "qos-02"
+      ],
+      "shares_raw": 2147483647,
+      "user": "user-01"
+    },
+    {
+      "account": "account-08",
+      "accounting": [],
+      "cluster": "cluster-05",
+      "comment": "",
+      "default": {
+        "qos": "qos-01"
+      },
+      "flags": [],
+      "id": 30021,
+      "is_default": true,
+      "lineage": "/account-08/account-10/",
+      "max": {
+        "jobs": {
+          "accruing": {
+            "infinite": true,
+            "number": 0,
+            "set": false
+          },
+          "active": {
+            "infinite": true,
+            "number": 0,
+            "set": false
+          },
+          "per": {
+            "accruing": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            },
+            "count": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            },
+            "submitted": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            },
+            "wall_clock": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            }
+          },
+          "total": {
+            "infinite": true,
+            "number": 0,
+            "set": false
+          }
+        },
+        "per": {
+          "account": {
+            "wall_clock": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            }
+          }
+        },
+        "tres": {
+          "group": {
+            "active": [],
+            "minutes": []
+          },
+          "minutes": {
+            "per": {
+              "job": []
+            },
+            "total": []
+          },
+          "per": {
+            "job": [],
+            "node": []
+          },
+          "total": []
+        }
+      },
+      "min": {
+        "priority_threshold": {
+          "infinite": true,
+          "number": 0,
+          "set": false
+        }
+      },
+      "parent_account": "",
+      "partition": "",
+      "priority": {
+        "infinite": true,
+        "number": 0,
+        "set": false
+      },
+      "qos": [
+        "qos-03",
+        "qos-05",
+        "qos-01",
+        "qos-04",
+        "qos-02"
+      ],
+      "shares_raw": 2147483647,
+      "user": "user-01"
+    },
+    {
+      "account": "account-07",
+      "accounting": [],
+      "cluster": "cluster-06",
+      "comment": "",
+      "default": {
+        "qos": "qos-01"
+      },
+      "flags": [],
+      "id": 30022,
+      "is_default": true,
+      "lineage": "/account-07/account-10/",
+      "max": {
+        "jobs": {
+          "accruing": {
+            "infinite": true,
+            "number": 0,
+            "set": false
+          },
+          "active": {
+            "infinite": true,
+            "number": 0,
+            "set": false
+          },
+          "per": {
+            "accruing": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            },
+            "count": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            },
+            "submitted": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            },
+            "wall_clock": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            }
+          },
+          "total": {
+            "infinite": true,
+            "number": 0,
+            "set": false
+          }
+        },
+        "per": {
+          "account": {
+            "wall_clock": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            }
+          }
+        },
+        "tres": {
+          "group": {
+            "active": [],
+            "minutes": []
+          },
+          "minutes": {
+            "per": {
+              "job": []
+            },
+            "total": []
+          },
+          "per": {
+            "job": [],
+            "node": []
+          },
+          "total": []
+        }
+      },
+      "min": {
+        "priority_threshold": {
+          "infinite": true,
+          "number": 0,
+          "set": false
+        }
+      },
+      "parent_account": "",
+      "partition": "",
+      "priority": {
+        "infinite": true,
+        "number": 0,
+        "set": false
+      },
+      "qos": [
+        "qos-03",
+        "qos-05",
+        "qos-01",
+        "qos-04",
+        "qos-02"
+      ],
+      "shares_raw": 2147483647,
+      "user": "user-01"
+    },
+    {
+      "account": "account-08",
+      "accounting": [],
+      "cluster": "cluster-06",
+      "comment": "",
+      "default": {
+        "qos": "qos-01"
+      },
+      "flags": [],
+      "id": 30023,
+      "is_default": false,
+      "lineage": "/account-08/account-10/",
+      "max": {
+        "jobs": {
+          "accruing": {
+            "infinite": true,
+            "number": 0,
+            "set": false
+          },
+          "active": {
+            "infinite": true,
+            "number": 0,
+            "set": false
+          },
+          "per": {
+            "accruing": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            },
+            "count": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            },
+            "submitted": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            },
+            "wall_clock": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            }
+          },
+          "total": {
+            "infinite": true,
+            "number": 0,
+            "set": false
+          }
+        },
+        "per": {
+          "account": {
+            "wall_clock": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            }
+          }
+        },
+        "tres": {
+          "group": {
+            "active": [],
+            "minutes": []
+          },
+          "minutes": {
+            "per": {
+              "job": []
+            },
+            "total": []
+          },
+          "per": {
+            "job": [],
+            "node": []
+          },
+          "total": []
+        }
+      },
+      "min": {
+        "priority_threshold": {
+          "infinite": true,
+          "number": 0,
+          "set": false
+        }
+      },
+      "parent_account": "",
+      "partition": "",
+      "priority": {
+        "infinite": true,
+        "number": 0,
+        "set": false
+      },
+      "qos": [
+        "qos-03",
+        "qos-05",
+        "qos-01",
+        "qos-04",
+        "qos-02"
+      ],
+      "shares_raw": 2147483647,
+      "user": "user-01"
+    },
+    {
+      "account": "account-05",
+      "accounting": [],
+      "cluster": "cluster-01",
+      "comment": "",
+      "default": {
+        "qos": "qos-01"
+      },
+      "flags": [],
+      "id": 30006,
+      "is_default": false,
+      "lineage": "/account-05/account-10/",
+      "max": {
+        "jobs": {
+          "accruing": {
+            "infinite": true,
+            "number": 0,
+            "set": false
+          },
+          "active": {
+            "infinite": true,
+            "number": 0,
+            "set": false
+          },
+          "per": {
+            "accruing": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            },
+            "count": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            },
+            "submitted": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            },
+            "wall_clock": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            }
+          },
+          "total": {
+            "infinite": true,
+            "number": 0,
+            "set": false
+          }
+        },
+        "per": {
+          "account": {
+            "wall_clock": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            }
+          }
+        },
+        "tres": {
+          "group": {
+            "active": [],
+            "minutes": []
+          },
+          "minutes": {
+            "per": {
+              "job": []
+            },
+            "total": []
+          },
+          "per": {
+            "job": [],
+            "node": []
+          },
+          "total": []
+        }
+      },
+      "min": {
+        "priority_threshold": {
+          "infinite": true,
+          "number": 0,
+          "set": false
+        }
+      },
+      "parent_account": "",
+      "partition": "",
+      "priority": {
+        "infinite": true,
+        "number": 0,
+        "set": false
+      },
+      "qos": [
+        "qos-05",
+        "qos-01",
+        "qos-02",
+        "qos-06",
+        "qos-07",
+        "qos-08"
+      ],
+      "shares_raw": 2147483647,
+      "user": "user-01"
+    },
+    {
+      "account": "account-06",
+      "accounting": [],
+      "cluster": "cluster-01",
+      "comment": "",
+      "default": {
+        "qos": "qos-01"
+      },
+      "flags": [],
+      "id": 30008,
+      "is_default": false,
+      "lineage": "/account-06/account-10/",
+      "max": {
+        "jobs": {
+          "accruing": {
+            "infinite": true,
+            "number": 0,
+            "set": false
+          },
+          "active": {
+            "infinite": true,
+            "number": 0,
+            "set": false
+          },
+          "per": {
+            "accruing": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            },
+            "count": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            },
+            "submitted": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            },
+            "wall_clock": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            }
+          },
+          "total": {
+            "infinite": true,
+            "number": 0,
+            "set": false
+          }
+        },
+        "per": {
+          "account": {
+            "wall_clock": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            }
+          }
+        },
+        "tres": {
+          "group": {
+            "active": [],
+            "minutes": []
+          },
+          "minutes": {
+            "per": {
+              "job": []
+            },
+            "total": []
+          },
+          "per": {
+            "job": [],
+            "node": []
+          },
+          "total": []
+        }
+      },
+      "min": {
+        "priority_threshold": {
+          "infinite": true,
+          "number": 0,
+          "set": false
+        }
+      },
+      "parent_account": "",
+      "partition": "",
+      "priority": {
+        "infinite": true,
+        "number": 0,
+        "set": false
+      },
+      "qos": [
+        "qos-05",
+        "qos-01",
+        "qos-02",
+        "qos-06",
+        "qos-07",
+        "qos-08"
+      ],
+      "shares_raw": 2147483647,
+      "user": "user-01"
+    },
+    {
+      "account": "account-07",
+      "accounting": [],
+      "cluster": "cluster-01",
+      "comment": "",
+      "default": {
+        "qos": "qos-01"
+      },
+      "flags": [],
+      "id": 30010,
+      "is_default": true,
+      "lineage": "/account-07/account-10/",
+      "max": {
+        "jobs": {
+          "accruing": {
+            "infinite": true,
+            "number": 0,
+            "set": false
+          },
+          "active": {
+            "infinite": true,
+            "number": 0,
+            "set": false
+          },
+          "per": {
+            "accruing": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            },
+            "count": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            },
+            "submitted": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            },
+            "wall_clock": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            }
+          },
+          "total": {
+            "infinite": true,
+            "number": 0,
+            "set": false
+          }
+        },
+        "per": {
+          "account": {
+            "wall_clock": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            }
+          }
+        },
+        "tres": {
+          "group": {
+            "active": [],
+            "minutes": []
+          },
+          "minutes": {
+            "per": {
+              "job": []
+            },
+            "total": []
+          },
+          "per": {
+            "job": [],
+            "node": []
+          },
+          "total": []
+        }
+      },
+      "min": {
+        "priority_threshold": {
+          "infinite": true,
+          "number": 0,
+          "set": false
+        }
+      },
+      "parent_account": "",
+      "partition": "",
+      "priority": {
+        "infinite": true,
+        "number": 0,
+        "set": false
+      },
+      "qos": [
+        "qos-05",
+        "qos-01",
+        "qos-02",
+        "qos-06",
+        "qos-07",
+        "qos-08"
+      ],
+      "shares_raw": 2147483647,
+      "user": "user-01"
+    },
+    {
+      "account": "account-08",
+      "accounting": [],
+      "cluster": "cluster-01",
+      "comment": "",
+      "default": {
+        "qos": "qos-01"
+      },
+      "flags": [],
+      "id": 30012,
+      "is_default": false,
+      "lineage": "/account-08/account-10/",
+      "max": {
+        "jobs": {
+          "accruing": {
+            "infinite": true,
+            "number": 0,
+            "set": false
+          },
+          "active": {
+            "infinite": true,
+            "number": 0,
+            "set": false
+          },
+          "per": {
+            "accruing": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            },
+            "count": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            },
+            "submitted": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            },
+            "wall_clock": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            }
+          },
+          "total": {
+            "infinite": true,
+            "number": 0,
+            "set": false
+          }
+        },
+        "per": {
+          "account": {
+            "wall_clock": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            }
+          }
+        },
+        "tres": {
+          "group": {
+            "active": [],
+            "minutes": []
+          },
+          "minutes": {
+            "per": {
+              "job": []
+            },
+            "total": []
+          },
+          "per": {
+            "job": [],
+            "node": []
+          },
+          "total": []
+        }
+      },
+      "min": {
+        "priority_threshold": {
+          "infinite": true,
+          "number": 0,
+          "set": false
+        }
+      },
+      "parent_account": "",
+      "partition": "",
+      "priority": {
+        "infinite": true,
+        "number": 0,
+        "set": false
+      },
+      "qos": [
+        "qos-05",
+        "qos-01",
+        "qos-02",
+        "qos-06",
+        "qos-07",
+        "qos-08"
+      ],
+      "shares_raw": 2147483647,
+      "user": "user-01"
+    },
+    {
+      "account": "account-09",
+      "accounting": [],
+      "cluster": "cluster-01",
+      "comment": "",
+      "default": {
+        "qos": "qos-02"
+      },
+      "flags": [],
+      "id": 30014,
+      "is_default": false,
+      "lineage": "/account-09/account-10/",
+      "max": {
+        "jobs": {
+          "accruing": {
+            "infinite": true,
+            "number": 0,
+            "set": false
+          },
+          "active": {
+            "infinite": true,
+            "number": 0,
+            "set": false
+          },
+          "per": {
+            "accruing": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            },
+            "count": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            },
+            "submitted": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            },
+            "wall_clock": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            }
+          },
+          "total": {
+            "infinite": true,
+            "number": 0,
+            "set": false
+          }
+        },
+        "per": {
+          "account": {
+            "wall_clock": {
+              "infinite": true,
+              "number": 0,
+              "set": false
+            }
+          }
+        },
+        "tres": {
+          "group": {
+            "active": [],
+            "minutes": []
+          },
+          "minutes": {
+            "per": {
+              "job": []
+            },
+            "total": []
+          },
+          "per": {
+            "job": [],
+            "node": []
+          },
+          "total": []
+        }
+      },
+      "min": {
+        "priority_threshold": {
+          "infinite": true,
+          "number": 0,
+          "set": false
+        }
+      },
+      "parent_account": "",
+      "partition": "",
+      "priority": {
+        "infinite": true,
+        "number": 0,
+        "set": false
+      },
+      "qos": [
+        "qos-02",
+        "qos-06",
+        "qos-07",
+        "qos-08"
+      ],
+      "shares_raw": 2147483647,
+      "user": "user-01"
+    }
+  ],
+  "errors": [],
+  "meta": {
+    "client": {
+      "group": "group-01",
+      "source": "/tmp/slurmtui-fixture/path-01",
+      "user": "user-01"
+    },
+    "command": [
+      "./job.sh",
+      "./job.sh",
+      "./job.sh",
+      "./job.sh",
+      "./job.sh"
+    ],
+    "plugin": {
+      "accounting_storage": "accounting_storage/slurmdbd",
+      "data_parser": "data_parser/v0.0.45",
+      "name": "",
+      "type": ""
+    },
+    "slurm": {
+      "cluster": "cluster-01",
+      "release": "26.05.4",
+      "version": {
+        "major": "26",
+        "micro": "4",
+        "minor": "05"
+      }
+    }
+  },
+  "warnings": []
+}

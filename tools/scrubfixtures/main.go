@@ -128,7 +128,11 @@ func scrubDirectory(inputDir, outputDir string) error {
 			}
 			continue
 		}
-		for _, document := range labelledDocuments(data) {
+		documents, err := labelledDocuments(data)
+		if err != nil {
+			return fmt.Errorf("%s: %w", entry.Name(), err)
+		}
+		for _, document := range documents {
 			if len(document.data) == 0 {
 				continue
 			}
@@ -136,7 +140,7 @@ func scrubDirectory(inputDir, outputDir string) error {
 			if err != nil {
 				return fmt.Errorf("%s (%s): %w", entry.Name(), document.name, err)
 			}
-			value = cleaner.cleanRoot(value, 0)
+			value = cleaner.cleanAccountRoot(value)
 			var output bytes.Buffer
 			encoder := json.NewEncoder(&output)
 			encoder.SetIndent("", "  ")
@@ -159,59 +163,44 @@ type labelledDocument struct {
 
 // labelledDocuments extracts JSON following the captured command labels and
 // deliberately discards the labels, which may contain the real username.
-func labelledDocuments(data []byte) []labelledDocument {
-	lines := bytes.Split(data, []byte("\n"))
+func labelledDocuments(data []byte) ([]labelledDocument, error) {
 	var docs []labelledDocument
-	for i, line := range lines {
-		command := strings.Fields(strings.TrimSpace(string(line)))
-		if len(command) == 0 {
-			continue
+	for len(bytes.TrimSpace(data)) > 0 {
+		end := bytes.IndexByte(data, '\n')
+		if end < 0 {
+			break
 		}
+		line := strings.TrimSpace(string(data[:end]))
+		data = data[end+1:]
 		name := ""
-		switch command[0] {
-		case "sshare":
+		switch {
+		case strings.HasPrefix(line, "sshare "):
 			name = "shares"
-		case "sacctmgr":
-			joined := strings.Join(command, " ")
-			switch {
-			case strings.Contains(joined, "show assoc"):
-				name = "associations"
-			case strings.Contains(joined, "show qos"):
-				name = "qos"
-			}
-		case "scontrol":
-			if strings.Contains(strings.Join(command, " "), "show partition") {
-				name = "partitions"
-			}
+		case strings.HasPrefix(line, "sacctmgr ") && strings.Contains(line, "show assoc"):
+			name = "associations"
+		case strings.HasPrefix(line, "sacctmgr ") && strings.Contains(line, "show qos"):
+			name = "qos"
+		case strings.HasPrefix(line, "scontrol ") && strings.Contains(line, "show partition"):
+			name = "partitions"
 		}
 		if name == "" {
 			continue
 		}
-		for j := i + 1; j < len(lines); j++ {
-			if bytes.HasPrefix(bytes.TrimSpace(lines[j]), []byte("{")) {
-				start := j
-				for start > i+1 && len(bytes.TrimSpace(lines[start-1])) == 0 {
-					start--
-				}
-				var raw bytes.Buffer
-				for k := start; k < len(lines); k++ {
-					raw.Write(lines[k])
-					raw.WriteByte('\n')
-					if bytes.Equal(bytes.TrimSpace(lines[k]), []byte("}")) {
-						// The enclosing response may contain nested objects. Decode
-						// to find the exact end instead of relying on this line.
-						_, consumed, err := decodeJSONPrefix(raw.Bytes())
-						if err == nil {
-							docs = append(docs, labelledDocument{name: name, data: raw.Bytes()[:consumed]})
-						}
-						break
-					}
-				}
-				break
-			}
+		data = bytes.TrimSpace(data)
+		_, n, err := decodeJSONPrefix(data)
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", name, err)
 		}
+		// Partition fixtures belong to the later partition-access change.
+		if name != "partitions" {
+			docs = append(docs, labelledDocument{name: name, data: data[:n]})
+		}
+		data = data[n:]
 	}
-	return docs
+	if len(docs) == 0 {
+		return nil, fmt.Errorf("no labelled JSON documents")
+	}
+	return docs, nil
 }
 
 func decodeSingleJSON(data []byte) (any, error) {
@@ -239,6 +228,7 @@ func decodeJSONPrefix(data []byte) (any, int, error) {
 // each following JSON document with the same mapping used for other samples.
 func scrubClusterDocuments(data []byte, cleaner *scrubber) ([]byte, error) {
 	scanner := bufio.NewScanner(bytes.NewReader(data))
+	scanner.Buffer(make([]byte, 4096), 16*1024*1024)
 	var output bytes.Buffer
 	var currentCluster string
 	var jsonLines bytes.Buffer
@@ -251,7 +241,7 @@ func scrubClusterDocuments(data []byte, cleaner *scrubber) ([]byte, error) {
 			return err
 		}
 		cleanedCluster := cleaner.fake("cluster", currentCluster, "cluster")
-		value = cleaner.cleanRoot(value, 0)
+		value = cleaner.cleanAccountRoot(value)
 		fmt.Fprintf(&output, "CLUSTER: %s\n", cleanedCluster)
 		encoder := json.NewEncoder(&output)
 		encoder.SetIndent("", "  ")
@@ -480,6 +470,14 @@ func (s *scrubber) cleanMap(value map[string]any, parent ...string) map[string]a
 	sort.Strings(keys)
 	for _, key := range keys {
 		item := value[key]
+		if parentKey == "shares" && key == "name" {
+			types, _ := value["type"].([]any)
+			if len(types) > 0 && types[0] == "USER" {
+				text, _ := item.(string)
+				cleaned[key] = s.fake("user", text, "user")
+				continue
+			}
+		}
 		cleaned[key] = s.cleanAt(key, parentKey, item)
 	}
 	return cleaned
@@ -507,12 +505,12 @@ func scrubStrings(value any, replacement string) any {
 }
 
 func (s *scrubber) replacement(key, parent string, value any) (any, bool) {
-	if key == "user_id" || key == "group_id" || key == "association_id" || (key == "id" && parent == "association") {
+	if key == "user_id" || key == "group_id" || key == "association_id" || (key == "id" && (parent == "association" || parent == "associations" || parent == "shares")) {
 		base := 10000
 		switch key {
 		case "group_id":
 			base = 20000
-		case "association_id":
+		case "association_id", "id":
 			base = 30000
 		}
 		return s.fakeNumber(key, fmt.Sprint(value), base), true
@@ -539,7 +537,7 @@ func (s *scrubber) replacement(key, parent string, value any) (any, bool) {
 	case "name":
 		switch parent {
 		case "jobs", "reservation":
-			return s.fake("job", text, "job"), true
+			return s.fake("name", text, "job"), true
 		case "shares", "associations":
 			return s.fake("account", text, "account"), true
 		case "qos":
@@ -612,4 +610,51 @@ func (s *scrubber) fakePath(key, original string) string {
 		return ""
 	}
 	return "/tmp/slurmtui-fixture/" + s.fake("path", original, "path")
+}
+
+// Account fixtures retain the fields exercised by this milestone, avoiding
+// unrelated free-form fields and large TRES usage arrays in raw site samples.
+func (s *scrubber) cleanAccountRoot(value any) any {
+	root, ok := value.(map[string]any)
+	if !ok {
+		return s.cleanRoot(value, 0)
+	}
+	if envelope, ok := root["shares"].(map[string]any); ok {
+		rows, _ := envelope["shares"].([]any)
+		keep := make(map[string]bool)
+		for i, raw := range rows {
+			row, _ := raw.(map[string]any)
+			types, _ := row["type"].([]any)
+			if i < 4 || (len(types) > 0 && types[0] == "USER") {
+				keep[fmt.Sprint(row["name"])] = true
+				keep[fmt.Sprint(row["parent"])] = true
+			}
+		}
+		for changed := true; changed; {
+			changed = false
+			for _, raw := range rows {
+				row, _ := raw.(map[string]any)
+				if keep[fmt.Sprint(row["name"])] && !keep[fmt.Sprint(row["parent"])] {
+					keep[fmt.Sprint(row["parent"])] = true
+					changed = true
+				}
+			}
+		}
+		trimmed := make([]any, 0)
+		for _, raw := range rows {
+			row, _ := raw.(map[string]any)
+			if keep[fmt.Sprint(row["name"])] {
+				delete(row, "tres")
+				trimmed = append(trimmed, row)
+			}
+		}
+		envelope["shares"] = trimmed
+	}
+	if rows, ok := root["qos"].([]any); ok {
+		for _, raw := range rows {
+			row, _ := raw.(map[string]any)
+			delete(row, "description")
+		}
+	}
+	return s.cleanRoot(root, 0)
 }

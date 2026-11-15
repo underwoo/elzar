@@ -1,0 +1,810 @@
+{
+  "errors": [],
+  "meta": {
+    "client": {
+      "group": "group-03",
+      "source": "/tmp/slurmtui-fixture/path-03",
+      "user": "user-01"
+    },
+    "command": [
+      "./job.sh",
+      "./job.sh",
+      "./job.sh"
+    ],
+    "plugin": {
+      "accounting_storage": "accounting_storage/slurmdbd",
+      "data_parser": "data_parser/v0.0.44",
+      "name": "",
+      "type": ""
+    },
+    "slurm": {
+      "cluster": "cluster-08",
+      "release": "25.11.8",
+      "version": {
+        "major": "25",
+        "micro": "8",
+        "minor": "11"
+      }
+    }
+  },
+  "shares": {
+    "shares": [
+      {
+        "cluster": "cluster-08",
+        "effective_usage": {
+          "infinite": false,
+          "number": 1.0,
+          "set": true
+        },
+        "fairshare": {
+          "factor": {
+            "infinite": false,
+            "number": 0.0,
+            "set": true
+          },
+          "level": {
+            "infinite": false,
+            "number": 0.0,
+            "set": true
+          }
+        },
+        "id": 30001,
+        "name": "account-01",
+        "parent": "",
+        "partition": "",
+        "shares": {
+          "infinite": false,
+          "number": 0,
+          "set": false
+        },
+        "shares_normalized": {
+          "infinite": false,
+          "number": 1.0,
+          "set": true
+        },
+        "type": [
+          "ASSOCIATION"
+        ],
+        "usage": 2419469872545,
+        "usage_normalized": {
+          "infinite": false,
+          "number": 0.0,
+          "set": false
+        }
+      },
+      {
+        "cluster": "cluster-08",
+        "effective_usage": {
+          "infinite": false,
+          "number": 0.00030059680188832075,
+          "set": true
+        },
+        "fairshare": {
+          "factor": {
+            "infinite": false,
+            "number": 0.9459109030241617,
+            "set": true
+          },
+          "level": {
+            "infinite": false,
+            "number": 0.0,
+            "set": true
+          }
+        },
+        "id": 30047,
+        "name": "account-18",
+        "parent": "account-01",
+        "partition": "",
+        "shares": {
+          "infinite": false,
+          "number": 328438,
+          "set": true
+        },
+        "shares_normalized": {
+          "infinite": false,
+          "number": 0.0037469780935066792,
+          "set": true
+        },
+        "type": [
+          "ASSOCIATION"
+        ],
+        "usage": 725535081,
+        "usage_normalized": {
+          "infinite": false,
+          "number": 0.00030059680188832075,
+          "set": true
+        }
+      },
+      {
+        "cluster": "cluster-08",
+        "effective_usage": {
+          "infinite": false,
+          "number": 0.0,
+          "set": true
+        },
+        "fairshare": {
+          "factor": {
+            "infinite": false,
+            "number": 1.0,
+            "set": true
+          },
+          "level": {
+            "infinite": false,
+            "number": 0.0,
+            "set": true
+          }
+        },
+        "id": 30048,
+        "name": "account-19",
+        "parent": "account-01",
+        "partition": "",
+        "shares": {
+          "infinite": false,
+          "number": 1,
+          "set": true
+        },
+        "shares_normalized": {
+          "infinite": false,
+          "number": 1.1408479206141431e-08,
+          "set": true
+        },
+        "type": [
+          "ASSOCIATION"
+        ],
+        "usage": 0,
+        "usage_normalized": {
+          "infinite": false,
+          "number": 0.0,
+          "set": true
+        }
+      },
+      {
+        "cluster": "cluster-08",
+        "effective_usage": {
+          "infinite": false,
+          "number": 0.0,
+          "set": true
+        },
+        "fairshare": {
+          "factor": {
+            "infinite": false,
+            "number": 1.0,
+            "set": true
+          },
+          "level": {
+            "infinite": false,
+            "number": 0.0,
+            "set": true
+          }
+        },
+        "id": 30049,
+        "name": "account-20",
+        "parent": "account-01",
+        "partition": "",
+        "shares": {
+          "infinite": false,
+          "number": 2,
+          "set": true
+        },
+        "shares_normalized": {
+          "infinite": false,
+          "number": 2.2816958412282863e-08,
+          "set": true
+        },
+        "type": [
+          "ASSOCIATION"
+        ],
+        "usage": 0,
+        "usage_normalized": {
+          "infinite": false,
+          "number": 0.0,
+          "set": true
+        }
+      },
+      {
+        "cluster": "cluster-08",
+        "effective_usage": {
+          "infinite": false,
+          "number": 0.0,
+          "set": true
+        },
+        "fairshare": {
+          "factor": {
+            "infinite": false,
+            "number": 1.0,
+            "set": true
+          },
+          "level": {
+            "infinite": false,
+            "number": 0.0,
+            "set": true
+          }
+        },
+        "id": 30050,
+        "name": "account-21",
+        "parent": "account-01",
+        "partition": "",
+        "shares": {
+          "infinite": false,
+          "number": 1,
+          "set": true
+        },
+        "shares_normalized": {
+          "infinite": false,
+          "number": 1.1408479206141431e-08,
+          "set": true
+        },
+        "type": [
+          "ASSOCIATION"
+        ],
+        "usage": 0,
+        "usage_normalized": {
+          "infinite": false,
+          "number": 0.0,
+          "set": true
+        }
+      },
+      {
+        "cluster": "cluster-08",
+        "effective_usage": {
+          "infinite": false,
+          "number": 0.0,
+          "set": true
+        },
+        "fairshare": {
+          "factor": {
+            "infinite": false,
+            "number": 1.0,
+            "set": true
+          },
+          "level": {
+            "infinite": false,
+            "number": 0.0,
+            "set": true
+          }
+        },
+        "id": 30051,
+        "name": "user-01",
+        "parent": "account-21",
+        "partition": "",
+        "shares": {
+          "infinite": false,
+          "number": 2147483647,
+          "set": true
+        },
+        "shares_normalized": {
+          "infinite": false,
+          "number": 1.1408479206141431e-08,
+          "set": true
+        },
+        "type": [
+          "USER"
+        ],
+        "usage": 0,
+        "usage_normalized": {
+          "infinite": false,
+          "number": 0.0,
+          "set": true
+        }
+      },
+      {
+        "cluster": "cluster-08",
+        "effective_usage": {
+          "infinite": false,
+          "number": 0.0,
+          "set": true
+        },
+        "fairshare": {
+          "factor": {
+            "infinite": false,
+            "number": 1.0,
+            "set": true
+          },
+          "level": {
+            "infinite": false,
+            "number": 0.0,
+            "set": true
+          }
+        },
+        "id": 30052,
+        "name": "account-22",
+        "parent": "account-01",
+        "partition": "",
+        "shares": {
+          "infinite": false,
+          "number": 1,
+          "set": true
+        },
+        "shares_normalized": {
+          "infinite": false,
+          "number": 1.1408479206141431e-08,
+          "set": true
+        },
+        "type": [
+          "ASSOCIATION"
+        ],
+        "usage": 0,
+        "usage_normalized": {
+          "infinite": false,
+          "number": 0.0,
+          "set": true
+        }
+      },
+      {
+        "cluster": "cluster-08",
+        "effective_usage": {
+          "infinite": false,
+          "number": 0.0,
+          "set": true
+        },
+        "fairshare": {
+          "factor": {
+            "infinite": false,
+            "number": 1.0,
+            "set": true
+          },
+          "level": {
+            "infinite": false,
+            "number": 0.0,
+            "set": true
+          }
+        },
+        "id": 30053,
+        "name": "user-01",
+        "parent": "account-22",
+        "partition": "",
+        "shares": {
+          "infinite": false,
+          "number": 2147483647,
+          "set": true
+        },
+        "shares_normalized": {
+          "infinite": false,
+          "number": 1.1408479206141431e-08,
+          "set": true
+        },
+        "type": [
+          "USER"
+        ],
+        "usage": 0,
+        "usage_normalized": {
+          "infinite": false,
+          "number": 0.0,
+          "set": true
+        }
+      },
+      {
+        "cluster": "cluster-08",
+        "effective_usage": {
+          "infinite": false,
+          "number": 0.0,
+          "set": true
+        },
+        "fairshare": {
+          "factor": {
+            "infinite": false,
+            "number": 1.0,
+            "set": true
+          },
+          "level": {
+            "infinite": false,
+            "number": 0.0,
+            "set": true
+          }
+        },
+        "id": 30054,
+        "name": "account-23",
+        "parent": "account-01",
+        "partition": "",
+        "shares": {
+          "infinite": false,
+          "number": 1,
+          "set": true
+        },
+        "shares_normalized": {
+          "infinite": false,
+          "number": 1.1408479206141431e-08,
+          "set": true
+        },
+        "type": [
+          "ASSOCIATION"
+        ],
+        "usage": 0,
+        "usage_normalized": {
+          "infinite": false,
+          "number": 0.0,
+          "set": true
+        }
+      },
+      {
+        "cluster": "cluster-08",
+        "effective_usage": {
+          "infinite": false,
+          "number": 0.0,
+          "set": true
+        },
+        "fairshare": {
+          "factor": {
+            "infinite": false,
+            "number": 1.0,
+            "set": true
+          },
+          "level": {
+            "infinite": false,
+            "number": 0.0,
+            "set": true
+          }
+        },
+        "id": 30055,
+        "name": "user-01",
+        "parent": "account-23",
+        "partition": "",
+        "shares": {
+          "infinite": false,
+          "number": 2147483647,
+          "set": true
+        },
+        "shares_normalized": {
+          "infinite": false,
+          "number": 1.1408479206141431e-08,
+          "set": true
+        },
+        "type": [
+          "USER"
+        ],
+        "usage": 0,
+        "usage_normalized": {
+          "infinite": false,
+          "number": 0.0,
+          "set": true
+        }
+      },
+      {
+        "cluster": "cluster-08",
+        "effective_usage": {
+          "infinite": false,
+          "number": 1.5827314006687312e-10,
+          "set": true
+        },
+        "fairshare": {
+          "factor": {
+            "infinite": false,
+            "number": 0.99999902502006133,
+            "set": true
+          },
+          "level": {
+            "infinite": false,
+            "number": 0.0,
+            "set": true
+          }
+        },
+        "id": 30056,
+        "name": "account-24",
+        "parent": "account-01",
+        "partition": "",
+        "shares": {
+          "infinite": false,
+          "number": 9863,
+          "set": true
+        },
+        "shares_normalized": {
+          "infinite": false,
+          "number": 0.00011252183041017293,
+          "set": true
+        },
+        "type": [
+          "ASSOCIATION"
+        ],
+        "usage": 382,
+        "usage_normalized": {
+          "infinite": false,
+          "number": 1.5827314006687312e-10,
+          "set": true
+        }
+      },
+      {
+        "cluster": "cluster-08",
+        "effective_usage": {
+          "infinite": false,
+          "number": 1.5827314006687312e-10,
+          "set": true
+        },
+        "fairshare": {
+          "factor": {
+            "infinite": false,
+            "number": 0.99999902502006133,
+            "set": true
+          },
+          "level": {
+            "infinite": false,
+            "number": 0.0,
+            "set": true
+          }
+        },
+        "id": 30057,
+        "name": "user-01",
+        "parent": "account-24",
+        "partition": "",
+        "shares": {
+          "infinite": false,
+          "number": 2147483647,
+          "set": true
+        },
+        "shares_normalized": {
+          "infinite": false,
+          "number": 0.00011252183041017293,
+          "set": true
+        },
+        "type": [
+          "USER"
+        ],
+        "usage": 0,
+        "usage_normalized": {
+          "infinite": false,
+          "number": 0.0,
+          "set": true
+        }
+      },
+      {
+        "cluster": "cluster-08",
+        "effective_usage": {
+          "infinite": false,
+          "number": 0.0,
+          "set": true
+        },
+        "fairshare": {
+          "factor": {
+            "infinite": false,
+            "number": 0.0,
+            "set": true
+          },
+          "level": {
+            "infinite": false,
+            "number": 0.0,
+            "set": true
+          }
+        },
+        "id": 30058,
+        "name": "account-25",
+        "parent": "account-01",
+        "partition": "",
+        "shares": {
+          "infinite": false,
+          "number": 0,
+          "set": true
+        },
+        "shares_normalized": {
+          "infinite": false,
+          "number": 0.0,
+          "set": true
+        },
+        "type": [
+          "ASSOCIATION"
+        ],
+        "usage": 0,
+        "usage_normalized": {
+          "infinite": false,
+          "number": 0.0,
+          "set": true
+        }
+      },
+      {
+        "cluster": "cluster-08",
+        "effective_usage": {
+          "infinite": false,
+          "number": 0.0,
+          "set": true
+        },
+        "fairshare": {
+          "factor": {
+            "infinite": false,
+            "number": 0.0,
+            "set": true
+          },
+          "level": {
+            "infinite": false,
+            "number": 0.0,
+            "set": true
+          }
+        },
+        "id": 30059,
+        "name": "user-01",
+        "parent": "account-25",
+        "partition": "",
+        "shares": {
+          "infinite": false,
+          "number": 2147483647,
+          "set": true
+        },
+        "shares_normalized": {
+          "infinite": false,
+          "number": 0.0,
+          "set": true
+        },
+        "type": [
+          "USER"
+        ],
+        "usage": 0,
+        "usage_normalized": {
+          "infinite": false,
+          "number": 0.0,
+          "set": true
+        }
+      },
+      {
+        "cluster": "cluster-08",
+        "effective_usage": {
+          "infinite": false,
+          "number": 0.0,
+          "set": true
+        },
+        "fairshare": {
+          "factor": {
+            "infinite": false,
+            "number": 1.0,
+            "set": true
+          },
+          "level": {
+            "infinite": false,
+            "number": 0.0,
+            "set": true
+          }
+        },
+        "id": 30060,
+        "name": "account-26",
+        "parent": "account-01",
+        "partition": "",
+        "shares": {
+          "infinite": false,
+          "number": 1,
+          "set": true
+        },
+        "shares_normalized": {
+          "infinite": false,
+          "number": 1.1408479206141431e-08,
+          "set": true
+        },
+        "type": [
+          "ASSOCIATION"
+        ],
+        "usage": 0,
+        "usage_normalized": {
+          "infinite": false,
+          "number": 0.0,
+          "set": true
+        }
+      },
+      {
+        "cluster": "cluster-08",
+        "effective_usage": {
+          "infinite": false,
+          "number": 0.0,
+          "set": true
+        },
+        "fairshare": {
+          "factor": {
+            "infinite": false,
+            "number": 1.0,
+            "set": true
+          },
+          "level": {
+            "infinite": false,
+            "number": 0.0,
+            "set": true
+          }
+        },
+        "id": 30061,
+        "name": "user-01",
+        "parent": "account-26",
+        "partition": "",
+        "shares": {
+          "infinite": false,
+          "number": 2147483647,
+          "set": true
+        },
+        "shares_normalized": {
+          "infinite": false,
+          "number": 1.1408479206141431e-08,
+          "set": true
+        },
+        "type": [
+          "USER"
+        ],
+        "usage": 0,
+        "usage_normalized": {
+          "infinite": false,
+          "number": 0.0,
+          "set": true
+        }
+      },
+      {
+        "cluster": "cluster-08",
+        "effective_usage": {
+          "infinite": false,
+          "number": 0.0,
+          "set": true
+        },
+        "fairshare": {
+          "factor": {
+            "infinite": false,
+            "number": 1.0,
+            "set": true
+          },
+          "level": {
+            "infinite": false,
+            "number": 0.0,
+            "set": true
+          }
+        },
+        "id": 30062,
+        "name": "account-27",
+        "parent": "account-01",
+        "partition": "",
+        "shares": {
+          "infinite": false,
+          "number": 1,
+          "set": true
+        },
+        "shares_normalized": {
+          "infinite": false,
+          "number": 1.1408479206141431e-08,
+          "set": true
+        },
+        "type": [
+          "ASSOCIATION"
+        ],
+        "usage": 0,
+        "usage_normalized": {
+          "infinite": false,
+          "number": 0.0,
+          "set": true
+        }
+      },
+      {
+        "cluster": "cluster-08",
+        "effective_usage": {
+          "infinite": false,
+          "number": 0.0,
+          "set": true
+        },
+        "fairshare": {
+          "factor": {
+            "infinite": false,
+            "number": 1.0,
+            "set": true
+          },
+          "level": {
+            "infinite": false,
+            "number": 0.0,
+            "set": true
+          }
+        },
+        "id": 30063,
+        "name": "user-01",
+        "parent": "account-27",
+        "partition": "",
+        "shares": {
+          "infinite": false,
+          "number": 2147483647,
+          "set": true
+        },
+        "shares_normalized": {
+          "infinite": false,
+          "number": 1.1408479206141431e-08,
+          "set": true
+        },
+        "type": [
+          "USER"
+        ],
+        "usage": 0,
+        "usage_normalized": {
+          "infinite": false,
+          "number": 0.0,
+          "set": true
+        }
+      }
+    ],
+    "total_shares": 0
+  },
+  "warnings": []
+}
