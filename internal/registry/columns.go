@@ -12,8 +12,9 @@ import (
 type Tab string
 
 const (
-	QueueTab  Tab = "queue"
-	RecentTab Tab = "recent"
+	QueueTab    Tab = "queue"
+	RecentTab   Tab = "recent"
+	AccountsTab Tab = "accounts"
 )
 
 type Column struct {

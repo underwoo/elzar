@@ -42,13 +42,16 @@ func main() {
 	lipgloss.HasDarkBackground()
 
 	program := tea.NewProgram(ui.NewWithOptions(slurm.ExecRunner{}, ui.Options{
-		RefreshInterval: settings.RefreshInterval,
-		RecentWindow:    settings.RecentWindow,
-		Scope:           settings.DefaultScope,
-		ConfigPath:      settings.Path,
-		QueueColumns:    settings.QueueColumns,
-		RecentColumns:   settings.RecentColumns,
-		TabPrefix:       settings.TabPrefix,
+		RefreshInterval:        settings.RefreshInterval,
+		RecentWindow:           settings.RecentWindow,
+		Scope:                  settings.DefaultScope,
+		ConfigPath:             settings.Path,
+		QueueColumns:           settings.QueueColumns,
+		RecentColumns:          settings.RecentColumns,
+		TabPrefix:              settings.TabPrefix,
+		AccountColumns:         settings.AccountColumns,
+		AccountClusters:        settings.AccountClusters,
+		AccountRefreshInterval: settings.AccountRefreshInterval,
 	}), tea.WithAltScreen())
 	if _, err := program.Run(); err != nil {
 		fmt.Fprintln(os.Stderr, "slurmtui:", err)

@@ -22,17 +22,20 @@ const (
 )
 
 type Settings struct {
-	RefreshInterval time.Duration
-	RecentWindow    time.Duration
-	DefaultScope    slurm.Scope
-	QueueColumns    []string
-	RecentColumns   []string
-	TabPrefix       string
-	Path            string
+	RefreshInterval        time.Duration
+	RecentWindow           time.Duration
+	DefaultScope           slurm.Scope
+	QueueColumns           []string
+	RecentColumns          []string
+	AccountColumns         []string
+	AccountClusters        string
+	AccountRefreshInterval time.Duration
+	TabPrefix              string
+	Path                   string
 }
 
 func Defaults() Settings {
-	return Settings{RefreshInterval: DefaultRefreshInterval, RecentWindow: DefaultRecentWindow, DefaultScope: slurm.ScopeMe, TabPrefix: "ctrl+t"}
+	return Settings{RefreshInterval: DefaultRefreshInterval, RecentWindow: DefaultRecentWindow, DefaultScope: slurm.ScopeMe, AccountRefreshInterval: 5 * time.Minute, TabPrefix: "ctrl+t"}
 }
 
 // Load reads XDG_CONFIG_HOME/slurmtui/config.toml, falling back to the
@@ -106,6 +109,35 @@ func LoadFile(path string) (Settings, error) {
 		}
 		if values, ok := rawColumns["recent"].([]any); ok {
 			settings.RecentColumns = stringValues(values)
+		}
+	}
+	if raw, exists := document["accounts"]; exists {
+		table, ok := raw.(map[string]any)
+		if !ok {
+			return Settings{}, fmt.Errorf("accounts must be a table")
+		}
+		if value, exists := table["clusters"]; exists {
+			text, ok := value.(string)
+			if !ok {
+				return Settings{}, fmt.Errorf("accounts.clusters must be a string")
+			}
+			settings.AccountClusters = text
+		}
+		if value, exists := table["refresh_interval"]; exists {
+			text, ok := value.(string)
+			if !ok {
+				return Settings{}, fmt.Errorf("accounts.refresh_interval must be a positive duration")
+			}
+			duration, err := time.ParseDuration(text)
+			if err != nil || duration <= 0 {
+				return Settings{}, fmt.Errorf("accounts.refresh_interval must be a positive duration")
+			}
+			settings.AccountRefreshInterval = duration
+		}
+	}
+	if rawColumns, ok := document["columns"].(map[string]any); ok {
+		if values, ok := rawColumns["accounts"].([]any); ok {
+			settings.AccountColumns = stringValues(values)
 		}
 	}
 	if rawKeys, ok := document["keys"].(map[string]any); ok {
@@ -187,7 +219,8 @@ var tableHeader = regexp.MustCompile(`^\s*\[[^\[][^]]*\]\s*(?:#.*)?$`)
 // SaveColumns replaces just the top-level [columns] table, preserving all
 // other bytes. The document is parsed before writing, and the replacement is
 // installed with a same-directory atomic rename.
-func SaveColumns(path string, queue, recent []string) error {
+func SaveColumns(path string, queue, recent []string, accountColumns ...[]string) error {
+	var accounts []string
 	original, err := os.ReadFile(path)
 	if errors.Is(err, os.ErrNotExist) {
 		original = nil
@@ -199,8 +232,16 @@ func SaveColumns(path string, queue, recent []string) error {
 		if _, err := toml.Decode(string(original), &document); err != nil {
 			return fmt.Errorf("decode config %s: %w", path, err)
 		}
+		if cols, ok := document["columns"].(map[string]any); ok {
+			if values, ok := cols["accounts"].([]any); ok {
+				accounts = stringValues(values)
+			}
+		}
 	}
-	replacement := formatColumns(queue, recent)
+	if len(accountColumns) > 0 {
+		accounts = accountColumns[0]
+	}
+	replacement := formatColumns(queue, recent, accounts)
 	updated, found, err := replaceColumns(original, replacement)
 	if err != nil {
 		return err
@@ -246,7 +287,7 @@ func SaveColumns(path string, queue, recent []string) error {
 	return nil
 }
 
-func formatColumns(queue, recent []string) []byte {
+func formatColumns(queue, recent []string, accounts ...[]string) []byte {
 	var out bytes.Buffer
 	fmt.Fprintln(&out, "[columns]")
 	writeArray := func(name string, values []string) {
@@ -261,6 +302,9 @@ func formatColumns(queue, recent []string) []byte {
 	}
 	writeArray("queue", queue)
 	writeArray("recent", recent)
+	if len(accounts) > 0 && accounts[0] != nil {
+		writeArray("accounts", accounts[0])
+	}
 	return out.Bytes()
 }
 

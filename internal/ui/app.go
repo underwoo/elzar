@@ -23,21 +23,26 @@ import (
 const minTerminalWidth = 20
 
 type Options struct {
-	RefreshInterval time.Duration
-	RecentWindow    time.Duration
-	Scope           slurm.Scope
-	Clock           func() time.Time
-	Location        *time.Location
-	ConfigPath      string
-	QueueColumns    []string
-	RecentColumns   []string
-	TabPrefix       string
+	RefreshInterval        time.Duration
+	RecentWindow           time.Duration
+	Scope                  slurm.Scope
+	Clock                  func() time.Time
+	Location               *time.Location
+	ConfigPath             string
+	QueueColumns           []string
+	RecentColumns          []string
+	TabPrefix              string
+	AccountColumns         []string
+	AccountClusters        string
+	AccountRefreshInterval time.Duration
+	Username               string
 }
 
 type App struct {
-	runner  slurm.Runner
-	options Options
-	clock   func() time.Time
+	accounts accountsState
+	runner   slurm.Runner
+	options  Options
+	clock    func() time.Time
 
 	width, height      int
 	mode               mode
@@ -104,6 +109,9 @@ func New() tea.Model {
 }
 
 func NewWithOptions(runner slurm.Runner, options Options) *App {
+	if options.AccountRefreshInterval <= 0 {
+		options.AccountRefreshInterval = 5 * time.Minute
+	}
 	if options.RefreshInterval <= 0 {
 		options.RefreshInterval = 15 * time.Second
 	}
@@ -128,12 +136,13 @@ func NewWithOptions(runner slurm.Runner, options Options) *App {
 	input.Width = 80
 	input.CharLimit = 256
 	app := &App{runner: runner, options: options, clock: clock, tab: registry.QueueTab, scope: options.Scope, filterInput: input}
+	app.accounts.clusters = clusterSelection(options.AccountClusters)
 	app.refreshColumnWarnings()
 	return app
 }
 
 func (a *App) Init() tea.Cmd {
-	return tea.Batch(a.startQueueFetch(), a.startRecentFetch(), a.scheduleTick())
+	return tea.Batch(a.startQueueFetch(), a.startRecentFetch(), a.scheduleTick(), a.startAccountsFetch(), a.scheduleAccountsTick())
 }
 
 func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -144,6 +153,10 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		a.keepAllCursorsVisible()
 	case tea.KeyMsg:
 		return a, a.handleKey(msg)
+	case accountsTick:
+		return a, tea.Batch(a.startAccountsFetch(), a.scheduleAccountsTick())
+	case accountsResult:
+		a.acceptAccounts(msg)
 	case tickMsg:
 		return a, tea.Batch(a.startQueueFetch(), a.startRecentFetch(), a.scheduleTick())
 	case queueResult:
@@ -283,6 +296,9 @@ func (a *App) handleKey(msg tea.KeyMsg) tea.Cmd {
 }
 
 func (a *App) handleListKey(msg tea.KeyMsg) tea.Cmd {
+	if a.tab == registry.AccountsTab {
+		return a.handleAccountsList(msg)
+	}
 	switch {
 	case key.Matches(msg, appKeys.quit):
 		return tea.Quit
@@ -297,7 +313,7 @@ func (a *App) handleListKey(msg tea.KeyMsg) tea.Cmd {
 			a.clearFilter()
 		}
 	case key.Matches(msg, appKeys.tab) || msg.String() == "shift+tab":
-		a.toggleTab()
+		a.toggleTabKey(msg.String())
 	case key.Matches(msg, appKeys.up):
 		a.moveCursor(-1)
 	case key.Matches(msg, appKeys.down):
@@ -369,7 +385,7 @@ func (a *App) handleDetailKey(msg tea.KeyMsg) tea.Cmd {
 		a.detailScroll = 0
 		a.detailRequest++
 	case key.Matches(msg, appKeys.tab) || msg.String() == "shift+tab":
-		a.toggleTab()
+		a.toggleTabKey(msg.String())
 		a.leaveDetailForTabSwitch()
 	case key.Matches(msg, appKeys.allFields):
 		a.showAllFields = !a.showAllFields
@@ -526,6 +542,8 @@ func (a *App) refreshColumnWarnings() {
 		_, skipped := registry.ColumnsForIDs(tab, ids)
 		unknown = append(unknown, skipped...)
 	}
+	_, skippedAccounts := registry.AccountColumnsForIDs(a.options.AccountColumns)
+	unknown = append(unknown, skippedAccounts...)
 	if len(unknown) != 0 {
 		a.columnWarning = "unknown column IDs skipped: " + strings.Join(uniqueStrings(unknown), ", ")
 		a.addMessage(a.columnWarning, messageError)
@@ -566,7 +584,7 @@ func (a *App) savePickedColumns() {
 	if recent == nil {
 		recent = columnIDs(registry.RecentTab)
 	}
-	if err := config.SaveColumns(a.options.ConfigPath, queue, recent); err != nil {
+	if err := config.SaveColumns(a.options.ConfigPath, queue, recent, a.options.AccountColumns); err != nil {
 		a.columnWarning = "could not save columns: " + err.Error()
 		a.addMessage(a.columnWarning, messageError)
 		a.mode = modeList
@@ -671,15 +689,11 @@ func sortJobs(jobs []model.Job, columns []registry.Column, state columnSort) {
 
 func (a *App) renderPicker(out *strings.Builder, width int) {
 	fmt.Fprintf(out, "%s  %s\n", titleStyle.Render("Slurm TUI"), mutedStyle.Render("scope: "+string(a.scope)))
-	queueTab, recentTab := mutedStyle.Render("Queue"), mutedStyle.Render("Recent")
-	if a.tab == registry.QueueTab {
-		queueTab = titleStyle.Render("[Queue]")
-	} else {
-		recentTab = titleStyle.Render("[Recent]")
-	}
-	fmt.Fprintf(out, "%s  %s\n", queueTab, recentTab)
+	fmt.Fprintln(out, a.tabLine())
 	fmt.Fprintln(out, a.picker.View(width, a.height))
-	if a.pickerColumns {
+	if a.tab == registry.AccountsTab && a.accounts.picker == "clusters" {
+		fmt.Fprint(out, mutedStyle.Render(fitFooter(width, []string{"space toggle", "enter apply", "esc cancel"})))
+	} else if a.pickerColumns {
 		fmt.Fprint(out, mutedStyle.Render(fitFooter(width, []string{"space toggle", "J/K reorder", "w save", "esc cancel"})))
 	} else {
 		fmt.Fprint(out, mutedStyle.Render(fitFooter(width, []string{"↑/↓ or j/k select", "pgup/pgdn page", "enter sort", "esc cancel"})))
@@ -701,6 +715,7 @@ func (a *App) applyFilter(pattern string) {
 	a.recomputeRecentFilter()
 	a.queueCursor = restoreCursor(oldQueue, a.visibleQueue(), a.queueCursor)
 	a.recentCursor = restoreCursor(oldRecent, a.visibleRecent(), a.recentCursor)
+	a.recomputeAccounts()
 	a.keepAllCursorsVisible()
 }
 
@@ -714,6 +729,7 @@ func (a *App) clearFilter() {
 	a.filteredQueue, a.filteredRecent = nil, nil
 	a.queueCursor = restoreCursor(oldQueue, a.queueJobs, a.queueCursor)
 	a.recentCursor = restoreCursor(oldRecent, a.recentJobs, a.recentCursor)
+	a.recomputeAccounts()
 	a.keepAllCursorsVisible()
 }
 
@@ -763,6 +779,9 @@ func (a *App) recomputeRecentFilter() {
 }
 
 func (a *App) handlePickerKey(msg tea.KeyMsg) tea.Cmd {
+	if a.tab == registry.AccountsTab {
+		return a.handleAccountsPicker(msg)
+	}
 	if a.pickerColumns {
 		switch {
 		case key.Matches(msg, appKeys.back):
@@ -895,17 +914,12 @@ func (a *App) View() string {
 		a.renderPicker(&out, width)
 		return fitOutput(out.String(), width)
 	}
+	if a.tab == registry.AccountsTab {
+		return a.renderAccounts(width)
+	}
 	tabName, jobs, cursor, loading, sourceErr := a.activeData()
 	fmt.Fprintf(&out, "%s  %s\n", titleStyle.Render("Slurm TUI"), mutedStyle.Render("scope: "+string(a.scope)))
-	var queueTab, recentTab string
-	if a.tab == registry.QueueTab {
-		queueTab = titleStyle.Render("[Queue]")
-		recentTab = mutedStyle.Render("Recent")
-	} else {
-		queueTab = mutedStyle.Render("Queue")
-		recentTab = titleStyle.Render("[Recent]")
-	}
-	fmt.Fprintf(&out, "%s  %s\n", queueTab, recentTab)
+	fmt.Fprintln(&out, a.tabLine())
 
 	columns := a.displayedColumns()
 	widths := fitWidths(columns, width)
@@ -1193,15 +1207,14 @@ func (a *App) otherData() (string, []model.Job, int, bool, error) {
 	return "Recent", a.visibleRecent(), a.recentCursor, a.recentLoading, a.recentError
 }
 
-func (a *App) toggleTab() {
-	if a.tab == registry.QueueTab {
-		a.tab = registry.RecentTab
-	} else {
-		a.tab = registry.QueueTab
-	}
-}
+func (a *App) toggleTab() { a.toggleTabKey("tab") }
 
 func (a *App) moveCursor(delta int) {
+	if a.tab == registry.AccountsTab {
+		a.accounts.cursor += delta
+		a.keepAccountsCursorVisible()
+		return
+	}
 	jobs := a.visibleQueue()
 	cursor := &a.queueCursor
 	if a.tab == registry.RecentTab {
@@ -1239,6 +1252,9 @@ func (a *App) tableRowCapacity() int {
 }
 
 func (a *App) activeScroll() int {
+	if a.tab == registry.AccountsTab {
+		return a.accounts.scroll
+	}
 	if a.tab == registry.RecentTab {
 		return a.recentScroll
 	}
@@ -1246,6 +1262,9 @@ func (a *App) activeScroll() int {
 }
 
 func (a *App) activeScrollPointer() *int {
+	if a.tab == registry.AccountsTab {
+		return &a.accounts.scroll
+	}
 	if a.tab == registry.RecentTab {
 		return &a.recentScroll
 	}
@@ -1260,11 +1279,16 @@ func (a *App) activeJobsAndCursor() ([]model.Job, *int) {
 }
 
 func (a *App) keepActiveCursorVisible() {
+	if a.tab == registry.AccountsTab {
+		a.keepAccountsCursorVisible()
+		return
+	}
 	jobs, cursor := a.activeJobsAndCursor()
 	keepCursorVisible(jobs, cursor, a.activeScrollPointer(), a.tableRowCapacity())
 }
 
 func (a *App) keepAllCursorsVisible() {
+	a.keepAccountsCursorVisible()
 	keepCursorVisible(a.visibleQueue(), &a.queueCursor, &a.queueScroll, a.tableRowCapacity())
 	keepCursorVisible(a.visibleRecent(), &a.recentCursor, &a.recentScroll, a.tableRowCapacity())
 }
@@ -1287,16 +1311,16 @@ func keepCursorVisible(jobs []model.Job, cursor, scroll *int, rowCapacity int) {
 }
 
 func (a *App) pageCursor(delta int) {
-	jobs, cursor := a.activeJobsAndCursor()
-	if len(jobs) == 0 {
+	count, cursor := a.activeRowCountAndCursor()
+	if count == 0 {
 		*cursor = 0
 		*a.activeScrollPointer() = 0
 		return
 	}
 	page := a.tableRowCapacity()
 	row := *cursor - a.activeScroll()
-	*cursor = max(0, min(len(jobs)-1, *cursor+delta))
-	maxScroll := max(0, len(jobs)-page)
+	*cursor = max(0, min(count-1, *cursor+delta))
+	maxScroll := max(0, count-page)
 	*a.activeScrollPointer() = max(0, min(maxScroll, *cursor-row))
 	a.keepActiveCursorVisible()
 }
@@ -1382,4 +1406,12 @@ type detailResult struct {
 	detail  model.JobDetail
 	err     error
 	request uint64
+}
+
+func (a *App) activeRowCountAndCursor() (int, *int) {
+	if a.tab == registry.AccountsTab {
+		return len(a.accounts.visible), &a.accounts.cursor
+	}
+	jobs, cursor := a.activeJobsAndCursor()
+	return len(jobs), cursor
 }
