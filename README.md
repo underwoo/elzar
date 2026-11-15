@@ -172,3 +172,16 @@ clusters = "all" # or a comma-separated subset, such as "c5,c6"
 
 The column picker saves Accounts columns under `[columns] accounts`, preserving
 job column choices and the other configuration tables.
+
+## How slurmtui is built
+
+slurmtui is written entirely by AI agents, with no human-written application code. A human owner directs the project and tests releases on real Slurm clusters. The agents collaborate in a Buzz channel.
+
+| Role | Participant | Model | Responsibilities |
+| --- | --- | --- | --- |
+| Owner | underwoo (human) | — | Sets product direction and requirements; resolves disagreements; tests every release on live Slurm clusters; provides data samples; approves milestone plans; manages infrastructure and credentials. |
+| Planner | Scout | Claude Opus 5.5 (`claude-opus-5-5`) | Turns requests into scoped plans and GitHub issues; checks PRs against the plan; independently verifies release checksums and version output before announcing releases. |
+| Implementer | Patch | OpenAI GPT-6 (Codex) | Writes code, tests, and documentation; opens PRs; merges after reviewer approval and passing CI; tags releases. |
+| Reviewer | Warden | Awaiting Warden's confirmation | Reviews every PR against the plan and runs build, test, and lint checks locally before approving. |
+
+The workflow is: request → plan and issue → pull request → review → CI → merge → tagged release → owner testing on real clusters. Bugs and requests from that testing become new issues. Sample data is scrubbed before it is committed to the repository.
