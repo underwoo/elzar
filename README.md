@@ -1,14 +1,17 @@
 # slurmtui
 
-A terminal interface for viewing Slurm jobs and their details.
+A terminal interface for viewing Slurm jobs, their details, and account shares.
 
 ## Requirements
 
-- Slurm **25.11 or newer**, with JSON output available from `squeue`, `sacct`, and `scontrol`.
+- Slurm **25.11 or newer**, with JSON output available from `squeue`, `sacct`, `scontrol`, `sshare`, and `sacctmgr`.
 - At runtime, these Slurm commands must be on `PATH` and configured to access the cluster:
   - `squeue --json`
   - `sacct --json`
   - `scontrol show job --json`
+  - `sshare --json -l -U -M all`
+  - `sacctmgr --json show assoc user=<your-user>`
+  - `sacctmgr --json show qos`
 - Go **1.26 or newer** to build from source.
 
 slurmtui uses Slurm's JSON interfaces; it has no plain-text output fallback.
@@ -65,7 +68,7 @@ The **Queue** view shows active jobs. **Recent** shows jobs that completed withi
 | Key | Action |
 | --- | --- |
 | `Tab`, `Shift+Tab` | Cycle through views |
-| `Ctrl+T`, then `1`/`2` | Jump to Queue or Recent; the prefix is configurable |
+| `Ctrl+T`, then `1`/`2`/`3` | Jump to Queue, Recent, or Accounts; the prefix is configurable |
 | `Ctrl+T`, then `s` | Open the status and error message log |
 | `↑`/`↓`, `j`/`k` | Move the selection or scroll details |
 | `Space`, `Ctrl+V`, `Ctrl+F`, `PgDn` | Page down |
@@ -83,7 +86,7 @@ The **Queue** view shows active jobs. **Recent** shows jobs that completed withi
 | `e` | Edit a job's time limit, name, and comment, then confirm the changes |
 | `Esc` | Return from job details to the list, or clear an active filter |
 | `a` | Show or hide the raw All fields section in job details |
-| `r` | Refresh the job lists |
+| `r` | Refresh job lists, or Accounts when that view is active |
 | `u` | Toggle between your jobs and all visible users' jobs |
 | `?` | Show or hide the key help overlay |
 | `q`, `Ctrl+C` | Quit |
@@ -92,7 +95,30 @@ Job details include summary, requested and allocated resources, timing, paths, a
 
 The message log keeps the latest 200 status and error messages, newest first. Repeated consecutive messages are grouped with a `×N` count. Use the same navigation motions to scroll it; `Esc`, `q`, or the tab prefix followed by `s` closes it.
 
-The filter uses Go's RE2 regular-expression syntax. Lowercase patterns match without regard to case; adding an uppercase letter makes the pattern case-sensitive. The filter applies to the rendered values of visible columns in both views.
+The filter uses Go's RE2 regular-expression syntax. Lowercase patterns match without regard to case; adding an uppercase letter makes the pattern case-sensitive. The filter applies to the rendered values of visible columns in all three views.
+
+## Accounts
+
+Use `Ctrl+T` then `3` to open Accounts, or cycle through Queue, Recent, and
+Accounts with `Tab` (`Shift+Tab` cycles backward). Accounts shows every account
+across all clusters, with one row per cluster/account pair. `You` marks your
+accounts as `default` or `member`; `/member|default` filters to those rows.
+
+`RawShares` is the account's allocation target. Usage is the current decayed
+`sshare` usage, rather than usage over a reporting period. FairShare shows your
+user factor for accounts you belong to and is blank for other accounts.
+
+Press `M` for the cluster selector. Space toggles All or individual clusters,
+Enter applies, and Esc cancels. An empty selection means All. Cluster selection
+combines with the regex filter, and the status line shows the selected clusters.
+The selector changes this session only; set `[accounts] clusters` below to
+choose the initial selection.
+
+Filtering, sorting, column selection (`c`, then `w` to save), counted motions,
+and paging work as in the job views. Accounts refreshes independently every
+five minutes, or immediately with `r`. Failed clusters are logged in `Ctrl+T s`;
+previous rows for those clusters remain visible while successful clusters update.
+Job actions do not apply in Accounts.
 
 ## Options
 
@@ -135,3 +161,14 @@ recent = ["job_id", "name", "user", "account", "partition", "qos", "state", "ela
 The optional `[keys]` table sets the key used before a digit to jump directly to a view. `tab_prefix` accepts a Bubble Tea key string such as `"ctrl+t"`, `"ctrl+y"`, or `"alt+x"`. The default is `ctrl+t`.
 
 The optional `[columns]` table stores visible column IDs in display order. The column picker updates only this table and preserves the rest of the file. Unknown IDs are skipped with a status-line warning.
+
+The optional `[accounts]` table configures Accounts independently of job views:
+
+```toml
+[accounts]
+refresh_interval = "5m"
+clusters = "all" # or a comma-separated subset, such as "c5,c6"
+```
+
+The column picker saves Accounts columns under `[columns] accounts`, preserving
+job column choices and the other configuration tables.

@@ -8,6 +8,8 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
+
+	"slurmtui/internal/registry"
 )
 
 type helpGroup struct {
@@ -16,6 +18,13 @@ type helpGroup struct {
 }
 
 func (a *App) helpGroups() []helpGroup {
+	if a.tab == registry.AccountsTab && a.mode != modePicker {
+		return []helpGroup{
+			{title: "Navigation", bindings: []key.Binding{appKeys.up, appKeys.down, appKeys.pageUp, appKeys.pageDown, appKeys.count, appKeys.top, appKeys.bottom}},
+			{title: "Accounts", bindings: []key.Binding{appKeys.tab, appKeys.shiftTab, appKeys.filter, appKeys.sort, appKeys.columns, key.NewBinding(key.WithKeys("M"), key.WithHelp("M", "clusters")), appKeys.refresh}},
+			{title: "App", bindings: []key.Binding{key.NewBinding(key.WithHelp(formatKeyLabel(a.options.TabPrefix)+" 1/2/3", "queue/recent/accounts")), key.NewBinding(key.WithHelp(a.statusMessageHint(), "messages")), appKeys.help, appKeys.quit}},
+		}
+	}
 	switch a.mode {
 	case modeDetail:
 		return []helpGroup{
@@ -26,7 +35,9 @@ func (a *App) helpGroups() []helpGroup {
 		}
 	case modePicker:
 		view := []key.Binding{appKeys.toggle, appKeys.moveUp, appKeys.moveDown, appKeys.save, appKeys.back}
-		if !a.pickerColumns {
+		if a.tab == registry.AccountsTab && a.accounts.picker == "clusters" {
+			view = []key.Binding{appKeys.toggle, appKeys.enter, appKeys.back}
+		} else if !a.pickerColumns {
 			view = []key.Binding{appKeys.enter, appKeys.back}
 		}
 		return []helpGroup{

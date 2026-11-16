@@ -1,5 +1,5 @@
 Slurm TUI  scope: me
-[Queue]  Recent
+[Queue]  Recent  Accounts
 JobID       Name        User        Account     Partition  QOS       State       Elapsed/Li… Nodes   NodeList(R…
 ─────────── ─────────── ─────────── ─────────── ────────── ───────── ─────────── ─────────── ─────── ───────────
 34827745    job-01      user-01     account-01  partition… qos-01    PENDING     —/3:00:00   1       (None)     

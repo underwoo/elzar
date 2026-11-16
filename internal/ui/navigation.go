@@ -140,6 +140,7 @@ func (a *App) tabPrefixCommands() []tabPrefixCommand {
 			a.tab = registry.RecentTab
 			a.leaveDetailForTabSwitch()
 		}},
+		{key: "3", description: "accounts view", run: func() { a.tab = registry.AccountsTab; a.leaveDetailForTabSwitch() }},
 		{key: "s", description: "messages", run: func() {
 			a.showMessages = true
 			a.messageScroll = 0
@@ -178,13 +179,13 @@ func (a *App) jumpToRow(oneBased int) {
 		a.detailScroll = min(a.detailMaxScroll(), max(0, oneBased-1))
 		return
 	}
-	jobs, cursor := a.activeJobsAndCursor()
-	if len(jobs) == 0 {
+	count, cursor := a.activeRowCountAndCursor()
+	if count == 0 {
 		*cursor = 0
 		*a.activeScrollPointer() = 0
 		return
 	}
-	*cursor = max(0, min(len(jobs)-1, oneBased-1))
+	*cursor = max(0, min(count-1, oneBased-1))
 	a.keepActiveCursorVisible()
 }
 
@@ -213,8 +214,8 @@ func (a *App) jumpToBottom() {
 		a.detailScroll = a.detailMaxScroll()
 		return
 	}
-	jobs, cursor := a.activeJobsAndCursor()
-	*cursor = max(0, len(jobs)-1)
+	count, cursor := a.activeRowCountAndCursor()
+	*cursor = max(0, count-1)
 	a.keepActiveCursorVisible()
 }
 
@@ -268,6 +269,9 @@ func formatKeyLabel(value string) string {
 }
 
 func prefixConflict(prefix string) string {
+	if prefix == "M" {
+		return "cluster selector"
+	}
 	bindings := []struct {
 		binding key.Binding
 		name    string

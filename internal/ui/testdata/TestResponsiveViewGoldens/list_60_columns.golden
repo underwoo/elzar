@@ -1,5 +1,5 @@
 Slurm TUI  scope: me
-[Queue]  Recent
+[Queue]  Recent  Accounts
 JobID Name  User  Acco… Part… QOS   State Elap… Nodes NodeL…
 ───── ───── ───── ───── ───── ───── ───── ───── ───── ──────
 12345 samp… test… scie… comp…       RUNN… 1:00… —     node-…
