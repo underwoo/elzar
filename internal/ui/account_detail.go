@@ -132,5 +132,5 @@ func (a *App) renderAccountDetail(out *strings.Builder, width int) {
 	for _, line := range lines[a.detailScroll:min(len(lines), a.detailScroll+available)] {
 		fmt.Fprintln(out, truncateLine(line, width))
 	}
-	fmt.Fprintln(out, mutedStyle.Render(fitFooter(width, []string{"esc back", "↑/↓ scroll", "space page", "G bottom", "1G top", "tab views", "q quit"})))
+	fmt.Fprint(out, mutedStyle.Render(fitFooter(width, []string{"esc back", "↑/↓ scroll", "space page", "G bottom", "1G top", "tab views", "q quit"})))
 }
