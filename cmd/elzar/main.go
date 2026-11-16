@@ -42,6 +42,7 @@ func main() {
 	lipgloss.HasDarkBackground()
 
 	program := tea.NewProgram(ui.NewWithOptions(slurm.ExecRunner{}, ui.Options{
+		Plugins:                settings.Plugins,
 		RefreshInterval:        settings.RefreshInterval,
 		RecentWindow:           settings.RecentWindow,
 		Scope:                  settings.DefaultScope,

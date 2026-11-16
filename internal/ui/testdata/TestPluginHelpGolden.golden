@@ -1,0 +1,36 @@
+╭──────────────────────────────────────────────────────────────────────╮
+│ Key bindings                                                         │
+│ Navigation                                                           │
+│ ↑/k              select previous                                     │
+│ ↓/j              select next                                         │
+│ b/^b/M-v/PgUp    page up                                             │
+│ space/^v/^f/PgDn page down                                           │
+│ 0-9              motion count                                        │
+│ gg/1G/Home/M-<   top                                                 │
+│ G/End/M->        bottom                                              │
+│ enter            details                                             │
+│ View                                                                 │
+│ tab       next view                                                  │
+│ shift+tab previous view                                              │
+│ Ctrl+T    tab prefix                                                 │
+│ Ctrl+T 1  queue view                                                 │
+│ Ctrl+T 2  recent view                                                │
+│ Ctrl+T 3  accounts view                                              │
+│ Ctrl+T s  messages                                                   │
+│ /         filter                                                     │
+│ s         sort                                                       │
+│ c         columns                                                    │
+│ Job actions                                                          │
+│ x cancel                                                             │
+│ h hold/release                                                       │
+│ R requeue                                                            │
+│ e edit job                                                           │
+│ App                                                                  │
+│ r refresh                                                            │
+│ u toggle scope                                                       │
+│ ? help                                                               │
+│ q quit                                                               │
+│ Plugins                                                              │
+│ z Inspect selected item                                              │
+│ ↑/↓ or j/k scroll • ?/esc close                                      │
+╰──────────────────────────────────────────────────────────────────────╯
