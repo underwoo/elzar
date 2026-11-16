@@ -21,6 +21,11 @@ func detailAccountTestApp() *App {
 		model.Share{Cluster: "c1", Account: "root", Type: "ASSOCIATION", RawShares: model.NoValNumber{Set: true, Number: 1}},
 		model.Share{Cluster: "c2", Account: "root", Parent: "wrong-cluster", Type: "ASSOCIATION"})
 	a.accounts.qos = []model.QOS{{Name: "normal", MaxWall: model.NoValNumber{Set: true, Number: 120}, MaxJobsPerUser: model.NoValNumber{Set: true, Number: 10}, MaxSubmitPerUser: model.NoValNumber{Infinite: true}, Priority: model.NoValNumber{Set: true, Number: 0}, UsageFactor: model.OptionalFloat{Set: true, Number: 1}, MaxTRESPerJob: []model.TRES{{Type: "cpu", Count: 32}}, MaxTRESPerUser: []model.TRES{{Type: "gres", Name: "gpu", Count: 4}}}}
+	a.accounts.partitionClusters = map[string]bool{"c1": true, "c2": true}
+	a.accounts.partitions = []model.Partition{
+		{Cluster: "c1", Name: "compute", MaxTime: model.NoValNumber{Infinite: true}, DefaultTime: model.NoValNumber{Set: true, Number: 60}, MaxNodes: model.NoValNumber{Set: true, Number: 8}, State: []string{"UP"}},
+		{Cluster: "c2", Name: "wrong-cluster", State: []string{"DOWN"}},
+	}
 	return a
 }
 
@@ -125,7 +130,7 @@ func TestAccountDetailTerminalWorkflow(t *testing.T) {
 	tm.Send(tea.KeyMsg{Type: tea.KeyEnter})
 	teatest.WaitFor(t, tm.Output(), func(out []byte) bool { return strings.Contains(string(out), "Account detail: c1/account-0") }, teatest.WithDuration(time.Second))
 	tm.Type("G")
-	teatest.WaitFor(t, tm.Output(), func(out []byte) bool { return strings.Contains(string(out), "UsageFactor: 1") }, teatest.WithDuration(time.Second))
+	teatest.WaitFor(t, tm.Output(), func(out []byte) bool { return strings.Contains(string(out), "MaxNodes: 8") }, teatest.WithDuration(time.Second))
 	tm.Send(tea.KeyMsg{Type: tea.KeyEsc})
 	tm.Type("q")
 	final := tm.FinalModel(t, teatest.WithFinalTimeout(time.Second)).(*App)

@@ -23,4 +23,9 @@ normal
   MaxTRES per job: cpu=32
   MaxTRES per user: gres/gpu=4
   Priority: 0  UsageFactor: 1
+
+Partition access (account/QOS)
+compute  State: UP
+  MaxTime (minutes): ∞  DefaultTime (minutes): 60
+  MaxNodes: 8
 esc back  ↑/↓ scroll  space page  G bottom  1G top  tab views  q quit  ? help

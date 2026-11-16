@@ -128,6 +128,15 @@ FairShare and Level, and allowed QOS limits. MaxWall is shown in minutes;
 then `Esc` to return to the selected account. Non-member accounts show their
 lineage without claiming user-specific QOS access.
 
+Account detail also lists partitions matching your association's account and QOS,
+with their configured MaxTime/DefaultTime (minutes), MaxNodes, and state. Queries
+run once per association cluster during the Accounts refresh; a failed cluster
+shows unavailable access and a message-log diagnostic. This is an account/QOS
+check, not a guarantee that a job can run: other Slurm policies and resources
+still apply. Account lists include descendants, and explicit allow lists take
+precedence over deny lists, following [Slurm's partition rules](https://slurm.schedmd.com/slurm.conf.html).
+
+
 ## Options
 
 | Option | Description | Default |

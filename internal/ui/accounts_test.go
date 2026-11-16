@@ -222,6 +222,9 @@ func (r *accountFixtureRunner) Run(_ context.Context, name string, args ...strin
 	case "sacctmgr --json show qos":
 		file = "site-01_qos"
 	default:
+		if name == "scontrol" && len(args) == 5 && args[0] == "-M" && args[2] == "show" && args[3] == "partition" && args[4] == "--json" {
+			return os.ReadFile("../../testdata/partitions/site-01.json")
+		}
 		return nil, fmt.Errorf("unexpected command %s", call)
 	}
 	return os.ReadFile("../../testdata/accounts/" + file + ".json")
@@ -238,7 +241,7 @@ func TestAccountsFetchAndIndependentTimer(t *testing.T) {
 		t.Fatal("fetch overlap")
 	}
 	a.Update(cmd())
-	if len(a.accounts.rows) == 0 || len(r.calls) != 3 || a.accounts.loading {
+	if len(a.accounts.rows) == 0 || len(r.calls) != 3+len(a.accounts.partitionClusters) || len(a.accounts.partitionClusters) == 0 || a.accounts.err != nil || a.accounts.loading {
 		t.Fatal("fetch failed")
 	}
 	before := len(r.calls)

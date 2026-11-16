@@ -23,4 +23,9 @@ normal
   MaxTRES per job: —
   MaxTRES per user: —
   Priority: —  UsageFactor: —
+
+Partition access (account/QOS)
+compute  State: UP
+  MaxTime (minutes): ∞  DefaultTime (minutes): 60
+  MaxNodes: 8
 esc back  ↑/↓ scroll  space page  G bottom  1G top  tab views  q quit  ? help

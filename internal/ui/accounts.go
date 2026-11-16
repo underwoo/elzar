@@ -17,24 +17,28 @@ import (
 )
 
 type accountsState struct {
-	rows, visible  []model.AccountRow
-	shares         []model.Share
-	associations   []model.Association
-	qos            []model.QOS
-	cursor, scroll int
-	loading        bool
-	err            error
-	updated        time.Time
-	sort           columnSort
-	clusters       map[string]bool
-	picker         string
-	detailRow      model.AccountRow
+	rows, visible     []model.AccountRow
+	shares            []model.Share
+	associations      []model.Association
+	qos               []model.QOS
+	partitions        []model.Partition
+	partitionClusters map[string]bool
+	partitionErrors   map[string]error
+	cursor, scroll    int
+	loading           bool
+	err               error
+	updated           time.Time
+	sort              columnSort
+	clusters          map[string]bool
+	picker            string
+	detailRow         model.AccountRow
 }
 type accountsTick struct{}
 type accountsResult struct {
 	shares                     slurm.SharesResult
 	associations               slurm.AssociationsResult
 	qos                        slurm.QOSResult
+	partitions                 slurm.PartitionsResult
 	shareErr, assocErr, qosErr error
 	at                         time.Time
 	username                   string
@@ -73,7 +77,11 @@ func (a *App) startAccountsFetch() tea.Cmd {
 		shares, e1 := slurm.ListShares(context.Background(), runner)
 		associations, e2 := slurm.ListAssociations(context.Background(), runner, username)
 		qos, e3 := slurm.ListQOS(context.Background(), runner)
-		return accountsResult{shares: shares, associations: associations, qos: qos, shareErr: e1, assocErr: e2, qosErr: e3, at: clock(), username: username}
+		partitions := slurm.PartitionsResult{}
+		if e2 == nil {
+			partitions = slurm.ListPartitions(context.Background(), runner, associations.Associations)
+		}
+		return accountsResult{partitions: partitions, shares: shares, associations: associations, qos: qos, shareErr: e1, assocErr: e2, qosErr: e3, at: clock(), username: username}
 	}
 }
 func buildAccountRows(shares []model.Share, associations []model.Association, username string) []model.AccountRow {
@@ -142,6 +150,22 @@ func (a *App) acceptAccounts(msg accountsResult) {
 		a.accounts.err = fmt.Errorf("%d share errors; see %s", len(msg.shares.Errors), a.statusMessageHint())
 	}
 	if msg.assocErr == nil {
+		a.accounts.partitionClusters = map[string]bool{}
+		a.accounts.partitionErrors = map[string]error{}
+		a.accounts.partitions = msg.partitions.Partitions
+		for _, cluster := range msg.partitions.Clusters {
+			a.accounts.partitionClusters[cluster] = true
+		}
+		for _, e := range msg.partitions.Errors {
+			a.accounts.partitionErrors[e.Cluster] = e.Err
+			a.addMessage("Accounts partitions: "+e.Error(), messageError)
+			if a.accounts.err == nil {
+				a.accounts.err = fmt.Errorf("partition query failed; see %s", a.statusMessageHint())
+			}
+		}
+		for _, w := range msg.partitions.Warnings {
+			a.addMessage("Accounts partitions: "+w, messageError)
+		}
 		a.accounts.associations = msg.associations.Associations
 	}
 	if msg.qosErr == nil {
@@ -171,6 +195,11 @@ func (a *App) acceptAccounts(msg accountsResult) {
 		}
 		a.accounts.shares = shares
 		a.accounts.updated = msg.at
+	}
+	if msg.assocErr != nil {
+		a.accounts.partitionErrors = nil
+		a.accounts.partitionClusters = nil
+		a.accounts.partitions = nil
 	}
 	a.accounts.rows = buildAccountRows(a.accounts.shares, a.accounts.associations, msg.username)
 	a.recomputeAccounts()

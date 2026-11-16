@@ -29,5 +29,5 @@ use sequential `site-01`, `site-02`, etc. labels instead of input site names. Th
 splits command-labelled documents and preserves anonymized `CLUSTER:` headers.
 It retains the first few share rows, user rows, and their ancestor accounts,
 while omitting large share TRES arrays and QOS descriptions. Association and
-QOS references use the same names across files. Partition captures are skipped
-until partition fixtures are needed. Do not include raw samples in git.
+QOS references use the same names across files. Partition captures retain access lists, state, and time/node limits; topology
+and unrelated fields are omitted. Standalone partition JSON uses `-input`/`-output`. Do not include raw samples in git.

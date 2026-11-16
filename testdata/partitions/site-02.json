@@ -1,0 +1,500 @@
+{
+  "errors": [],
+  "last_update": {
+    "infinite": false,
+    "number": 1794770970,
+    "set": true
+  },
+  "meta": {
+    "client": {
+      "group": "group-01",
+      "source": "/tmp/slurmtui-fixture/path-01",
+      "user": "user-01"
+    },
+    "command": [
+      "./job.sh",
+      "./job.sh",
+      "./job.sh",
+      "./job.sh"
+    ],
+    "plugin": {
+      "accounting_storage": "accounting_storage/slurmdbd",
+      "data_parser": "data_parser/v0.0.45",
+      "name": "",
+      "type": ""
+    },
+    "slurm": {
+      "cluster": "cluster-01",
+      "release": "26.05.2",
+      "version": {
+        "major": "26",
+        "micro": "2",
+        "minor": "05"
+      }
+    }
+  },
+  "partitions": [
+    {
+      "accounts": {
+        "allowed": "",
+        "deny": ""
+      },
+      "cluster": "",
+      "defaults": {
+        "time": {
+          "infinite": false,
+          "number": 60,
+          "set": true
+        }
+      },
+      "flags": [
+        "DEFAULT",
+        "NO_ROOT"
+      ],
+      "maximums": {
+        "nodes": {
+          "infinite": false,
+          "number": 1,
+          "set": true
+        },
+        "time": {
+          "infinite": true,
+          "number": 0,
+          "set": false
+        }
+      },
+      "name": "partition-01",
+      "partition": {
+        "exclusive": "NO",
+        "oversubscribe": "NO",
+        "state": [
+          "UP"
+        ]
+      },
+      "qos": {
+        "allowed": "",
+        "assigned": "",
+        "deny": ""
+      }
+    },
+    {
+      "accounts": {
+        "allowed": "",
+        "deny": ""
+      },
+      "cluster": "",
+      "defaults": {
+        "time": {
+          "infinite": false,
+          "number": 60,
+          "set": true
+        }
+      },
+      "flags": [
+        "NO_ROOT"
+      ],
+      "maximums": {
+        "nodes": {
+          "infinite": false,
+          "number": 1,
+          "set": true
+        },
+        "time": {
+          "infinite": false,
+          "number": 960,
+          "set": true
+        }
+      },
+      "name": "partition-02",
+      "partition": {
+        "exclusive": "NO",
+        "oversubscribe": "NO",
+        "state": [
+          "UP"
+        ]
+      },
+      "qos": {
+        "allowed": "",
+        "assigned": "",
+        "deny": ""
+      }
+    },
+    {
+      "accounts": {
+        "allowed": "",
+        "deny": ""
+      },
+      "cluster": "",
+      "defaults": {
+        "time": {
+          "infinite": false,
+          "number": 60,
+          "set": true
+        }
+      },
+      "flags": [
+        "NO_ROOT"
+      ],
+      "maximums": {
+        "nodes": {
+          "infinite": false,
+          "number": 1,
+          "set": true
+        },
+        "time": {
+          "infinite": true,
+          "number": 0,
+          "set": false
+        }
+      },
+      "name": "partition-03",
+      "partition": {
+        "exclusive": "NO",
+        "oversubscribe": "NO",
+        "state": [
+          "UP"
+        ]
+      },
+      "qos": {
+        "allowed": "",
+        "assigned": "qos-01",
+        "deny": ""
+      }
+    },
+    {
+      "accounts": {
+        "allowed": "",
+        "deny": ""
+      },
+      "cluster": "",
+      "defaults": {
+        "time": {
+          "infinite": false,
+          "number": 60,
+          "set": true
+        }
+      },
+      "flags": [
+        "NO_ROOT"
+      ],
+      "maximums": {
+        "nodes": {
+          "infinite": false,
+          "number": 1,
+          "set": true
+        },
+        "time": {
+          "infinite": true,
+          "number": 0,
+          "set": false
+        }
+      },
+      "name": "partition-04",
+      "partition": {
+        "exclusive": "NO",
+        "oversubscribe": "NO",
+        "state": [
+          "UP"
+        ]
+      },
+      "qos": {
+        "allowed": "",
+        "assigned": "",
+        "deny": ""
+      }
+    },
+    {
+      "accounts": {
+        "allowed": "",
+        "deny": ""
+      },
+      "cluster": "",
+      "defaults": {
+        "time": {
+          "infinite": false,
+          "number": 60,
+          "set": true
+        }
+      },
+      "flags": [],
+      "maximums": {
+        "nodes": {
+          "infinite": false,
+          "number": 1,
+          "set": true
+        },
+        "time": {
+          "infinite": true,
+          "number": 0,
+          "set": false
+        }
+      },
+      "name": "partition-05",
+      "partition": {
+        "exclusive": "NO",
+        "oversubscribe": "NO",
+        "state": [
+          "UP"
+        ]
+      },
+      "qos": {
+        "allowed": "",
+        "assigned": "",
+        "deny": ""
+      }
+    },
+    {
+      "accounts": {
+        "allowed": "",
+        "deny": ""
+      },
+      "cluster": "",
+      "defaults": {
+        "time": {
+          "infinite": false,
+          "number": 30,
+          "set": true
+        }
+      },
+      "flags": [
+        "NO_ROOT"
+      ],
+      "maximums": {
+        "nodes": {
+          "infinite": false,
+          "number": 1,
+          "set": true
+        },
+        "time": {
+          "infinite": false,
+          "number": 60,
+          "set": true
+        }
+      },
+      "name": "partition-06",
+      "partition": {
+        "exclusive": "NO",
+        "oversubscribe": "NO",
+        "state": [
+          "UP"
+        ]
+      },
+      "qos": {
+        "allowed": "",
+        "assigned": "",
+        "deny": ""
+      }
+    },
+    {
+      "accounts": {
+        "allowed": "",
+        "deny": ""
+      },
+      "cluster": "",
+      "defaults": {
+        "time": {
+          "infinite": false,
+          "number": 60,
+          "set": true
+        }
+      },
+      "flags": [
+        "NO_ROOT"
+      ],
+      "maximums": {
+        "nodes": {
+          "infinite": false,
+          "number": 1,
+          "set": true
+        },
+        "time": {
+          "infinite": true,
+          "number": 0,
+          "set": false
+        }
+      },
+      "name": "partition-07",
+      "partition": {
+        "exclusive": "NO",
+        "oversubscribe": "NO",
+        "state": [
+          "UP"
+        ]
+      },
+      "qos": {
+        "allowed": "",
+        "assigned": "",
+        "deny": ""
+      }
+    },
+    {
+      "accounts": {
+        "allowed": "",
+        "deny": ""
+      },
+      "cluster": "",
+      "defaults": {
+        "time": {
+          "infinite": false,
+          "number": 60,
+          "set": true
+        }
+      },
+      "flags": [
+        "NO_ROOT"
+      ],
+      "maximums": {
+        "nodes": {
+          "infinite": false,
+          "number": 1,
+          "set": true
+        },
+        "time": {
+          "infinite": true,
+          "number": 0,
+          "set": false
+        }
+      },
+      "name": "partition-08",
+      "partition": {
+        "exclusive": "NO",
+        "oversubscribe": "NO",
+        "state": [
+          "UP"
+        ]
+      },
+      "qos": {
+        "allowed": "",
+        "assigned": "qos-02",
+        "deny": ""
+      }
+    },
+    {
+      "accounts": {
+        "allowed": "",
+        "deny": ""
+      },
+      "cluster": "",
+      "defaults": {
+        "time": {
+          "infinite": false,
+          "number": 30,
+          "set": true
+        }
+      },
+      "flags": [
+        "NO_ROOT"
+      ],
+      "maximums": {
+        "nodes": {
+          "infinite": false,
+          "number": 1,
+          "set": true
+        },
+        "time": {
+          "infinite": false,
+          "number": 60,
+          "set": true
+        }
+      },
+      "name": "partition-09",
+      "partition": {
+        "exclusive": "NO",
+        "oversubscribe": "NO",
+        "state": [
+          "UP"
+        ]
+      },
+      "qos": {
+        "allowed": "",
+        "assigned": "qos-03",
+        "deny": ""
+      }
+    },
+    {
+      "accounts": {
+        "allowed": "",
+        "deny": ""
+      },
+      "cluster": "",
+      "defaults": {
+        "time": {
+          "infinite": false,
+          "number": 60,
+          "set": true
+        }
+      },
+      "flags": [
+        "NO_ROOT"
+      ],
+      "maximums": {
+        "nodes": {
+          "infinite": false,
+          "number": 1,
+          "set": true
+        },
+        "time": {
+          "infinite": true,
+          "number": 0,
+          "set": false
+        }
+      },
+      "name": "partition-10",
+      "partition": {
+        "exclusive": "NO",
+        "oversubscribe": "NO",
+        "state": [
+          "UP"
+        ]
+      },
+      "qos": {
+        "allowed": "",
+        "assigned": "",
+        "deny": ""
+      }
+    },
+    {
+      "accounts": {
+        "allowed": "",
+        "deny": ""
+      },
+      "cluster": "",
+      "defaults": {
+        "time": {
+          "infinite": false,
+          "number": 60,
+          "set": true
+        }
+      },
+      "flags": [
+        "NO_ROOT"
+      ],
+      "maximums": {
+        "nodes": {
+          "infinite": false,
+          "number": 1,
+          "set": true
+        },
+        "time": {
+          "infinite": true,
+          "number": 0,
+          "set": false
+        }
+      },
+      "name": "partition-11",
+      "partition": {
+        "exclusive": "NO",
+        "oversubscribe": "NO",
+        "state": [
+          "UP"
+        ]
+      },
+      "qos": {
+        "allowed": "",
+        "assigned": "",
+        "deny": ""
+      }
+    }
+  ],
+  "warnings": []
+}
