@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"slurmtui/internal/plugin"
+	"github.com/underwoo/elzar/internal/plugin"
 )
 
 func loadPlugins(raw any, options *plugin.Options) error {

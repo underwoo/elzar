@@ -2,9 +2,10 @@ package ui
 
 import (
 	"fmt"
-	"slurmtui/internal/registry"
 	"sort"
 	"strings"
+
+	"github.com/underwoo/elzar/internal/registry"
 )
 
 // tableLayout returns render-only column indices. Configured columns remain

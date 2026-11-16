@@ -10,10 +10,10 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 
-	"slurmtui/internal/config"
-	"slurmtui/internal/model"
-	"slurmtui/internal/registry"
-	"slurmtui/internal/slurm"
+	"github.com/underwoo/elzar/internal/config"
+	"github.com/underwoo/elzar/internal/model"
+	"github.com/underwoo/elzar/internal/registry"
+	"github.com/underwoo/elzar/internal/slurm"
 )
 
 type accountsState struct {
@@ -465,7 +465,7 @@ func (a *App) clusterStatus() string {
 }
 func (a *App) renderAccounts(width int) string {
 	var out strings.Builder
-	fmt.Fprintln(&out, titleStyle.Render("Slurm TUI")+"  "+mutedStyle.Render("all accounts"))
+	fmt.Fprintln(&out, titleStyle.Render("elzar")+"  "+mutedStyle.Render("all accounts"))
 	fmt.Fprintln(&out, a.tabLine())
 	cols := a.accountColumns()
 	layout := make([]registry.Column, len(cols))

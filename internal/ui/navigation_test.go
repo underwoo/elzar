@@ -8,9 +8,9 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 
-	"slurmtui/internal/config"
-	"slurmtui/internal/model"
-	"slurmtui/internal/registry"
+	"github.com/underwoo/elzar/internal/config"
+	"github.com/underwoo/elzar/internal/model"
+	"github.com/underwoo/elzar/internal/registry"
 )
 
 func navigationApp(options Options, count int) *App {

@@ -13,8 +13,8 @@ import (
 
 	"github.com/BurntSushi/toml"
 
-	"slurmtui/internal/plugin"
-	"slurmtui/internal/slurm"
+	"github.com/underwoo/elzar/internal/plugin"
+	"github.com/underwoo/elzar/internal/slurm"
 )
 
 const (
@@ -34,14 +34,17 @@ type Settings struct {
 	AccountRefreshInterval time.Duration
 	TabPrefix              string
 	Path                   string
+	LegacyPath             string
+	Notice                 string
 }
 
 func Defaults() Settings {
 	return Settings{Plugins: plugin.DefaultOptions(), RefreshInterval: DefaultRefreshInterval, RecentWindow: DefaultRecentWindow, DefaultScope: slurm.ScopeMe, AccountRefreshInterval: 5 * time.Minute, TabPrefix: "ctrl+t"}
 }
 
-// Load reads XDG_CONFIG_HOME/slurmtui/config.toml, falling back to the
-// platform user config directory. A missing file keeps the built-in defaults.
+// Load reads XDG_CONFIG_HOME/elzar/config.toml, falling back to the legacy
+// slurmtui path and then the platform user config directory. A missing file
+// keeps the built-in defaults.
 func Load() (Settings, error) {
 	path, err := ConfigPath()
 	if err != nil {
@@ -53,6 +56,14 @@ func Load() (Settings, error) {
 }
 
 func ConfigPath() (string, error) {
+	base, err := configBaseDir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(base, "elzar", "config.toml"), nil
+}
+
+func configBaseDir() (string, error) {
 	base := os.Getenv("XDG_CONFIG_HOME")
 	if base == "" {
 		var err error
@@ -61,22 +72,51 @@ func ConfigPath() (string, error) {
 			return "", fmt.Errorf("find user config directory: %w", err)
 		}
 	}
-	return filepath.Join(base, "slurmtui", "config.toml"), nil
+	return base, nil
+}
+
+func LegacyPathFor(path string) (string, bool) {
+	if filepath.Base(path) != "config.toml" {
+		return "", false
+	}
+	dir := filepath.Dir(path)
+	if filepath.Base(dir) != "elzar" {
+		return "", false
+	}
+	return filepath.Join(filepath.Dir(dir), "slurmtui", "config.toml"), true
+}
+
+func LegacyNotice(legacyPath, newPath string) string {
+	return fmt.Sprintf("using legacy config %s; move it to %s/", legacyPath, filepath.Dir(newPath))
 }
 
 func LoadFile(path string) (Settings, error) {
 	settings := Defaults()
+	readPath := path
 	data, err := os.ReadFile(path)
 	if errors.Is(err, os.ErrNotExist) {
-		return settings, nil
-	}
-	if err != nil {
+		if legacyPath, ok := LegacyPathFor(path); ok {
+			legacyData, legacyErr := os.ReadFile(legacyPath)
+			if legacyErr == nil {
+				data = legacyData
+				readPath = legacyPath
+				settings.LegacyPath = legacyPath
+				settings.Notice = LegacyNotice(legacyPath, path)
+			} else if !errors.Is(legacyErr, os.ErrNotExist) {
+				return Settings{}, fmt.Errorf("open config %s: %w", legacyPath, legacyErr)
+			} else {
+				return settings, nil
+			}
+		} else {
+			return settings, nil
+		}
+	} else if err != nil {
 		return Settings{}, fmt.Errorf("open config %s: %w", path, err)
 	}
 	var document map[string]any
 	_, err = toml.Decode(string(data), &document)
 	if err != nil {
-		return Settings{}, fmt.Errorf("decode config %s: %w", path, err)
+		return Settings{}, fmt.Errorf("decode config %s: %w", readPath, err)
 	}
 	for key, target := range map[string]*time.Duration{"refresh_interval": &settings.RefreshInterval, "recent_window": &settings.RecentWindow} {
 		value, exists := document[key]
@@ -85,24 +125,24 @@ func LoadFile(path string) (Settings, error) {
 		}
 		text, ok := value.(string)
 		if !ok {
-			return Settings{}, fmt.Errorf("config %s:%d: expected quoted string", path, keyLine(data, key))
+			return Settings{}, fmt.Errorf("config %s:%d: expected quoted string", readPath, keyLine(data, key))
 		}
 		duration, parseErr := time.ParseDuration(text)
 		if parseErr != nil || duration <= 0 {
-			return Settings{}, fmt.Errorf("config %s:%d: %s must be a positive duration", path, keyLine(data, key), key)
+			return Settings{}, fmt.Errorf("config %s:%d: %s must be a positive duration", readPath, keyLine(data, key), key)
 		}
 		*target = duration
 	}
 	if value, exists := document["default_scope"]; exists {
 		scope, ok := value.(string)
 		if !ok {
-			return Settings{}, fmt.Errorf("config %s:%d: expected quoted string", path, keyLine(data, "default_scope"))
+			return Settings{}, fmt.Errorf("config %s:%d: expected quoted string", readPath, keyLine(data, "default_scope"))
 		}
 		switch slurm.Scope(scope) {
 		case slurm.ScopeMe, slurm.ScopeAll:
 			settings.DefaultScope = slurm.Scope(scope)
 		default:
-			return Settings{}, fmt.Errorf("config %s:%d: default_scope must be %q or %q", path, keyLine(data, "default_scope"), slurm.ScopeMe, slurm.ScopeAll)
+			return Settings{}, fmt.Errorf("config %s:%d: default_scope must be %q or %q", readPath, keyLine(data, "default_scope"), slurm.ScopeMe, slurm.ScopeAll)
 		}
 	}
 	if rawColumns, ok := document["columns"].(map[string]any); ok {
@@ -146,7 +186,7 @@ func LoadFile(path string) (Settings, error) {
 		if value, exists := rawKeys["tab_prefix"]; exists {
 			prefix, ok := value.(string)
 			if !ok || !validKeyString(prefix) {
-				return Settings{}, fmt.Errorf("config %s:%d: keys.tab_prefix must be a valid Bubble Tea key string", path, keyLine(data, "tab_prefix"))
+				return Settings{}, fmt.Errorf("config %s:%d: keys.tab_prefix must be a valid Bubble Tea key string", readPath, keyLine(data, "tab_prefix"))
 			}
 			if prefix == "space" {
 				prefix = " "
@@ -156,7 +196,7 @@ func LoadFile(path string) (Settings, error) {
 	}
 	if raw, exists := document["plugins"]; exists {
 		if err := loadPlugins(raw, &settings.Plugins); err != nil {
-			return Settings{}, fmt.Errorf("config %s: %w", path, err)
+			return Settings{}, fmt.Errorf("config %s: %w", readPath, err)
 		}
 	}
 	return settings, nil
@@ -231,6 +271,20 @@ func SaveColumns(path string, queue, recent []string, accountColumns ...[]string
 	original, err := os.ReadFile(path)
 	if errors.Is(err, os.ErrNotExist) {
 		original = nil
+		if legacyPath, ok := LegacyPathFor(path); ok {
+			if legacyBytes, legacyErr := os.ReadFile(legacyPath); legacyErr == nil {
+				var legacyDoc map[string]any
+				if _, err := toml.Decode(string(legacyBytes), &legacyDoc); err != nil {
+					return fmt.Errorf("decode config %s: %w", legacyPath, err)
+				}
+				if err := copyFileExact(legacyPath, path, legacyBytes); err != nil {
+					return err
+				}
+				original = legacyBytes
+			} else if !errors.Is(legacyErr, os.ErrNotExist) {
+				return fmt.Errorf("read config %s: %w", legacyPath, legacyErr)
+			}
+		}
 	} else if err != nil {
 		return fmt.Errorf("read config %s: %w", path, err)
 	}
@@ -290,6 +344,20 @@ func SaveColumns(path string, queue, recent []string, accountColumns ...[]string
 	}
 	if err := os.Rename(tempPath, path); err != nil {
 		return fmt.Errorf("replace config: %w", err)
+	}
+	return nil
+}
+
+func copyFileExact(src, dst string, data []byte) error {
+	if err := os.MkdirAll(filepath.Dir(dst), 0o700); err != nil {
+		return fmt.Errorf("create config directory: %w", err)
+	}
+	mode := os.FileMode(0o600)
+	if info, err := os.Stat(src); err == nil {
+		mode = info.Mode().Perm()
+	}
+	if err := os.WriteFile(dst, data, mode); err != nil {
+		return fmt.Errorf("copy legacy config: %w", err)
 	}
 	return nil
 }

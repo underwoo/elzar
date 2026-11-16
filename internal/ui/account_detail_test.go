@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"slurmtui/internal/model"
-	"slurmtui/internal/registry"
+	"github.com/underwoo/elzar/internal/model"
+	"github.com/underwoo/elzar/internal/registry"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"

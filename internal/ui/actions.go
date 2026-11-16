@@ -9,7 +9,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 
-	"slurmtui/internal/model"
+	"github.com/underwoo/elzar/internal/model"
 )
 
 type jobAction uint8

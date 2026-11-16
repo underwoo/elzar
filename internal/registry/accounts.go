@@ -3,8 +3,9 @@ package registry
 import (
 	"cmp"
 	"fmt"
-	"slurmtui/internal/model"
 	"strings"
+
+	"github.com/underwoo/elzar/internal/model"
 )
 
 type AccountColumn struct {

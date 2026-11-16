@@ -2,7 +2,9 @@ package ui
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"os"
 	"regexp"
 	"sort"
 	"strings"
@@ -14,10 +16,10 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
 
-	"slurmtui/internal/config"
-	"slurmtui/internal/model"
-	"slurmtui/internal/registry"
-	"slurmtui/internal/slurm"
+	"github.com/underwoo/elzar/internal/config"
+	"github.com/underwoo/elzar/internal/model"
+	"github.com/underwoo/elzar/internal/registry"
+	"github.com/underwoo/elzar/internal/slurm"
 )
 
 const minTerminalWidth = 20
@@ -29,6 +31,7 @@ type Options struct {
 	Clock                  func() time.Time
 	Location               *time.Location
 	ConfigPath             string
+	ConfigNotice           string
 	QueueColumns           []string
 	RecentColumns          []string
 	TabPrefix              string
@@ -137,6 +140,19 @@ func NewWithOptions(runner slurm.Runner, options Options) *App {
 	input.CharLimit = 256
 	app := &App{runner: runner, options: options, clock: clock, tab: registry.QueueTab, scope: options.Scope, filterInput: input}
 	app.accounts.clusters = clusterSelection(options.AccountClusters)
+	notice := options.ConfigNotice
+	if notice == "" && options.ConfigPath != "" {
+		if _, err := os.Stat(options.ConfigPath); errors.Is(err, os.ErrNotExist) {
+			if legacyPath, ok := config.LegacyPathFor(options.ConfigPath); ok {
+				if _, err := os.Stat(legacyPath); err == nil {
+					notice = config.LegacyNotice(legacyPath, options.ConfigPath)
+				}
+			}
+		}
+	}
+	if notice != "" {
+		app.addMessage(notice, messageInfo)
+	}
 	app.refreshColumnWarnings()
 	return app
 }
@@ -691,7 +707,7 @@ func sortJobs(jobs []model.Job, columns []registry.Column, state columnSort) {
 }
 
 func (a *App) renderPicker(out *strings.Builder, width int) {
-	fmt.Fprintf(out, "%s  %s\n", titleStyle.Render("Slurm TUI"), mutedStyle.Render("scope: "+string(a.scope)))
+	fmt.Fprintf(out, "%s  %s\n", titleStyle.Render("elzar"), mutedStyle.Render("scope: "+string(a.scope)))
 	fmt.Fprintln(out, a.tabLine())
 	fmt.Fprintln(out, a.picker.View(width, a.height))
 	if a.tab == registry.AccountsTab && a.accounts.picker == "clusters" {
@@ -921,7 +937,7 @@ func (a *App) View() string {
 		return a.renderAccounts(width)
 	}
 	tabName, jobs, cursor, loading, sourceErr := a.activeData()
-	fmt.Fprintf(&out, "%s  %s\n", titleStyle.Render("Slurm TUI"), mutedStyle.Render("scope: "+string(a.scope)))
+	fmt.Fprintf(&out, "%s  %s\n", titleStyle.Render("elzar"), mutedStyle.Render("scope: "+string(a.scope)))
 	fmt.Fprintln(&out, a.tabLine())
 
 	columns := a.displayedColumns()

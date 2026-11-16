@@ -5,8 +5,8 @@ import (
 	"time"
 	"unicode"
 
-	"slurmtui/internal/model"
-	"slurmtui/internal/registry"
+	"github.com/underwoo/elzar/internal/model"
+	"github.com/underwoo/elzar/internal/registry"
 )
 
 func compileFilter(pattern string) (*regexp.Regexp, error) {

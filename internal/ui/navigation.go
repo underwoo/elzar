@@ -7,7 +7,7 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 
-	"slurmtui/internal/registry"
+	"github.com/underwoo/elzar/internal/registry"
 )
 
 const maxNavigationCount = 1_000_000

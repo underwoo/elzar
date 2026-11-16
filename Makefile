@@ -1,11 +1,11 @@
-BINARY ?= slurmtui
+BINARY ?= elzar
 VERSION ?= dev
 LDFLAGS = -s -w -X main.version=$(VERSION)
 
 .PHONY: build test lint clean
 
 build:
-	go build -ldflags "$(LDFLAGS)" -o $(BINARY) ./cmd/slurmtui
+	go build -ldflags "$(LDFLAGS)" -o $(BINARY) ./cmd/elzar
 
 test:
 	go test -race ./...

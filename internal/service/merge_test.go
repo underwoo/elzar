@@ -3,7 +3,7 @@ package service
 import (
 	"testing"
 
-	"slurmtui/internal/model"
+	"github.com/underwoo/elzar/internal/model"
 )
 
 func TestMergeDeduplicatesAndQueueWins(t *testing.T) {

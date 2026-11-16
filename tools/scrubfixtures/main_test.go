@@ -80,7 +80,7 @@ func TestScrubberReplacesSensitiveValuesConsistently(t *testing.T) {
 	if job["account"] == "private-account" || job["user_id"] == json.Number("7312") || job["group_id"] == json.Number("812") {
 		t.Fatal("account or numeric identity remained in scrubbed output")
 	}
-	if job["current_working_directory"] != "/tmp/slurmtui-fixture/path-01" || job["standard_output"] == "/private/home/private-user/run/output.txt" {
+	if job["current_working_directory"] != "/tmp/elzar-fixture/path-01" || job["standard_output"] == "/private/home/private-user/run/output.txt" {
 		t.Fatal("path fields were not replaced")
 	}
 	if job["submit_line"] != "./job.sh" || job["script"] != "#!/bin/sh\n# scrubbed job script\n" {

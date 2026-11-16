@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strings"
 
-	"slurmtui/internal/model"
+	"github.com/underwoo/elzar/internal/model"
 )
 
 type ClusterError struct {
@@ -57,7 +57,7 @@ func (e accountEnvelope) validate() error {
 		return fmt.Errorf("missing meta.slurm.version")
 	}
 	if !v.Supported() {
-		return fmt.Errorf("slurm %s is unsupported; slurmtui requires Slurm 25.11 or newer", v)
+		return fmt.Errorf("slurm %s is unsupported; elzar requires Slurm 25.11 or newer", v)
 	}
 	if len(e.Errors) != 0 {
 		return fmt.Errorf("slurm reported errors: %s", joinMessages(e.Errors))

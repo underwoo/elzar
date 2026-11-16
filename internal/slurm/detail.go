@@ -9,7 +9,7 @@ import (
 	"io"
 	"strings"
 
-	"slurmtui/internal/model"
+	"github.com/underwoo/elzar/internal/model"
 )
 
 // GetJobDetail fetches detail from the source appropriate for the selected

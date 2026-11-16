@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"slurmtui/internal/model"
+	"github.com/underwoo/elzar/internal/model"
 )
 
 type Tab string

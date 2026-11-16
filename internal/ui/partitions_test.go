@@ -2,10 +2,11 @@ package ui
 
 import (
 	"errors"
-	"slurmtui/internal/model"
-	"slurmtui/internal/slurm"
 	"strings"
 	"testing"
+
+	"github.com/underwoo/elzar/internal/model"
+	"github.com/underwoo/elzar/internal/slurm"
 
 	tea "github.com/charmbracelet/bubbletea"
 )

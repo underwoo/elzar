@@ -4,7 +4,7 @@ CLUSTER: cluster-04
   "meta": {
     "client": {
       "group": "group-01",
-      "source": "/tmp/slurmtui-fixture/path-01",
+      "source": "/tmp/elzar-fixture/path-01",
       "user": "user-01"
     },
     "command": [
@@ -388,7 +388,7 @@ CLUSTER: cluster-05
   "meta": {
     "client": {
       "group": "group-01",
-      "source": "/tmp/slurmtui-fixture/path-01",
+      "source": "/tmp/elzar-fixture/path-01",
       "user": "user-01"
     },
     "command": [
@@ -858,7 +858,7 @@ CLUSTER: cluster-06
   "meta": {
     "client": {
       "group": "group-01",
-      "source": "/tmp/slurmtui-fixture/path-01",
+      "source": "/tmp/elzar-fixture/path-01",
       "user": "user-01"
     },
     "command": [
@@ -1242,7 +1242,7 @@ CLUSTER: cluster-01
   "meta": {
     "client": {
       "group": "group-01",
-      "source": "/tmp/slurmtui-fixture/path-01",
+      "source": "/tmp/elzar-fixture/path-01",
       "user": "user-01"
     },
     "command": [

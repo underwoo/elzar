@@ -5,8 +5,9 @@ import (
 	"errors"
 	"os"
 	"reflect"
-	"slurmtui/internal/model"
 	"testing"
+
+	"github.com/underwoo/elzar/internal/model"
 )
 
 func TestPartitionFixtures(t *testing.T) {

@@ -3,7 +3,7 @@ package registry
 import (
 	"time"
 
-	"slurmtui/internal/model"
+	"github.com/underwoo/elzar/internal/model"
 )
 
 func lessForColumn(id string) func(model.Job, model.Job) bool {

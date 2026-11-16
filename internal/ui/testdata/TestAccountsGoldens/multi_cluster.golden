@@ -1,4 +1,4 @@
-Slurm TUI  all accounts
+elzar  all accounts
 Queue  Recent  [Accounts]
 Cluster      Account         Parent          You      RawShares    NormShares   RawUsage       EffectvUsage FairShare    Level        QOS             
 ──────────── ─────────────── ─────────────── ──────── ──────────── ──────────── ────────────── ──────────── ──────────── ──────────── ────────────────

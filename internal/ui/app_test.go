@@ -17,10 +17,10 @@ import (
 	"github.com/charmbracelet/x/exp/teatest"
 	"github.com/muesli/termenv"
 
-	"slurmtui/internal/config"
-	"slurmtui/internal/model"
-	"slurmtui/internal/registry"
-	"slurmtui/internal/slurm"
+	"github.com/underwoo/elzar/internal/config"
+	"github.com/underwoo/elzar/internal/model"
+	"github.com/underwoo/elzar/internal/registry"
+	"github.com/underwoo/elzar/internal/slurm"
 )
 
 func TestQueueViewGolden(t *testing.T) {
@@ -352,7 +352,7 @@ func TestSortIsPerTabAndUsesJobIDForTies(t *testing.T) {
 }
 
 func TestColumnPickerTogglesReordersAndSaves(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "slurmtui", "config.toml")
+	path := filepath.Join(t.TempDir(), "elzar", "config.toml")
 	app := NewWithOptions(nil, Options{ConfigPath: path})
 	app.height = 24
 	app.queueJobs = []model.Job{{ID: 1}}
@@ -428,7 +428,7 @@ func TestColumnPickerReopensInConfiguredOrder(t *testing.T) {
 }
 
 func TestHidingColumnRecomputesActiveFilter(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "slurmtui", "config.toml")
+	path := filepath.Join(t.TempDir(), "elzar", "config.toml")
 	app := NewWithOptions(nil, Options{ConfigPath: path})
 	app.queueJobs = []model.Job{{ID: 1, Name: "secret-job"}, {ID: 2, Name: "ordinary"}}
 	app.applyFilter("secret")
@@ -454,6 +454,54 @@ func TestColumnPickerEscapeCancelsAndUnknownIDsWarn(t *testing.T) {
 	app.Update(tea.KeyMsg{Type: tea.KeyEsc})
 	if app.mode != modeList || app.options.QueueColumns[1] != "unknown" {
 		t.Fatalf("escape changed saved selection: mode=%v columns=%v", app.mode, app.options.QueueColumns)
+	}
+}
+
+func TestLegacyConfigLogsInfoAndCopiesOnFirstColumnSave(t *testing.T) {
+	base := t.TempDir()
+	t.Setenv("XDG_CONFIG_HOME", base)
+	legacyPath := filepath.Join(base, "slurmtui", "config.toml")
+	newPath := filepath.Join(base, "elzar", "config.toml")
+	if err := os.MkdirAll(filepath.Dir(legacyPath), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	legacyContent := "# keep comment\nrefresh_interval = \"25s\"\n\n[columns]\nqueue = [\"job_id\", \"name\"]\nrecent = [\"end\"]\n"
+	if err := os.WriteFile(legacyPath, []byte(legacyContent), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	settings, err := config.Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	app := NewWithOptions(nil, Options{
+		ConfigPath:    settings.Path,
+		ConfigNotice:  settings.Notice,
+		QueueColumns:  settings.QueueColumns,
+		RecentColumns: settings.RecentColumns,
+	})
+	wantNotice := "using legacy config " + legacyPath + "; move it to " + filepath.Dir(newPath) + "/"
+	if len(app.messageLog) != 1 || app.messageLog[0].Level != messageInfo || app.messageLog[0].Text != wantNotice {
+		t.Fatalf("message log = %+v, want info %q", app.messageLog, wantNotice)
+	}
+
+	app.beginColumnPicker()
+	app.Update(tea.KeyMsg{Type: tea.KeySpace}) // uncheck job_id
+	app.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'w'}})
+
+	legacyAfter, err := os.ReadFile(legacyPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(legacyAfter) != legacyContent {
+		t.Fatalf("legacy config was modified:\n%s", legacyAfter)
+	}
+	newAfter, err := os.ReadFile(newPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	wantNew := "# keep comment\nrefresh_interval = \"25s\"\n\n[columns]\nqueue = [\"name\"]\nrecent = [\"end\"]\n"
+	if string(newAfter) != wantNew {
+		t.Fatalf("new config:\n%s\nwant:\n%s", newAfter, wantNew)
 	}
 }
 

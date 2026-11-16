@@ -1,8 +1,9 @@
 package registry
 
 import (
-	"slurmtui/internal/model"
 	"testing"
+
+	"github.com/underwoo/elzar/internal/model"
 )
 
 func TestAccountNumericColumns(t *testing.T) {
