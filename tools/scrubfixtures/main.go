@@ -72,7 +72,11 @@ func scrubFile(inputPath, outputPath string, maxJobs, offset, count int, compact
 		return fmt.Errorf("decode trailing input: %w", err)
 	}
 	cleaner := newScrubber()
-	value = cleaner.cleanRoot(value, maxJobs)
+	if root, ok := value.(map[string]any); ok && root["partitions"] != nil {
+		value = cleaner.cleanAccountRoot(value)
+	} else {
+		value = cleaner.cleanRoot(value, maxJobs)
+	}
 	if omitJobResources {
 		value = withoutJobResources(value)
 	}
@@ -193,10 +197,7 @@ func labelledDocuments(data []byte) ([]labelledDocument, error) {
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", name, err)
 		}
-		// Partition fixtures belong to the later partition-access change.
-		if name != "partitions" {
-			docs = append(docs, labelledDocument{name: name, data: data[:n]})
-		}
+		docs = append(docs, labelledDocument{name: name, data: data[:n]})
 		data = data[n:]
 	}
 	if len(docs) == 0 {
@@ -620,6 +621,49 @@ func (s *scrubber) cleanAccountRoot(value any) any {
 	root, ok := value.(map[string]any)
 	if !ok {
 		return s.cleanRoot(value, 0)
+	}
+	if rows, ok := root["partitions"].([]any); ok {
+		// Whitelist partition fields to omit site topology and free-form data.
+		for i, raw := range rows {
+			row, _ := raw.(map[string]any)
+			clean := map[string]any{}
+			for _, key := range []string{"name", "cluster", "accounts", "qos", "maximums", "defaults", "partition", "flags"} {
+				if v, ok := row[key]; ok {
+					clean[key] = v
+				}
+			}
+			for _, key := range []string{"accounts", "qos"} {
+				values, _ := row[key].(map[string]any)
+				mapped := map[string]any{}
+				kind := "account"
+				if key == "qos" {
+					kind = "qos"
+				}
+				for _, field := range []string{"allowed", "deny", "assigned"} {
+					if text, ok := values[field].(string); ok {
+						parts := strings.Split(text, ",")
+						for j, part := range parts {
+							if part != "ALL" {
+								parts[j] = s.fake(kind, part, kind)
+							}
+						}
+						mapped[field] = strings.Join(parts, ",")
+					}
+				}
+				clean[key] = mapped
+			}
+			for _, key := range []string{"maximums", "defaults"} {
+				values, _ := row[key].(map[string]any)
+				mapped := map[string]any{}
+				for _, field := range []string{"time", "nodes"} {
+					if v, ok := values[field]; ok {
+						mapped[field] = v
+					}
+				}
+				clean[key] = mapped
+			}
+			rows[i] = clean
+		}
 	}
 	if envelope, ok := root["shares"].(map[string]any); ok {
 		rows, _ := envelope["shares"].([]any)

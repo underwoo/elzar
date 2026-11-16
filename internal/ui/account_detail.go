@@ -55,6 +55,10 @@ func accountTRES(items []model.TRES) string {
 }
 
 func (a *App) accountDetailLines() []string {
+	return append(a.accountSummaryLines(), a.accountPartitionLines()...)
+}
+
+func (a *App) accountSummaryLines() []string {
 	row := a.accounts.detailRow
 	shares := map[string]model.Share{}
 	for _, share := range a.accounts.shares {
@@ -133,4 +137,43 @@ func (a *App) renderAccountDetail(out *strings.Builder, width int) {
 		fmt.Fprintln(out, truncateLine(line, width))
 	}
 	fmt.Fprint(out, mutedStyle.Render(fitFooter(width, []string{"esc back", "↑/↓ scroll", "space page", "G bottom", "1G top", "tab views", "q quit"})))
+}
+
+func (a *App) accountPartitionLines() []string {
+	row := a.accounts.detailRow
+	lines := []string{"", titleStyle.Render("Partition access (account/QOS)")}
+	if row.You == "" {
+		return append(lines, "No user association; partition access unavailable.")
+	}
+	if a.accounts.partitionErrors[row.Cluster] != nil {
+		return append(lines, "Partition query failed; see "+a.statusMessageHint()+".")
+	}
+	if !a.accounts.partitionClusters[row.Cluster] {
+		return append(lines, "Partition data unavailable.")
+	}
+	found := false
+	for _, p := range a.accounts.partitions {
+		allowed := false
+		for _, assoc := range a.accounts.associations {
+			if assoc.Cluster == row.Cluster && assoc.Account == row.Account && p.Allows(assoc) {
+				allowed = true
+				break
+			}
+		}
+		if !allowed {
+			continue
+		}
+		found = true
+		state := strings.Join(p.State, ",")
+		if state == "" {
+			state = "—"
+		}
+		lines = append(lines, p.Name+"  State: "+state,
+			"  MaxTime (minutes): "+p.MaxTime.String()+"  DefaultTime (minutes): "+p.DefaultTime.String(),
+			"  MaxNodes: "+p.MaxNodes.String())
+	}
+	if !found {
+		lines = append(lines, "No partitions match this association's account/QOS.")
+	}
+	return lines
 }

@@ -12,7 +12,7 @@ import (
 func TestLabelledAccountDocuments(t *testing.T) {
 	data := []byte("sshare --json -l -U\n{\n\"shares\": {\n\"shares\": []\n}\n}\nsacctmgr --json show assoc user=private\n{\"associations\":[]}\nsacctmgr --json show qos\n{\"qos\":[]}\nscontrol show partition --json\n{\"partitions\":[]}")
 	docs, err := labelledDocuments(data)
-	if err != nil || len(docs) != 3 {
+	if err != nil || len(docs) != 4 {
 		t.Fatalf("docs=%v err=%v", docs, err)
 	}
 	for _, d := range docs {
