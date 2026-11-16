@@ -395,15 +395,22 @@ func (a *App) acceptPluginDetailResult(msg pluginDetailResult) {
 }
 
 func (a *App) pluginKeyReserved(value string) bool {
-	if value == a.options.TabPrefix || value == "M" {
-		return true
+	return ReservedPluginKeys(a.options.TabPrefix)[value]
+}
+
+// ReservedPluginKeys returns the set of built-in key bindings (including the
+// configured tab prefix and cluster selector) that command plugins cannot use.
+func ReservedPluginKeys(tabPrefix string) map[string]bool {
+	if tabPrefix == "" {
+		tabPrefix = "ctrl+t"
 	}
+	reserved := map[string]bool{tabPrefix: true, "M": true}
 	for _, binding := range allAppBindings() {
-		if slices.Contains(binding.Keys(), value) {
-			return true
+		for _, k := range binding.Keys() {
+			reserved[k] = true
 		}
 	}
-	return false
+	return reserved
 }
 
 func allAppBindings() []key.Binding {

@@ -25,3 +25,11 @@ jobs:
       - run: go vet ./...
       - run: go test -race ./...
       - run: make build
+      - name: Check example plugins
+        run: |
+          tmp="$(mktemp -d)"
+          mkdir -p "$tmp/elzar/plugins"
+          cp examples/plugins/* "$tmp/elzar/plugins/"
+          chmod 0700 "$tmp/elzar/plugins/job-info.sh"
+          chmod 0600 "$tmp/elzar/plugins/"*.yaml
+          XDG_CONFIG_HOME="$tmp" ./elzar plugins

@@ -1,0 +1,5 @@
+name: job-info
+description: Example exec plugin adding a WorkDir column and an Environment detail section (requires POSIX sh and jq)
+type: exec
+command: ./job-info.sh
+provides: [columns, detail]
