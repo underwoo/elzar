@@ -121,7 +121,7 @@ func TestAccountDetailTerminalWorkflow(t *testing.T) {
 	a := detailAccountTestApp()
 	tm := teatest.NewTestModel(t, a, teatest.WithInitialTermSize(100, 16))
 	t.Cleanup(func() { _ = tm.Quit() })
-	teatest.WaitFor(t, tm.Output(), func(out []byte) bool { return strings.Contains(string(out), "account-0") }, teatest.WithDuration(time.Second))
+	teatest.WaitFor(t, tm.Output(), func(out []byte) bool { return strings.Contains(string(out), "Accounts: 6 of 6") }, teatest.WithDuration(time.Second))
 	tm.Send(tea.KeyMsg{Type: tea.KeyEnter})
 	teatest.WaitFor(t, tm.Output(), func(out []byte) bool { return strings.Contains(string(out), "Account detail: c1/account-0") }, teatest.WithDuration(time.Second))
 	tm.Type("G")
