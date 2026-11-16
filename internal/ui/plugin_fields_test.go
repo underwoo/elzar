@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"slurmtui/internal/slurm"
+	"github.com/underwoo/elzar/internal/slurm"
 )
 
 type pluginFixtureRunner []byte
@@ -52,6 +52,24 @@ func TestPluginFieldsFromSlurmFixtures(t *testing.T) {
 			}
 			if fields["StdOut"] != expanded {
 				t.Fatalf("StdOut=%q want expanded %q", fields["StdOut"], expanded)
+			}
+			if filename != "squeue-02.json" {
+				detail, err := slurm.GetJobDetail(context.Background(), runner, job, true)
+				if err != nil {
+					t.Fatal(err)
+				}
+				app := NewWithOptions(nil, Options{})
+				app.mode = modeDetail
+				app.detail = &detail
+				detailFields, err := app.pluginFields()
+				if err != nil {
+					t.Fatal(err)
+				}
+				for _, name := range []string{"StdOut", "StdErr", "WorkDir", "Comment"} {
+					if detailFields[name] != fields[name] {
+						t.Errorf("%s differs in list (%q) and detail (%q)", name, fields[name], detailFields[name])
+					}
+				}
 			}
 			if filename == "squeue-02.json" && fields["Comment"] != "comment-01" {
 				t.Fatalf("Comment=%q", fields["Comment"])

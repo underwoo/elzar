@@ -245,3 +245,36 @@ func TestFirstNode(t *testing.T) {
 		}
 	}
 }
+
+func TestAccountDetailPluginScope(t *testing.T) {
+	runner := &pluginTestRunner{}
+	app := NewWithOptions(runner, Options{})
+	app.tab = registry.AccountsTab
+	app.mode = modeDetail
+	app.accounts.detailRow = model.AccountRow{Share: model.Share{Cluster: "cluster", Account: "account", Parent: "parent"}}
+	account := commandPlugin()
+	account.Scopes = []string{"accounts"}
+	account.Args = []string{"{{.Account}}"}
+	job := commandPlugin()
+	job.Name = "job-only"
+	job.Key = "o"
+	job.Scopes = []string{"detail"}
+	job.Args = []string{"{{.StdOut}}"}
+	app.installPlugins([]plugin.Plugin{account, job})
+	if cmd := pluginKey(app, "o"); cmd != nil || app.actionStatus != "" {
+		t.Fatal("job detail plugin dispatched in Account Detail")
+	}
+	groups := app.helpGroups()
+	plugins := groups[len(groups)-1]
+	if plugins.title != "Plugins" || len(plugins.bindings) != 1 || plugins.bindings[0].Help().Key != "z" {
+		t.Fatalf("Account Detail help=%+v", plugins)
+	}
+	cmd := pluginKey(app, "z")
+	if cmd == nil {
+		t.Fatal("account plugin unavailable in Account Detail")
+	}
+	app.Update(cmd())
+	if len(runner.calls) != 1 || !reflect.DeepEqual(runner.calls[0].args, []string{"account"}) {
+		t.Fatalf("calls=%+v", runner.calls)
+	}
+}

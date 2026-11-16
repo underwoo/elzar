@@ -86,14 +86,14 @@ func allAppBindings() []key.Binding {
 }
 
 func (a *App) pluginScope() string {
-	if a.mode == modeDetail {
-		return "detail"
-	}
-	if a.mode != modeList {
+	if a.mode != modeList && a.mode != modeDetail {
 		return ""
 	}
 	if a.tab == registry.AccountsTab {
 		return "accounts"
+	}
+	if a.mode == modeDetail {
+		return "detail"
 	}
 	if a.tab == registry.RecentTab {
 		return "recent"

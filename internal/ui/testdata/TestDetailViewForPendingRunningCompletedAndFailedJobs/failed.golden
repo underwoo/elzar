@@ -35,7 +35,7 @@ Exit: code 1
 Paths
 Working directory: /tmp/elzar-fixture/path-04
 Command: ./job.sh
-Stdout: /tmp/elzar-fixture/path-02
+Stdout: /tmp/elzar-fixture/path-03
 Stderr: —
 Stdin: /tmp/elzar-fixture/path-01
 
