@@ -9,7 +9,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
 
-	"slurmtui/internal/registry"
+	"github.com/underwoo/elzar/internal/registry"
 )
 
 type helpGroup struct {

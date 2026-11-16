@@ -4,9 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"slurmtui/internal/model"
 	"sort"
 	"strings"
+
+	"github.com/underwoo/elzar/internal/model"
 )
 
 type PartitionsResult struct {

@@ -82,7 +82,7 @@ func TestListJobsAllScopeOmitsMe(t *testing.T) {
 }
 
 func TestExecRunnerMissingBinary(t *testing.T) {
-	_, err := (ExecRunner{}).Run(context.Background(), "slurmtui-test-command-does-not-exist")
+	_, err := (ExecRunner{}).Run(context.Background(), "elzar-test-command-does-not-exist")
 	if err == nil {
 		t.Fatal("expected missing-binary error")
 	}

@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"slurmtui/internal/model"
+	"github.com/underwoo/elzar/internal/model"
 )
 
 // DetailSection is the extension seam for job detail panels.

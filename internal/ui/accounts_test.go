@@ -15,10 +15,10 @@ import (
 	"github.com/charmbracelet/x/exp/teatest"
 	"github.com/muesli/termenv"
 
-	"slurmtui/internal/config"
-	"slurmtui/internal/model"
-	"slurmtui/internal/registry"
-	"slurmtui/internal/slurm"
+	"github.com/underwoo/elzar/internal/config"
+	"github.com/underwoo/elzar/internal/model"
+	"github.com/underwoo/elzar/internal/registry"
+	"github.com/underwoo/elzar/internal/slurm"
 )
 
 func accountTestApp() *App {

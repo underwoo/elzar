@@ -26,11 +26,11 @@ Time limit: 480
 Exit: code 0
 
 Paths
-Working directory: /tmp/slurmtui-fixture/path-09
+Working directory: /tmp/elzar-fixture/path-09
 Command: ./job.sh
-Stdout: /tmp/slurmtui-fixture/path-10
+Stdout: /tmp/elzar-fixture/path-10
 Stderr: —
-Stdin: /tmp/slurmtui-fixture/path-03
+Stdin: /tmp/elzar-fixture/path-03
 
 Reason / Dependency
 Reason: None

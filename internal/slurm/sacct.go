@@ -9,7 +9,7 @@ import (
 	"io"
 	"time"
 
-	"slurmtui/internal/model"
+	"github.com/underwoo/elzar/internal/model"
 )
 
 // ListRecent loads terminal jobs that have been active within window. Active
@@ -50,7 +50,7 @@ func ListRecent(ctx context.Context, runner Runner, scope Scope, window time.Dur
 		return ListResult{}, errors.New("sacct JSON is missing meta.slurm.version")
 	}
 	if !version.Supported() {
-		return ListResult{}, fmt.Errorf("slurm %s is unsupported; slurmtui requires Slurm 25.11 or newer", version)
+		return ListResult{}, fmt.Errorf("slurm %s is unsupported; elzar requires Slurm 25.11 or newer", version)
 	}
 	if len(response.Errors) > 0 {
 		return ListResult{}, fmt.Errorf("sacct reported errors: %s", joinMessages(response.Errors))

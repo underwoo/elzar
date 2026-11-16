@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	"slurmtui/internal/model"
+	"github.com/underwoo/elzar/internal/model"
 )
 
 type Scope string
@@ -169,7 +169,7 @@ func ListJobs(ctx context.Context, runner Runner, scope Scope) (ListResult, erro
 		return ListResult{}, errors.New("squeue JSON is missing meta.slurm.version")
 	}
 	if !version.Supported() {
-		return ListResult{}, fmt.Errorf("slurm %s is unsupported; slurmtui requires Slurm 25.11 or newer", version)
+		return ListResult{}, fmt.Errorf("slurm %s is unsupported; elzar requires Slurm 25.11 or newer", version)
 	}
 	if len(response.Errors) > 0 {
 		return ListResult{}, fmt.Errorf("squeue reported errors: %s", joinMessages(response.Errors))

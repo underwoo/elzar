@@ -8,9 +8,9 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
-	"slurmtui/internal/config"
-	"slurmtui/internal/slurm"
-	"slurmtui/internal/ui"
+	"github.com/underwoo/elzar/internal/config"
+	"github.com/underwoo/elzar/internal/slurm"
+	"github.com/underwoo/elzar/internal/ui"
 )
 
 var version = "dev"
@@ -23,18 +23,18 @@ func main() {
 	flag.Parse()
 
 	if *showVersion {
-		fmt.Println(version)
+		fmt.Println("elzar", version)
 		return
 	}
 
 	settings, err := config.Load()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "slurmtui:", err)
+		fmt.Fprintln(os.Stderr, "elzar:", err)
 		os.Exit(2)
 	}
 	settings, err = config.Override(settings, *refresh, *window, *all)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "slurmtui:", err)
+		fmt.Fprintln(os.Stderr, "elzar:", err)
 		os.Exit(2)
 	}
 
@@ -46,6 +46,7 @@ func main() {
 		RecentWindow:           settings.RecentWindow,
 		Scope:                  settings.DefaultScope,
 		ConfigPath:             settings.Path,
+		ConfigNotice:           settings.Notice,
 		QueueColumns:           settings.QueueColumns,
 		RecentColumns:          settings.RecentColumns,
 		TabPrefix:              settings.TabPrefix,
@@ -54,7 +55,7 @@ func main() {
 		AccountRefreshInterval: settings.AccountRefreshInterval,
 	}), tea.WithAltScreen())
 	if _, err := program.Run(); err != nil {
-		fmt.Fprintln(os.Stderr, "slurmtui:", err)
+		fmt.Fprintln(os.Stderr, "elzar:", err)
 		os.Exit(1)
 	}
 }

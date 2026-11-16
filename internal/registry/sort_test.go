@@ -4,7 +4,7 @@ import (
 	"sort"
 	"testing"
 
-	"slurmtui/internal/model"
+	"github.com/underwoo/elzar/internal/model"
 )
 
 func TestColumnComparators(t *testing.T) {

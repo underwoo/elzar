@@ -33,11 +33,11 @@ Time limit: 210
 Exit: code 0
 
 Paths
-Working directory: /tmp/slurmtui-fixture/path-03
+Working directory: /tmp/elzar-fixture/path-03
 Command: ./job.sh
-Stdout: /tmp/slurmtui-fixture/path-01
-Stderr: /tmp/slurmtui-fixture/path-01
-Stdin: /tmp/slurmtui-fixture/path-02
+Stdout: /tmp/elzar-fixture/path-01
+Stderr: /tmp/elzar-fixture/path-01
+Stdin: /tmp/elzar-fixture/path-02
 
 Steps
 34827648.batch (batch)

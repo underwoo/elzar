@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"slurmtui/internal/slurm"
+	"github.com/underwoo/elzar/internal/slurm"
 )
 
 func TestLoadFileAndCommandLineOverrides(t *testing.T) {
@@ -177,5 +177,62 @@ func TestAccountSettingsAndColumnPreservation(t *testing.T) {
 		if _, err := LoadFile(path); err == nil {
 			t.Fatalf("accepted %s", value)
 		}
+	}
+}
+
+func TestLegacyConfigFallbackSaveAndPrecedence(t *testing.T) {
+	base := t.TempDir()
+	t.Setenv("XDG_CONFIG_HOME", base)
+	legacyPath := filepath.Join(base, "slurmtui", "config.toml")
+	newPath := filepath.Join(base, "elzar", "config.toml")
+	if err := os.MkdirAll(filepath.Dir(legacyPath), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	legacyContent := "# legacy header\nrefresh_interval = \"42s\"\n\n[columns]\nqueue = [\"job_id\", \"name\"]\nrecent = [\"end\"]\n\n[other]\nkeep = \"legacy\"\n"
+	if err := os.WriteFile(legacyPath, []byte(legacyContent), 0o640); err != nil {
+		t.Fatal(err)
+	}
+
+	settings, err := Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	wantNotice := "using legacy config " + legacyPath + "; move it to " + filepath.Dir(newPath) + "/"
+	if settings.Path != newPath || settings.LegacyPath != legacyPath || settings.Notice != wantNotice || settings.RefreshInterval != 42*time.Second {
+		t.Fatalf("legacy load = %+v, want notice %q", settings, wantNotice)
+	}
+
+	if err := SaveColumns(newPath, []string{"name"}, []string{"state"}); err != nil {
+		t.Fatal(err)
+	}
+	legacyAfter, err := os.ReadFile(legacyPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(legacyAfter) != legacyContent {
+		t.Fatalf("legacy config was modified:\n%s", legacyAfter)
+	}
+	newAfter, err := os.ReadFile(newPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	wantNew := "# legacy header\nrefresh_interval = \"42s\"\n\n[columns]\nqueue = [\"name\"]\nrecent = [\"state\"]\n\n[other]\nkeep = \"legacy\"\n"
+	if string(newAfter) != wantNew {
+		t.Fatalf("new config after first save:\n%s\nwant:\n%s", newAfter, wantNew)
+	}
+	info, err := os.Stat(newPath)
+	if err != nil || info.Mode().Perm() != 0o640 {
+		t.Fatalf("new config permissions = %v, err=%v", info, err)
+	}
+
+	if err := os.WriteFile(newPath, []byte("refresh_interval = \"11s\"\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	settings, err = Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if settings.RefreshInterval != 11*time.Second || settings.LegacyPath != "" || settings.Notice != "" {
+		t.Fatalf("new-path precedence failed: %+v", settings)
 	}
 }

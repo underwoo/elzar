@@ -1656,7 +1656,7 @@
   "meta": {
     "client": {
       "group": "group-01",
-      "source": "/tmp/slurmtui-fixture/path-01",
+      "source": "/tmp/elzar-fixture/path-01",
       "user": "user-01"
     },
     "command": [

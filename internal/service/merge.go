@@ -4,7 +4,7 @@ package service
 import (
 	"strconv"
 
-	"slurmtui/internal/model"
+	"github.com/underwoo/elzar/internal/model"
 )
 
 // Merge returns queue jobs first, then recent jobs not already present.

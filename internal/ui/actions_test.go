@@ -8,8 +8,8 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 
-	"slurmtui/internal/model"
-	"slurmtui/internal/slurm"
+	"github.com/underwoo/elzar/internal/model"
+	"github.com/underwoo/elzar/internal/slurm"
 )
 
 func TestConfirmedActionsUseExactArgvAndDisplayedID(t *testing.T) {

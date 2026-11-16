@@ -1,4 +1,4 @@
-module slurmtui
+module github.com/underwoo/elzar
 
 go 1.26.0
 

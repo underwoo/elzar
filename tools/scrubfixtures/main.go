@@ -612,7 +612,7 @@ func (s *scrubber) fakePath(key, original string) string {
 	if original == "" {
 		return ""
 	}
-	return "/tmp/slurmtui-fixture/" + s.fake("path", original, "path")
+	return "/tmp/elzar-fixture/" + s.fake("path", original, "path")
 }
 
 // Account fixtures retain the fields exercised by this milestone, avoiding

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"slurmtui/internal/model"
+	"github.com/underwoo/elzar/internal/model"
 
 	tea "github.com/charmbracelet/bubbletea"
 )

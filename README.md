@@ -1,4 +1,6 @@
-# slurmtui
+# elzar
+
+Formerly slurmtui; renamed to avoid a clash with another project.
 
 A terminal interface for viewing Slurm jobs, their details, and account shares.
 
@@ -16,46 +18,63 @@ A terminal interface for viewing Slurm jobs, their details, and account shares.
   - `sacctmgr --json show qos`
 - Go **1.26 or newer** to build from source.
 
-slurmtui uses Slurm's JSON interfaces; it has no plain-text output fallback.
+elzar uses Slurm's JSON interfaces; it has no plain-text output fallback.
 
 ## Download
 
-Tagged semantic versions publish static Linux binaries for amd64 and arm64, along with a `SHA256SUMS` file, on the [GitHub Releases page](https://github.com/underwoo/slurmtui/releases). The repository is private, so authenticate the GitHub CLI first with `gh auth login`.
+Tagged semantic versions publish static Linux binaries for amd64 and arm64, along with a `SHA256SUMS` file, on the [GitHub Releases page](https://github.com/underwoo/elzar/releases). The repository is private, so authenticate the GitHub CLI first with `gh auth login`.
 
-For example, download the `v0.1.0` release and verify the assets:
+For example, download the `v0.4.0` release with `gh` and verify the assets:
 
 ```sh
-gh release download v0.1.0 --repo underwoo/slurmtui
+gh release download v0.4.0 --repo underwoo/elzar
 sha256sum -c SHA256SUMS
-chmod +x slurmtui-linux-*
+chmod +x elzar-linux-*
+```
+
+Or download with `curl` (using a GitHub token when the repository is private):
+
+```sh
+curl -fLO https://github.com/underwoo/elzar/releases/download/v0.4.0/elzar-linux-amd64
+curl -fLO https://github.com/underwoo/elzar/releases/download/v0.4.0/SHA256SUMS
+sha256sum --ignore-missing -c SHA256SUMS
+chmod +x elzar-linux-amd64
 ```
 
 Run the binary for your machine's architecture:
 
 ```sh
-./slurmtui-linux-amd64
+./elzar-linux-amd64
 # or
-./slurmtui-linux-arm64
+./elzar-linux-arm64
 ```
 
 The binaries are attached directly to the release; no Go toolchain is needed on the machine where you run them.
 
 ## Build and run
 
+Install with `go install`:
+
 ```sh
-git clone https://github.com/underwoo/slurmtui.git
-cd slurmtui
+go install github.com/underwoo/elzar/cmd/elzar@latest
+```
+
+Or clone and build from source:
+
+```sh
+git clone https://github.com/underwoo/elzar.git
+cd elzar
 make build
-./slurmtui
+./elzar
 ```
 
-`make build` writes the executable to `./slurmtui`. To print its build version, run:
+`make build` writes the executable to `./elzar`. To print its build version, run:
 
 ```sh
-./slurmtui --version
+./elzar --version
 ```
 
-If Go is unavailable on the machine where you will run slurmtui, build for Linux amd64 on another machine with Go installed, then copy the binary to the Slurm environment:
+If Go is unavailable on the machine where you will run elzar, build for Linux amd64 on another machine with Go installed, then copy the binary to the Slurm environment:
 
 ```sh
 CGO_ENABLED=0 GOOS=linux GOARCH=amd64 make build
@@ -157,16 +176,16 @@ precedence over deny lists, following [Slurm's partition rules](https://slurm.sc
 Durations use Go duration syntax, such as `30s`, `5m`, or `2h`. Examples:
 
 ```sh
-./slurmtui --refresh 30s
-./slurmtui --window 12h
-./slurmtui --all
+./elzar --refresh 30s
+./elzar --window 12h
+./elzar --all
 ```
 
 The `u` key changes the current scope while the program is running.
 
 ## Configuration
 
-Configuration is read from `slurmtui/config.toml` under `$XDG_CONFIG_HOME`. If `XDG_CONFIG_HOME` is unset, slurmtui uses the platform's user config directory (on Linux, usually `~/.config`). For example, the Linux default path is `~/.config/slurmtui/config.toml`.
+Configuration is read from `elzar/config.toml` under `$XDG_CONFIG_HOME`. If `XDG_CONFIG_HOME` is unset, elzar uses the platform's user config directory (on Linux, usually `~/.config`). For example, the Linux default path is `~/.config/elzar/config.toml`.
 
 ```toml
 refresh_interval = "15s"
@@ -198,9 +217,9 @@ clusters = "all" # or a comma-separated subset, such as "c5,c6"
 The column picker saves Accounts columns under `[columns] accounts`, preserving
 job column choices and the other configuration tables.
 
-## How slurmtui is built
+## How elzar is built
 
-slurmtui is written entirely by AI agents, with no human-written application code. A human owner directs the project and tests releases on real Slurm clusters. The agents collaborate in a Buzz channel.
+elzar is written entirely by AI agents, with no human-written application code. A human owner directs the project and tests releases on real Slurm clusters. The agents collaborate in a Buzz channel.
 
 | Role | Participant | Model | Responsibilities |
 | --- | --- | --- | --- |
