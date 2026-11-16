@@ -13,6 +13,7 @@ import (
 
 	"github.com/BurntSushi/toml"
 
+	"slurmtui/internal/plugin"
 	"slurmtui/internal/slurm"
 )
 
@@ -22,6 +23,7 @@ const (
 )
 
 type Settings struct {
+	Plugins                plugin.Options
 	RefreshInterval        time.Duration
 	RecentWindow           time.Duration
 	DefaultScope           slurm.Scope
@@ -35,7 +37,7 @@ type Settings struct {
 }
 
 func Defaults() Settings {
-	return Settings{RefreshInterval: DefaultRefreshInterval, RecentWindow: DefaultRecentWindow, DefaultScope: slurm.ScopeMe, AccountRefreshInterval: 5 * time.Minute, TabPrefix: "ctrl+t"}
+	return Settings{Plugins: plugin.DefaultOptions(), RefreshInterval: DefaultRefreshInterval, RecentWindow: DefaultRecentWindow, DefaultScope: slurm.ScopeMe, AccountRefreshInterval: 5 * time.Minute, TabPrefix: "ctrl+t"}
 }
 
 // Load reads XDG_CONFIG_HOME/slurmtui/config.toml, falling back to the
@@ -150,6 +152,11 @@ func LoadFile(path string) (Settings, error) {
 				prefix = " "
 			}
 			settings.TabPrefix = prefix
+		}
+	}
+	if raw, exists := document["plugins"]; exists {
+		if err := loadPlugins(raw, &settings.Plugins); err != nil {
+			return Settings{}, fmt.Errorf("config %s: %w", path, err)
 		}
 	}
 	return settings, nil

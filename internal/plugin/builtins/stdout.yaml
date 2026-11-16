@@ -1,0 +1,9 @@
+name: stdout
+description: Open job standard output
+type: command
+key: o
+scopes: [queue, recent, detail]
+command: '{{env "PAGER" "less"}}'
+args: ['--', '{{.StdOut}}']
+mode: foreground
+confirm: false
