@@ -255,14 +255,19 @@ func TestAccountDetailPluginScope(t *testing.T) {
 	account := commandPlugin()
 	account.Scopes = []string{"accounts"}
 	account.Args = []string{"{{.Account}}"}
-	job := commandPlugin()
-	job.Name = "job-only"
-	job.Key = "o"
-	job.Scopes = []string{"detail"}
-	job.Args = []string{"{{.StdOut}}"}
-	app.installPlugins([]plugin.Plugin{account, job})
-	if cmd := pluginKey(app, "o"); cmd != nil || app.actionStatus != "" {
-		t.Fatal("job detail plugin dispatched in Account Detail")
+	options := plugin.DefaultOptions()
+	options.UserDir = t.TempDir()
+	options.SiteDir = t.TempDir()
+	t.Setenv("PAGER", "echo")
+	builtins, errs := plugin.Discover(options)
+	if len(errs) != 0 || len(builtins) != 2 {
+		t.Fatalf("builtins=%v errors=%v", builtins, errs)
+	}
+	app.installPlugins(append(builtins, account))
+	for _, key := range []string{"o", "O"} {
+		if cmd := pluginKey(app, key); cmd != nil || app.actionStatus != "" {
+			t.Fatalf("job detail plugin %s dispatched in Account Detail", key)
+		}
 	}
 	groups := app.helpGroups()
 	plugins := groups[len(groups)-1]
