@@ -14,7 +14,7 @@ import (
 
 type Fields map[string]string
 
-// Manifest describes one command. Exec protocol manifests are added separately.
+// Manifest describes a command or a JSON protocol executable.
 type Manifest struct {
 	Name        string   `yaml:"name"`
 	Description string   `yaml:"description"`
@@ -25,6 +25,7 @@ type Manifest struct {
 	Args        []string `yaml:"args"`
 	Mode        string   `yaml:"mode"`
 	Confirm     bool     `yaml:"confirm"`
+	Provides    []string `yaml:"provides"`
 }
 
 // Parse accepts exactly one YAML document and rejects unknown fields.
@@ -48,14 +49,57 @@ func Parse(data []byte) (Manifest, error) {
 func (m Manifest) Validate() error {
 	for _, field := range []struct{ name, value string }{
 		{"name", m.Name}, {"description", m.Description}, {"type", m.Type},
-		{"key", m.Key}, {"command", m.Command}, {"mode", m.Mode},
+		{"command", m.Command},
 	} {
 		if strings.TrimSpace(field.value) == "" {
 			return fmt.Errorf("%s is required", field.name)
 		}
 	}
-	if m.Type != "command" {
+	switch m.Type {
+	case "command":
+		if err := m.validateCommand(); err != nil {
+			return err
+		}
+	case "exec":
+		if m.Key != "" || len(m.Scopes) > 0 || m.Mode != "" || m.Confirm {
+			return fmt.Errorf("exec plugins cannot specify key, scopes, mode, or confirm")
+		}
+		if len(m.Provides) == 0 {
+			return fmt.Errorf("provides is required for exec plugins")
+		}
+		seen := map[string]bool{}
+		for _, provided := range m.Provides {
+			if provided != "columns" && provided != "detail" {
+				return fmt.Errorf("unknown provides value %q", provided)
+			}
+			if seen[provided] {
+				return fmt.Errorf("duplicate provides value %q", provided)
+			}
+			seen[provided] = true
+		}
+	default:
 		return fmt.Errorf("unknown plugin type %q", m.Type)
+	}
+	for i, source := range append([]string{m.Command}, m.Args...) {
+		if strings.ContainsRune(source, 0) {
+			return fmt.Errorf("template %d contains NUL", i)
+		}
+		if _, err := parseTemplate(source); err != nil {
+			return fmt.Errorf("template %d: %w", i, err)
+		}
+	}
+	return nil
+}
+
+func (m Manifest) validateCommand() error {
+	if m.Key == "" {
+		return fmt.Errorf("key is required")
+	}
+	if m.Mode == "" {
+		return fmt.Errorf("mode is required")
+	}
+	if len(m.Provides) > 0 {
+		return fmt.Errorf("command plugins cannot specify provides")
 	}
 	if !validKey(m.Key) {
 		return fmt.Errorf("invalid key %q: expected one key, ctrl+x, or alt+x (no chords)", m.Key)
@@ -77,14 +121,6 @@ func (m Manifest) Validate() error {
 			return fmt.Errorf("duplicate scope %q", scope)
 		}
 		seen[scope] = true
-	}
-	for i, source := range append([]string{m.Command}, m.Args...) {
-		if strings.ContainsRune(source, 0) {
-			return fmt.Errorf("template %d contains NUL", i)
-		}
-		if _, err := parseTemplate(source); err != nil {
-			return fmt.Errorf("template %d: %w", i, err)
-		}
 	}
 	return nil
 }
