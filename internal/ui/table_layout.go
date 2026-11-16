@@ -3,53 +3,50 @@ package ui
 import (
 	"fmt"
 	"slurmtui/internal/registry"
+	"sort"
 	"strings"
 )
 
 // tableLayout returns render-only column indices. Configured columns remain
 // unchanged so filtering and column preferences do not depend on terminal size.
-func tableLayout(columns []registry.Column, width int, pinned string) ([]int, []int, int) {
-	indices := make([]int, len(columns))
-	minimum := max(0, len(columns)-1)
-	for i, c := range columns {
-		indices[i] = i
-		minimum += max(1, c.MinWidth)
-	}
-	if minimum <= width {
-		return indices, fitWidths(columns, width), 0
-	}
+func tableLayout(columns []registry.Column, width int, pinned string, contentWidth int) ([]int, []int, int) {
+	priority := make([]int, 0, len(columns))
+	pin := -1
 	for i, c := range columns {
 		if c.ID == pinned {
-			indices = append([]int{i}, append(indices[:i:i], indices[i+1:]...)...)
+			pin = i
+			priority = append(priority, i)
 			break
 		}
 	}
-	// Retain the longest prefix that fits, including the overflow indicator.
-	keep := len(indices)
-	for keep > 1 {
-		used := keep - 1
-		for _, i := range indices[:keep] {
-			used += max(1, columns[i].MinWidth)
+	for i := range columns {
+		if i != pin {
+			priority = append(priority, i)
 		}
-		if keep < len(indices) {
-			used += 1 + len(fmt.Sprintf("+%d cols", len(indices)-keep))
+	}
+	// Pick by retention priority, then restore configured order for rendering.
+	for keep := len(priority); ; keep-- {
+		hidden := len(priority) - keep
+		available := width
+		if hidden > 0 && width > 1+len(fmt.Sprintf("+%d cols", hidden)) {
+			available = width - 1 - len(fmt.Sprintf("+%d cols", hidden))
 		}
-		if used <= width {
-			break
+		indices := append([]int(nil), priority[:keep]...)
+		sort.Ints(indices)
+		selected := make([]registry.Column, keep)
+		minimum := max(0, keep-1)
+		for j, i := range indices {
+			selected[j] = columns[i]
+			if i == pin {
+				selected[j].MinWidth = max(1, min(contentWidth, available))
+				selected[j].Width = max(selected[j].Width, selected[j].MinWidth)
+			}
+			minimum += max(1, selected[j].MinWidth)
 		}
-		keep--
+		if minimum <= available || keep <= 1 {
+			return indices, fitWidths(selected, available), hidden
+		}
 	}
-	hidden := len(indices) - keep
-	indices = indices[:keep]
-	selected := make([]registry.Column, keep)
-	for j, i := range indices {
-		selected[j] = columns[i]
-	}
-	available := width
-	if hidden > 0 && width > 1+len(fmt.Sprintf("+%d cols", hidden)) {
-		available = max(1, width-1-len(fmt.Sprintf("+%d cols", hidden)))
-	}
-	return indices, fitWidths(selected, available), hidden
 }
 
 func overflowHeader(header string, hidden, width int) string {

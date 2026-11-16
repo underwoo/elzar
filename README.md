@@ -101,7 +101,9 @@ The filter uses Go's RE2 regular-expression syntax. Lowercase patterns match wit
 
 On narrow terminals, tables hide overflow columns from the right and show
 `+N cols` in the header. Queue and Recent retain JobID; Accounts retains Account,
-provided you have configured that column as visible. Widening the terminal
+provided you have configured that column as visible. Its full header/value width
+is reserved (capped to fit the terminal and overflow badge), and retained columns
+stay in configured order. Widening the terminal
 restores the columns. Regex filters still match all configured columns, including
 those temporarily hidden by width.
 

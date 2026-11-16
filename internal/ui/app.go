@@ -925,7 +925,17 @@ func (a *App) View() string {
 	fmt.Fprintln(&out, a.tabLine())
 
 	columns := a.displayedColumns()
-	indices, widths, hidden := tableLayout(columns, width, "job_id")
+	identifierWidth := 0
+	for _, c := range columns {
+		if c.ID == "job_id" {
+			identifierWidth = len([]rune(c.Header))
+			for _, job := range jobs {
+				identifierWidth = max(identifierWidth, len([]rune(job.DisplayID())))
+			}
+			break
+		}
+	}
+	indices, widths, hidden := tableLayout(columns, width, "job_id", identifierWidth)
 	visible := make([]registry.Column, len(indices))
 	for i, index := range indices {
 		visible[i] = columns[index]

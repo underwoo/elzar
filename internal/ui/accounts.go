@@ -479,7 +479,17 @@ func (a *App) renderAccounts(width int) string {
 			}
 		}
 	}
-	indices, widths, hidden := tableLayout(layout, width, "account")
+	identifierWidth := 0
+	for _, c := range cols {
+		if c.ID == "account" {
+			identifierWidth = len([]rune(c.Header))
+			for _, row := range a.accounts.visible {
+				identifierWidth = max(identifierWidth, len([]rune(c.Value(row))))
+			}
+			break
+		}
+	}
+	indices, widths, hidden := tableLayout(layout, width, "account", identifierWidth)
 	visible := make([]registry.AccountColumn, len(indices))
 	for i, index := range indices {
 		visible[i] = cols[index]

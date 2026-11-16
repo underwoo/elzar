@@ -1,12 +1,12 @@
 Slurm TUI  all accounts
 Queue  Recent  [Accounts]
-Acc… Clu… Par… You   RawS… Norm… +5 cols
-──── ──── ──── ───── ───── ─────
-acc… c1   root defa… 1     0.2
-acc… c1   root memb… 2     0.2
-acc… c1   root       3     0.2
-acc… c2   root defa… 1     0.2
-acc… c2   root memb… 2     0.2
-acc… c2   root       3     0.2
+Clu… Account   Pare… You   RawS… +6 cols
+──── ───────── ───── ───── ─────
+c1   account-0 root  defa… 1
+c1   account-1 root  memb… 2
+c1   account-2 root        3
+c2   account-0 root  defa… 1
+c2   account-1 root  memb… 2
+c2   account-2 root        3
 Accounts: 6 of 6  clusters: all
 enter details  tab views  ? help
