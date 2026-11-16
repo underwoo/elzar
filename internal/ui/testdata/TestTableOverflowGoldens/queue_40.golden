@@ -1,0 +1,7 @@
+Slurm TUI  scope: me
+[Queue]  Recent  Accounts
+JobID   Name    User    Account  +6 cols
+─────── ─────── ─────── ────────
+12345   sample… tester  science
+Queue: 1 jobs
+tab views  / filter  s sort  ? help

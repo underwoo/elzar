@@ -470,7 +470,7 @@ func (a *App) renderAccounts(width int) string {
 	cols := a.accountColumns()
 	layout := make([]registry.Column, len(cols))
 	for i, c := range cols {
-		layout[i] = registry.Column{Width: c.Width, MinWidth: c.MinWidth}
+		layout[i] = registry.Column{ID: c.ID, Width: c.Width, MinWidth: c.MinWidth}
 		if a.accounts.sort.active && a.accounts.sort.columnID == c.ID {
 			if a.accounts.sort.descending {
 				cols[i].Header += " ▼"
@@ -479,14 +479,29 @@ func (a *App) renderAccounts(width int) string {
 			}
 		}
 	}
-	widths := fitWidths(layout, width)
+	identifierWidth := 0
+	for _, c := range cols {
+		if c.ID == "account" {
+			identifierWidth = len([]rune(c.Header))
+			for _, row := range a.accounts.visible {
+				identifierWidth = max(identifierWidth, len([]rune(c.Value(row))))
+			}
+			break
+		}
+	}
+	indices, widths, hidden := tableLayout(layout, width, "account", identifierWidth)
+	visible := make([]registry.AccountColumn, len(indices))
+	for i, index := range indices {
+		visible[i] = cols[index]
+	}
+	cols = visible
 	cells := []string{}
 	rules := []string{}
 	for i, c := range cols {
 		cells = append(cells, pad(c.Header, widths[i]))
 		rules = append(rules, strings.Repeat("─", widths[i]))
 	}
-	fmt.Fprintln(&out, strings.Join(cells, " "))
+	fmt.Fprintln(&out, overflowHeader(strings.Join(cells, " "), hidden, width))
 	fmt.Fprintln(&out, strings.Join(rules, " "))
 	if len(a.accounts.visible) == 0 {
 		fmt.Fprintln(&out, "(no accounts)")
@@ -499,6 +514,9 @@ func (a *App) renderAccounts(width int) string {
 			cells = append(cells, pad(c.Value(a.accounts.visible[row]), widths[i]))
 		}
 		line := strings.Join(cells, " ")
+		if hidden > 0 {
+			line = strings.TrimRight(line, " ")
+		}
 		if row == a.accounts.cursor {
 			line = selectedStyle.Render(line)
 		}

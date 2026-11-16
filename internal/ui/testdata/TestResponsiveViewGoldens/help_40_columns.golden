@@ -1,8 +1,8 @@
 Slurm TUI  scope: me
 [Q╭──────────────────────────────────╮
-Jo│ Key bindings                     │d…
-──│ Navigation                       │──
-12│ ↑/k              select previous │d…
+Jo│ Key bindings                     │ls
+──│ Navigation                       │
+12│ ↑/k              select previous │
 Qu│ ↓/j              select next     │
 ta│ b/^b/M-v/PgUp    page up         │
   │ space/^v/^f/PgDn page down       │

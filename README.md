@@ -99,6 +99,14 @@ The message log keeps the latest 200 status and error messages, newest first. Re
 
 The filter uses Go's RE2 regular-expression syntax. Lowercase patterns match without regard to case; adding an uppercase letter makes the pattern case-sensitive. The filter applies to the rendered values of visible columns in all three views.
 
+On narrow terminals, tables hide overflow columns from the right and show
+`+N cols` in the header. Queue and Recent retain JobID; Accounts retains Account,
+provided you have configured that column as visible. Its full header/value width
+is reserved (capped to fit the terminal and overflow badge), and retained columns
+stay in configured order. Widening the terminal
+restores the columns. Regex filters still match all configured columns, including
+those temporarily hidden by width.
+
 ## Accounts
 
 Use `Ctrl+T` then `3` to open Accounts, or cycle through Queue, Recent, and

@@ -1,0 +1,12 @@
+Slurm TUI  all accounts
+Queue  Recent  [Accounts]
+Clust… Account   Parent You    RawSh… NormS… RawUs… Effec… FairS… Level  QOS
+────── ───────── ────── ────── ────── ────── ────── ────── ────── ────── ───────
+c1     account-0 root   defau… 1      0.2    0      —      0.6    0.8    normal
+c1     account-1 root   member 2      0.2    100    —      0.6    0.8    normal
+c1     account-2 root          3      0.2    200    —             0.4
+c2     account-0 root   defau… 1      0.2    0      —      0.6    0.8    normal
+c2     account-1 root   member 2      0.2    100    —      0.6    0.8    normal
+c2     account-2 root          3      0.2    200    —             0.4
+Accounts: 6 of 6  clusters: all
+enter details  tab views  / filter  s sort  c columns  M clusters  ? help
