@@ -110,6 +110,9 @@ func Discover(options Options) ([]Plugin, []error) {
 				errs = append(errs, fmt.Errorf("%s: %w", path, parseErr))
 				continue
 			}
+			if layer.files == nil && !filepath.IsAbs(m.Command) && (strings.ContainsRune(m.Command, '/') || (filepath.Separator != '/' && strings.ContainsRune(m.Command, filepath.Separator))) {
+				m.Command = filepath.Join(layer.dir, m.Command)
+			}
 			if seen[m.Name] {
 				delete(current, m.Name)
 				errs = append(errs, fmt.Errorf("%s: duplicate name %q in %s layer", path, m.Name, layer.name))

@@ -105,6 +105,7 @@ The **Queue** view shows active jobs. **Recent** shows jobs that completed withi
 | `h` | Hold a pending job, or release a user/admin-held job, after confirmation |
 | `R` | Requeue the selected job after confirmation |
 | `e` | Edit a job's time limit, name, and comment, then confirm the changes |
+| `o`, `O` | Open the selected job's standard output or standard error in `$PAGER` (built-in plugins) |
 | `Esc` | Return from job details to the list, or clear an active filter |
 | `a` | Show or hide the raw All fields section in job details |
 | `r` | Refresh job lists, or Accounts when that view is active |
@@ -172,6 +173,7 @@ precedence over deny lists, following [Slurm's partition rules](https://slurm.sc
 | `--window <duration>` | How far back Recent includes completed jobs | `1h` |
 | `--all` | Start with all visible users' jobs | Your jobs (`me`) |
 | `--version` | Print the build version and exit | — |
+| `plugins` | List discovered plugins and their validation status, exiting non-zero on any error | — |
 
 Durations use Go duration syntax, such as `30s`, `5m`, or `2h`. Examples:
 
@@ -179,6 +181,7 @@ Durations use Go duration syntax, such as `30s`, `5m`, or `2h`. Examples:
 ./elzar --refresh 30s
 ./elzar --window 12h
 ./elzar --all
+./elzar plugins
 ```
 
 The `u` key changes the current scope while the program is running.
@@ -217,6 +220,277 @@ clusters = "all" # or a comma-separated subset, such as "c5,c6"
 The column picker saves Accounts columns under `[columns] accounts`, preserving
 job column choices and the other configuration tables.
 
+The optional `[plugins]` table configures plugin discovery and timeouts:
+
+```toml
+[plugins]
+enabled = true
+site_dir = "/etc/elzar/plugins"
+disabled = []
+timeout = "5s"
+```
+
+## Plugins
+
+elzar supports two kinds of declarative YAML plugins (`*.yaml` or `*.yml`):
+
+- **`command` plugins** bind a keyboard shortcut to an external command, filling in job or account fields with Go `text/template` expressions.
+- **`exec` plugins** run an executable that speaks JSON protocol v1 over stdin/stdout to contribute custom table columns and Job Detail sections.
+
+Sample manifests and a working `sh` + `jq` exec plugin live in [`examples/plugins/`](examples/plugins/).
+
+### Discovery and precedence
+
+Plugins are discovered across three layers, from highest precedence to lowest:
+
+1. **User directory:** `$XDG_CONFIG_HOME/elzar/plugins/` (or `~/.config/elzar/plugins/` when `XDG_CONFIG_HOME` is unset)
+2. **Site directory:** `/etc/elzar/plugins/` (configurable via `[plugins] site_dir` in `config.toml`)
+3. **Built-in plugins:** embedded in the `elzar` binary (`stdout` on `o` and `stderr` on `O`, which open the job's standard output or standard error in `{{env "PAGER" "less"}}`)
+
+A plugin in a higher layer with the same `name` replaces the lower-layer plugin. Duplicate plugin `name` values within the same layer invalidate that name in that layer. Missing directories are ignored.
+
+Set `[plugins] disabled = ["name", ...]` in `config.toml` to disable specific plugins (including built-ins), or `enabled = false` to disable all plugins.
+
+### Manifest formats
+
+Each manifest file must contain a single YAML document. Unknown YAML keys are rejected as validation errors. If `command` is a relative path containing a path separator (such as `./job-info.sh`), it is resolved relative to the directory containing the manifest.
+
+#### `command` plugin manifest
+
+```yaml
+name: ssh-first-node
+description: SSH to the job's first allocated node
+type: command
+key: S
+scopes: [queue, detail]
+command: ssh
+args: ['{{.FirstNode}}']
+mode: foreground
+confirm: true
+```
+
+| Field | Required | Description |
+| --- | --- | --- |
+| `name` | Yes | Unique plugin identifier |
+| `description` | Yes | Shown in the `?` help overlay under **Plugins** |
+| `type` | Yes | `"command"` |
+| `key` | Yes | Single printable key, `ctrl+<a-z>`, or `alt+<key>` (multi-key chords are not allowed) |
+| `scopes` | Yes | Non-empty list from `queue`, `recent`, `detail` (Job Detail), and `accounts` (both the Accounts list and Account Detail) |
+| `command` | Yes | Executable name or path (rendered as a template) |
+| `args` | No | List of argument templates; each element is rendered separately and passed directly in `argv` without a shell |
+| `mode` | Yes | `"foreground"` (suspends the TUI while the command runs, for pagers, `ssh`, or editors) or `"background"` (runs asynchronously; the first line of output appears on the status bar and full output is logged to `Ctrl+T s`) |
+| `confirm` | No | When `true`, prompts for confirmation (`y`) showing the rendered `argv` before running |
+
+Because elzar never invokes a shell implicitly, arguments containing spaces or quotes stay a single `argv` element. If you intentionally want a shell pipeline, invoke `sh -c` explicitly and quote interpolated fields with `shquote`:
+
+```yaml
+name: scontrol-show-job
+description: Show scontrol job details in pager
+type: command
+key: i
+scopes: [queue, detail]
+command: sh
+args:
+  - -c
+  - 'scontrol show job {{shquote .JobID}} | {{env "PAGER" "less"}}'
+mode: foreground
+confirm: false
+```
+
+#### `exec` plugin manifest
+
+```yaml
+name: job-info
+description: Example exec plugin adding a WorkDir column and an Environment detail section (requires POSIX sh and jq)
+type: exec
+command: ./job-info.sh
+args: []
+provides: [columns, detail]
+```
+
+| Field | Required | Description |
+| --- | --- | --- |
+| `name` | Yes | Unique plugin identifier |
+| `description` | Yes | Short description of the plugin |
+| `type` | Yes | `"exec"` |
+| `command` | Yes | Executable name or path |
+| `args` | No | Optional static/environment argument templates |
+| `provides` | Yes | Non-empty list containing `"columns"`, `"detail"`, or both |
+
+`exec` plugins cannot specify `key`, `scopes`, `mode`, or `confirm`.
+
+### Template fields and functions
+
+`command` and `args` templates use Go's `text/template` with `missingkey=error`. Referencing a field that is unavailable in the current scope (or empty on the selected job, such as `StdOut` or `FirstNode` on a pending job) fails cleanly with a status message instead of substituting an empty string.
+
+**Available fields in `queue`, `recent`, and `detail` scopes:**
+
+| Field | Description |
+| --- | --- |
+| `.JobID` | Display job ID |
+| `.Name` | Job name |
+| `.User` | Job owner username |
+| `.Account` | Account name |
+| `.Partition` | Partition name |
+| `.QOS` | QOS name |
+| `.State` | Comma-joined job states (e.g. `RUNNING`) |
+| `.Cluster` | Cluster name |
+| `.NodeList` | Raw Slurm nodelist expression |
+| `.FirstNode` | First node expanded from `.NodeList` (e.g. `node001` from `node[001-020]`) |
+| `.WorkDir` | Working directory |
+| `.StdOut` | Resolved standard output path |
+| `.StdErr` | Resolved standard error path |
+| `.Comment` | Job comment |
+
+**Available fields in `accounts` scope (Accounts list and Account Detail):**
+
+| Field | Description |
+| --- | --- |
+| `.Cluster` | Cluster name |
+| `.Account` | Account name |
+| `.Parent` | Parent account name |
+
+**Template functions:**
+
+- `{{shquote .Field}}` — wraps a value in single quotes with embedded single quotes escaped (`'...'`), safe for passing inside `sh -c` scripts.
+- `{{env "VAR" "fallback"}}` — returns the environment variable `VAR` if set and non-empty, or `"fallback"` otherwise.
+- `{{default "fallback" .Field}}` — returns `"fallback"` when `.Field` is empty (note: `.Field` must still be a defined key in the map).
+
+### Exec plugin protocol v1
+
+An `exec` plugin is invoked as a short-lived child process for each operation. Standard output is capped at **1 MiB** per call, and each call is bounded by `[plugins] timeout` (default `5s`). Unknown JSON fields in responses are ignored.
+
+#### 1. `describe` (at startup / `elzar plugins`)
+
+elzar runs `<command> [args...] describe` with empty stdin. The plugin must write a single JSON object to stdout declaring protocol `1` and the columns or detail sections it provides:
+
+```json
+{
+  "protocol": 1,
+  "columns": [
+    {
+      "id": "workdir",
+      "header": "WorkDir",
+      "width": 24,
+      "tabs": ["queue", "recent"]
+    }
+  ],
+  "sections": [
+    {
+      "id": "paths",
+      "title": "Job Paths (Plugin)"
+    }
+  ]
+}
+```
+
+- Column IDs register in elzar as `plugin.<name>.<id>` (for example, `plugin.job-info.workdir`). They are hidden by default and can be toggled on, reordered, and saved to `config.toml` from the `c` column picker, as well as sorted (`s`) and filtered (`/`).
+- Detail sections are appended after built-in sections and before `All fields` (`a`).
+
+#### 2. `columns` (once per refresh per tab, batched)
+
+After each successful Queue or Recent refresh, elzar runs `<command> [args...]` and passes a single batched JSON request on stdin:
+
+```json
+{
+  "protocol": 1,
+  "op": "columns",
+  "tab": "queue",
+  "jobs": [
+    {
+      "JobID": "101",
+      "Name": "train-llm",
+      "User": "alice",
+      "Account": "ml",
+      "Partition": "gpu",
+      "QOS": "normal",
+      "State": "RUNNING",
+      "NodeList": "gpu-01",
+      "FirstNode": "gpu-01",
+      "WorkDir": "/scratch/alice/train"
+    }
+  ]
+}
+```
+
+The plugin responds on stdout with cell values keyed by `JobID` and column `id`:
+
+```json
+{
+  "values": {
+    "101": {
+      "workdir": "/scratch/alice/train"
+    }
+  }
+}
+```
+
+While the first call is in flight, plugin cells display `…`. If a call fails and no prior value exists, cells display `—`; if prior values exist from an earlier refresh, they are preserved across failed calls.
+
+#### 3. `detail` (when opening Job Detail)
+
+When a user opens Job Detail (`Enter`), elzar runs `<command> [args...]` with the job's template fields plus the raw Slurm JSON object under `"raw"`:
+
+```json
+{
+  "protocol": 1,
+  "op": "detail",
+  "job": {
+    "JobID": "101",
+    "Name": "train-llm",
+    "WorkDir": "/scratch/alice/train",
+    "StdOut": "/scratch/alice/train/slurm-101.out",
+    "StdErr": "/scratch/alice/train/slurm-101.err",
+    "raw": {
+      "job_id": 101,
+      "name": "train-llm"
+    }
+  }
+}
+```
+
+The plugin responds on stdout with lines for each section ID:
+
+```json
+{
+  "sections": {
+    "paths": [
+      "WorkDir: /scratch/alice/train",
+      "StdOut:  /scratch/alice/train/slurm-101.out",
+      "StdErr:  /scratch/alice/train/slurm-101.err"
+    ]
+  }
+}
+```
+
+While in flight, the section shows `loading…`. If the call fails, the error is shown inline as a single line (`error: …`) and logged to `Ctrl+T s`.
+
+### Isolation, circuit breaker, and file permissions
+
+- **File permissions:** Every manifest file (`*.yaml`/`*.yml`) and resolved plugin executable must be a regular file that is **not writable by group or others** (mode `0022` bits must be clear, e.g. `0600`/`0644` for manifests and `0700`/`0755` for executables). Files failing this check are skipped and logged.
+- **Key collisions:** Built-in key bindings always win. A command plugin whose key collides with a built-in binding (or with an earlier command plugin in the same scope) is disabled and logged to `Ctrl+T s`.
+- **Circuit breaker:** If an `exec` plugin fails **3 consecutive calls** (non-zero exit, timeout, invalid JSON, or output exceeding 1 MiB), it is disabled for the remainder of the session and logged once to `Ctrl+T s`.
+
+### Diagnostics (`elzar plugins`)
+
+Run `elzar plugins` to inspect all discovered plugins across layers, run `describe` against `exec` plugins, and verify permissions and key bindings:
+
+```sh
+./elzar plugins
+```
+
+Example output:
+
+```text
+NAME               LAYER    PATH                                            TYPE     DETAILS                           STATUS
+job-info           user     /home/alice/.config/elzar/plugins/job-info.yaml exec     provides=columns,detail           ok
+scontrol-show-job  user     /home/alice/.config/elzar/plugins/scontrol.yaml command  key=i scopes=queue,detail         ok
+stderr             builtin  builtins/stderr.yaml                            command  key=O scopes=queue,recent,detail  ok
+stdout             builtin  builtins/stdout.yaml                            command  key=o scopes=queue,recent,detail  ok
+```
+
+Each plugin reports `ok`, `disabled: …`, or `error: …`. `elzar plugins` exits with status `0` when all discovered plugins are `ok` or `disabled`, and exits non-zero (`1`) if any plugin has an error (or `2` on invalid CLI flags/config), making it suitable for site configuration checks and CI.
+
 ## How elzar is built
 
 elzar is written entirely by AI agents, with no human-written application code. A human owner directs the project and tests releases on real Slurm clusters. The agents collaborate in a Buzz channel.
@@ -226,6 +500,7 @@ elzar is written entirely by AI agents, with no human-written application code. 
 | Owner | underwoo (human) | — | Sets product direction and requirements; resolves disagreements; tests every release on live Slurm clusters; provides data samples; approves milestone plans; manages infrastructure and credentials. |
 | Planner | Scout | Claude Opus 5.5 (`claude-opus-5-5`) | Turns requests into scoped plans and GitHub issues; checks PRs against the plan; independently verifies release checksums and version output before announcing releases. |
 | Implementer | Patch | OpenAI GPT-6 (Codex) | Writes code, tests, and documentation; opens PRs; merges after reviewer approval and passing CI; tags releases. |
+| Implementer | Anvil | Google Gemini 4 Argon (Antigravity) | Writes code, tests, and documentation; opens PRs; merges after reviewer approval and passing CI; tags releases. |
 | Reviewer | Warden | Google Gemini 4 Argon (Antigravity) | Reviews every PR against the plan and runs build, test, and lint checks locally before approving. |
 
 The workflow is: request → plan and issue → pull request → review → CI → merge → tagged release → owner testing on real clusters. Bugs and requests from that testing become new issues. Sample data is scrubbed before it is committed to the repository.

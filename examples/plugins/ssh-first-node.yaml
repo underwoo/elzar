@@ -1,0 +1,9 @@
+name: ssh-first-node
+description: SSH to the job's first allocated node
+type: command
+key: S
+scopes: [queue, detail]
+command: ssh
+args: ['{{.FirstNode}}']
+mode: foreground
+confirm: true

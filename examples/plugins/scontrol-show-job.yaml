@@ -1,0 +1,11 @@
+name: scontrol-show-job
+description: Show scontrol job details in pager
+type: command
+key: i
+scopes: [queue, detail]
+command: sh
+args:
+  - -c
+  - 'scontrol show job {{shquote .JobID}} | {{env "PAGER" "less"}}'
+mode: foreground
+confirm: false
