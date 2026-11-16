@@ -925,8 +925,12 @@ func (a *App) View() string {
 	fmt.Fprintln(&out, a.tabLine())
 
 	columns := a.displayedColumns()
-	widths := fitWidths(columns, width)
-	a.renderTable(&out, columns, widths, jobs, cursor, a.tableHeight(), a.activeScroll())
+	indices, widths, hidden := tableLayout(columns, width, "job_id")
+	visible := make([]registry.Column, len(indices))
+	for i, index := range indices {
+		visible[i] = columns[index]
+	}
+	a.renderTable(&out, visible, widths, jobs, cursor, a.tableHeight(), a.activeScroll(), hidden, width)
 
 	status := fmt.Sprintf("%s: %d jobs", tabName, len(jobs))
 	if a.filterStatusVisible() {
@@ -1092,15 +1096,13 @@ func truncateLine(line string, width int) string {
 	return ansi.Truncate(line, width, "…")
 }
 
-func (a *App) renderTable(out *strings.Builder, columns []registry.Column, widths []int, jobs []model.Job, cursor, tableHeight, scroll int) {
+func (a *App) renderTable(out *strings.Builder, columns []registry.Column, widths []int, jobs []model.Job, cursor, tableHeight, scroll, hidden, totalWidth int) {
 	now := a.clock()
+	headers := make([]string, len(columns))
 	for i, column := range columns {
-		if i > 0 {
-			out.WriteByte(' ')
-		}
-		out.WriteString(pad(column.Header, widths[i]))
+		headers[i] = pad(column.Header, widths[i])
 	}
-	out.WriteByte('\n')
+	fmt.Fprintln(out, overflowHeader(strings.Join(headers, " "), hidden, totalWidth))
 	for i, width := range widths {
 		if i > 0 {
 			out.WriteByte(' ')
@@ -1127,6 +1129,9 @@ func (a *App) renderTable(out *strings.Builder, columns []registry.Column, width
 			line.WriteString(pad(column.Value(jobs[row], now, a.options.Location), widths[columnIndex]))
 		}
 		text := line.String()
+		if hidden > 0 {
+			text = strings.TrimRight(text, " ")
+		}
 		if row == cursor {
 			text = selectedStyle.Render(text)
 		}

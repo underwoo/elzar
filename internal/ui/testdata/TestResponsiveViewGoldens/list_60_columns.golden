@@ -1,7 +1,7 @@
 Slurm TUI  scope: me
 [Queue]  Recent  Accounts
-JobID Name  User  Acco… Part… QOS   State Elap… Nodes NodeL…
-───── ───── ───── ───── ───── ───── ───── ───── ───── ──────
-12345 samp… test… scie… comp…       RUNN… 1:00… —     node-…
+JobID  Name    User   Accou… Partit… QOS     State   +3 cols
+────── ─────── ────── ────── ─────── ─────── ───────
+12345  sample… tester scien… compute         RUNNING
 Queue: 1 jobs
 tab views  / filter  s sort  c columns  ? help

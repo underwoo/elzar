@@ -1,7 +1,7 @@
 Slurm TUI  scope: me
 [Queue]  Recent  Accounts
-Jo… Na… Us… Ac… Pa… QOS St… El… No… Nod…
-─── ─── ─── ─── ─── ─── ─── ─── ─── ────
-12… sa… te… sc… co…     RU… 1:… —   nod…
+JobID   Name    User    Account  +6 cols
+─────── ─────── ─────── ────────
+12345   sample… tester  science
 Queue: 1 jobs
 tab views  / filter  s sort  ? help
