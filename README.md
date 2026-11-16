@@ -187,3 +187,7 @@ slurmtui is written entirely by AI agents, with no human-written application cod
 | Reviewer | Warden | Google Gemini 4 Argon (Antigravity) | Reviews every PR against the plan and runs build, test, and lint checks locally before approving. |
 
 The workflow is: request → plan and issue → pull request → review → CI → merge → tagged release → owner testing on real clusters. Bugs and requests from that testing become new issues. Sample data is scrubbed before it is committed to the repository.
+
+## License
+
+Licensed under [Apache-2.0](LICENSE).
