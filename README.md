@@ -78,7 +78,7 @@ The **Queue** view shows active jobs. **Recent** shows jobs that completed withi
 | `N` then motion | Repeat a motion N times (for example `5j`, `3 Space`) |
 | `gg`, `1G`, `Home`, `<`, `Alt+<` | Jump to the top |
 | `G`, `End`, `>`, `Alt+>` | Jump to the bottom |
-| `Enter` | Open details for the selected job |
+| `Enter` | Open details for the selected job or account |
 | `/` | Open the live regular-expression filter (Enter keeps it; Esc clears it) |
 | `s` | Sort by a visible column; selecting the current column flips direction |
 | `c` | Choose visible columns; use Space to toggle, `J`/`K` to reorder, and `w` to save |
@@ -121,6 +121,12 @@ and paging work as in the job views. Accounts refreshes independently every
 five minutes, or immediately with `r`. Failed clusters are logged in `Ctrl+T s`;
 previous rows for those clusters remain visible while successful clusters update.
 Job actions do not apply in Accounts.
+
+Press `Enter` to inspect an account’s lineage, shares and decayed usage, your
+FairShare and Level, and allowed QOS limits. MaxWall is shown in minutes;
+`—` means unset and `∞` means unlimited. Use the usual scrolling motions,
+then `Esc` to return to the selected account. Non-member accounts show their
+lineage without claiming user-specific QOS access.
 
 ## Options
 

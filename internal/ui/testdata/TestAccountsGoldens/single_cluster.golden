@@ -6,4 +6,4 @@ c1           account-0       root            default  1            0.2          
 c1           account-1       root            member   2            0.2          100            —            0.6          0.8          normal          
 c1           account-2       root                     3            0.2          200            —                         0.4                          
 Accounts: 3 of 3  clusters: all
-tab views  / filter  s sort  c columns  M clusters  r refresh  q quit  ^T s messages  ↑/↓ move  space page  G bottom  1G top  ? help
+enter details  tab views  / filter  s sort  c columns  M clusters  r refresh  q quit  ^T s messages  ↑/↓ move  space page  G bottom  1G top  ? help

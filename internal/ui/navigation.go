@@ -190,7 +190,7 @@ func (a *App) jumpToRow(oneBased int) {
 }
 
 func (a *App) detailMaxScroll() int {
-	if a.detail == nil {
+	if a.detail == nil && a.tab != registry.AccountsTab {
 		return 0
 	}
 	width := a.width
