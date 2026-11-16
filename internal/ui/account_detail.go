@@ -19,6 +19,8 @@ func (a *App) handleAccountDetailKey(msg tea.KeyMsg) tea.Cmd {
 		a.leaveDetailForTabSwitch()
 	case "q", "ctrl+c":
 		return tea.Quit
+	default:
+		return a.handlePluginKey(msg)
 	}
 	return nil
 }

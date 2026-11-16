@@ -102,7 +102,6 @@ func decodeSacctDetail(data []byte, id string) (model.JobDetail, error) {
 	for _, record := range envelope.Jobs {
 		job := record.job()
 		if job.DisplayID() == id || fmt.Sprint(record.ID) == id {
-			job.WorkingDirectory, job.Stdout, job.Stderr, job.Stdin = record.WorkingDirectory, record.Stdout, record.Stderr, record.Stdin
 			return model.JobDetail{Job: job, Comment: record.Comment.Job, Requested: record.TRES.Requested, Allocated: record.TRES.Allocated, Steps: record.jobSteps(), RawJSON: append(json.RawMessage(nil), record.raw...)}, nil
 		}
 	}

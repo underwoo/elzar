@@ -83,17 +83,22 @@ type sacctResponse struct {
 }
 
 type sacctJob struct {
-	ID        int64  `json:"job_id"`
-	Name      string `json:"name"`
-	User      string `json:"user"`
-	UserID    int64  `json:"user_id"`
-	Group     string `json:"group"`
-	GroupID   int64  `json:"group_id"`
-	Account   string `json:"account"`
-	Cluster   string `json:"cluster"`
-	Partition string `json:"partition"`
-	QOS       string `json:"qos"`
-	State     struct {
+	Comment struct {
+		Job *string `json:"job"`
+	} `json:"comment"`
+	StdoutExpanded string `json:"stdout_expanded"`
+	StderrExpanded string `json:"stderr_expanded"`
+	ID             int64  `json:"job_id"`
+	Name           string `json:"name"`
+	User           string `json:"user"`
+	UserID         int64  `json:"user_id"`
+	Group          string `json:"group"`
+	GroupID        int64  `json:"group_id"`
+	Account        string `json:"account"`
+	Cluster        string `json:"cluster"`
+	Partition      string `json:"partition"`
+	QOS            string `json:"qos"`
+	State          struct {
 		Current []model.State `json:"current"`
 		Reason  string        `json:"reason"`
 	} `json:"state"`
@@ -127,7 +132,7 @@ type sacctJob struct {
 
 func (record sacctJob) job() model.Job {
 	job := model.Job{
-		ID: record.ID, Name: record.Name, UserName: record.User,
+		Comment: record.Comment.Job, ID: record.ID, Name: record.Name, UserName: record.User,
 		UserID: record.UserID, GroupName: record.Group, GroupID: record.GroupID,
 		Account: record.Account, Cluster: record.Cluster, Partition: record.Partition, QOS: record.QOS,
 		States: record.State.Current, StateReason: record.State.Reason,
@@ -138,7 +143,7 @@ func (record sacctJob) job() model.Job {
 		EndTime:          present(record.Time.End),
 		ExitCode:         record.ExitCode,
 		WorkingDirectory: record.WorkingDirectory, Command: firstNonEmpty(record.SubmitLine, record.Command),
-		Stdout: record.Stdout, Stderr: record.Stderr, Stdin: record.Stdin,
+		Stdout: record.StdoutExpanded, Stderr: record.StderrExpanded, Stdin: record.Stdin,
 	}
 	if record.Array.JobID > 0 {
 		job.ArrayJobID = present(record.Array.JobID)

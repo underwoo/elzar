@@ -18,6 +18,7 @@ import (
 
 	"github.com/underwoo/elzar/internal/config"
 	"github.com/underwoo/elzar/internal/model"
+	"github.com/underwoo/elzar/internal/plugin"
 	"github.com/underwoo/elzar/internal/registry"
 	"github.com/underwoo/elzar/internal/slurm"
 )
@@ -25,6 +26,7 @@ import (
 const minTerminalWidth = 20
 
 type Options struct {
+	Plugins                plugin.Options
 	RefreshInterval        time.Duration
 	RecentWindow           time.Duration
 	Scope                  slurm.Scope
@@ -42,10 +44,12 @@ type Options struct {
 }
 
 type App struct {
-	accounts accountsState
-	runner   slurm.Runner
-	options  Options
-	clock    func() time.Time
+	plugins       []plugin.Plugin
+	pendingPlugin *pluginInvocation
+	accounts      accountsState
+	runner        slurm.Runner
+	options       Options
+	clock         func() time.Time
 
 	width, height      int
 	mode               mode
@@ -154,6 +158,7 @@ func NewWithOptions(runner slurm.Runner, options Options) *App {
 		app.addMessage(notice, messageInfo)
 	}
 	app.refreshColumnWarnings()
+	app.loadPlugins()
 	return app
 }
 
@@ -240,6 +245,8 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			a.setActionStatus("could not load job for edit: " + msg.err.Error())
 			a.mode = modeList
 		}
+	case pluginResult:
+		a.acceptPluginResult(msg)
 	case actionResult:
 		if msg.err != nil {
 			a.setActionStatus("action failed: " + msg.err.Error())
@@ -377,6 +384,8 @@ func (a *App) handleListKey(msg tea.KeyMsg) tea.Cmd {
 			a.mode = modeDetail
 			return a.startDetailFetch(a.detailJob, a.tab == registry.RecentTab, a.detailRequest)
 		}
+	default:
+		return a.handlePluginKey(msg)
 	}
 	return nil
 }
@@ -411,6 +420,8 @@ func (a *App) handleDetailKey(msg tea.KeyMsg) tea.Cmd {
 		a.detailScroll = 0
 	case key.Matches(msg, appKeys.quit):
 		return tea.Quit
+	default:
+		return a.handlePluginKey(msg)
 	}
 	return nil
 }
@@ -842,6 +853,9 @@ func (a *App) handlePickerKey(msg tea.KeyMsg) tea.Cmd {
 }
 
 func (a *App) handleConfirmKey(msg tea.KeyMsg) tea.Cmd {
+	if a.pendingPlugin != nil {
+		return a.confirmPlugin(msg)
+	}
 	if a.editConfirm {
 		if msg.Type == tea.KeyRunes && string(msg.Runes) == "y" {
 			a.editConfirm = false

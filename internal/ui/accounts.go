@@ -449,6 +449,8 @@ func (a *App) handleAccountsList(msg tea.KeyMsg) tea.Cmd {
 		a.toggleTabKey(msg.String())
 	case "esc":
 		a.clearFilter()
+	default:
+		return a.handlePluginKey(msg)
 	}
 	return nil
 }

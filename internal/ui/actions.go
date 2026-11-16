@@ -133,6 +133,10 @@ func (a *App) beginJobAction(action jobAction, job model.Job, returnMode mode) {
 }
 
 func (a *App) renderConfirm(out *strings.Builder) {
+	if a.pendingPlugin != nil {
+		a.renderPluginConfirm(out)
+		return
+	}
 	job := a.confirmJob
 	fmt.Fprintf(out, "%s\n\n", titleStyle.Render(a.confirmAction.label()+" job?"))
 	fmt.Fprintf(out, "ID: %s\nName: %s\nUser: %s\nState: %s\n", job.DisplayID(), job.Name, job.UserName, jobStateText(job))
