@@ -1,0 +1,43 @@
+Job detail: 101
+
+Summary
+Job ID: 101
+Cluster: —
+Name: train-llm
+User: alice
+Account: ml
+Partition: gpu
+QOS: normal
+State: RUNNING
+Node list: gpu-01
+Node count: 1
+
+Resources
+Requested TRES:
+  —
+Allocated TRES:
+  —
+
+Timing
+Submitted: 2026-11-11 06:53:20 EST
+Started: 2026-11-11 06:55:00 EST
+Ended: —
+Elapsed: 5:00
+Time limit: 120
+Exit: —
+
+Paths
+Working directory: /scratch/alice/train
+Command: /scratch/alice/train/run.sh
+Stdout: —
+Stderr: —
+Stdin: —
+
+Reason / Dependency
+Reason: —
+Dependency: —
+
+Plugin Notes
+Efficiency: 94%
+Bottleneck: none
+esc back  x cancel  h hold  R requeue  e edit  a all fields  q quit  ^T s messages  ? help

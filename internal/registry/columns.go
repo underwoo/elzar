@@ -24,8 +24,26 @@ type Column struct {
 	MinWidth       int
 	DefaultVisible bool
 	RecentOnly     bool
+	Tabs           []Tab
 	Value          func(model.Job, time.Time, *time.Location) string
 	Less           func(model.Job, model.Job) bool
+}
+
+func PluginColumnID(pluginName, columnID string) string {
+	return "plugin." + pluginName + "." + columnID
+}
+
+func NewPluginColumn(pluginName, columnID, header string, width int, tabs []Tab, value func(model.Job) string) Column {
+	minWidth := min(width, max(1, min(6, len([]rune(header)))))
+	return Column{
+		ID:       PluginColumnID(pluginName, columnID),
+		Header:   header,
+		Width:    width,
+		MinWidth: minWidth,
+		Tabs:     tabs,
+		Value:    func(job model.Job, _ time.Time, _ *time.Location) string { return value(job) },
+		Less:     func(a, b model.Job) bool { return lessText(value(a), value(b)) },
+	}
 }
 
 func DefaultColumns() []Column {
@@ -136,27 +154,44 @@ func VisibleColumns(tab Tab) []Column {
 	return visible
 }
 
-// AllColumns returns every built-in column supported by a tab, including
-// columns that are hidden by default but can be selected by the user.
-func AllColumns(tab Tab) []Column {
+// AllColumns returns every built-in and plugin column supported by a tab,
+// including columns that are hidden by default but can be selected by the user.
+func AllColumns(tab Tab, extra ...Column) []Column {
 	all := DefaultColumns()
-	columns := make([]Column, 0, len(all))
+	columns := make([]Column, 0, len(all)+len(extra))
 	for _, column := range all {
-		if !column.RecentOnly || tab == RecentTab {
+		if columnSupportsTab(column, tab) {
+			columns = append(columns, column)
+		}
+	}
+	for _, column := range extra {
+		if columnSupportsTab(column, tab) {
 			columns = append(columns, column)
 		}
 	}
 	return columns
 }
 
+func columnSupportsTab(column Column, tab Tab) bool {
+	if len(column.Tabs) > 0 {
+		for _, allowed := range column.Tabs {
+			if allowed == tab {
+				return true
+			}
+		}
+		return false
+	}
+	return !column.RecentOnly || tab == RecentTab
+}
+
 // ColumnsForIDs resolves an optional configured order. Unknown IDs are omitted
 // and returned so the UI can surface them to the user.
-func ColumnsForIDs(tab Tab, ids []string) ([]Column, []string) {
+func ColumnsForIDs(tab Tab, ids []string, extra ...Column) ([]Column, []string) {
 	if ids == nil {
 		return VisibleColumns(tab), nil
 	}
 	available := make(map[string]Column)
-	for _, column := range AllColumns(tab) {
+	for _, column := range AllColumns(tab, extra...) {
 		available[column.ID] = column
 	}
 	columns := make([]Column, 0, len(ids))

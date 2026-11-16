@@ -47,6 +47,16 @@ func (a *App) addMessage(text string, level messageLevel) {
 	a.messageLog = append(a.messageLog, statusMessage{Text: text, Level: level, At: now, Count: 1})
 }
 
+func (a *App) removeMessage(text string) {
+	text = strings.TrimSpace(text)
+	for i := len(a.messageLog) - 1; i >= 0; i-- {
+		if a.messageLog[i].Text == text {
+			a.messageLog = append(a.messageLog[:i], a.messageLog[i+1:]...)
+			return
+		}
+	}
+}
+
 func (a *App) setActionStatus(text string) {
 	a.actionStatus = text
 	level := messageInfo
