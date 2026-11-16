@@ -1,0 +1,9 @@
+name: stderr
+description: Open job standard error
+type: command
+key: O
+scopes: [queue, recent, detail]
+command: '{{env "PAGER" "less"}}'
+args: ['--', '{{.StdErr}}']
+mode: foreground
+confirm: false
