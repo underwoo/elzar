@@ -28,6 +28,7 @@ type accountsState struct {
 	sort           columnSort
 	clusters       map[string]bool
 	picker         string
+	detailRow      model.AccountRow
 }
 type accountsTick struct{}
 type accountsResult struct {
@@ -107,6 +108,7 @@ func buildAccountRows(shares []model.Share, associations []model.Association, us
 				row.You = "default"
 			}
 			row.QOS = assoc.QOS
+			row.Level = model.OptionalFloat{}
 			if factor, ok := factors[k]; ok {
 				row.FairShare = factor.FairShare
 				row.Level = factor.Level
@@ -404,6 +406,12 @@ func (a *App) handleAccountsList(msg tea.KeyMsg) tea.Cmd {
 		a.beginAccountsPicker("sort")
 	case "c":
 		a.beginAccountsPicker("columns")
+	case "enter":
+		if a.accounts.cursor < len(a.accounts.visible) {
+			a.accounts.detailRow = a.accounts.visible[a.accounts.cursor]
+			a.detailScroll = 0
+			a.mode = modeDetail
+		}
 	case "M":
 		a.beginAccountsPicker("clusters")
 	case "r":
@@ -495,7 +503,7 @@ func (a *App) renderAccounts(width int) string {
 		status = nav + "  " + status
 	}
 	fmt.Fprintln(&out, mutedStyle.Render(fitStatusLine(status, width, a.statusMessageHint())))
-	fmt.Fprint(&out, mutedStyle.Render(fitFooter(width, []string{"tab views", "/ filter", "s sort", "c columns", "M clusters", "r refresh", "q quit", a.statusMessageHint() + " messages", "↑/↓ move", "space page", "G bottom", "1G top"})))
+	fmt.Fprint(&out, mutedStyle.Render(fitFooter(width, []string{"enter details", "tab views", "/ filter", "s sort", "c columns", "M clusters", "r refresh", "q quit", a.statusMessageHint() + " messages", "↑/↓ move", "space page", "G bottom", "1G top"})))
 	return fitOutput(out.String(), width)
 }
 func (a *App) tabLine() string {

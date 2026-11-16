@@ -1,0 +1,26 @@
+Account detail: c1/account-0
+
+Lineage (root → account)
+root
+  RawShares: 1  NormShares: —
+  RawUsage: 0  EffectvUsage: —
+account-0
+  RawShares: 1  NormShares: 0.2
+  RawUsage: 0  EffectvUsage: —
+
+Your association
+Membership: default
+FairShare: 0.6  Level: 0.8
+
+Allowed QOS
+normal
+  MaxWall (minutes): 120
+  MaxJobs: —
+  MaxJobs per user: 10
+  MaxJobs per account: —
+  MaxSubmit per user: ∞
+  MaxSubmit per account: —
+  MaxTRES per job: cpu=32
+  MaxTRES per user: gres/gpu=4
+  Priority: 0  UsageFactor: 1
+esc back  ↑/↓ scroll  space page  G bottom  1G top  tab views  q quit  ? help

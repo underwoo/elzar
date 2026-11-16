@@ -366,6 +366,9 @@ func (a *App) handleListKey(msg tea.KeyMsg) tea.Cmd {
 }
 
 func (a *App) handleDetailKey(msg tea.KeyMsg) tea.Cmd {
+	if a.tab == registry.AccountsTab {
+		return a.handleAccountDetailKey(msg)
+	}
 	switch {
 	case key.Matches(msg, appKeys.cancel):
 		a.beginJobAction(actionCancel, a.detailJob, modeDetail)
@@ -981,6 +984,10 @@ func (a *App) View() string {
 }
 
 func (a *App) renderDetail(out *strings.Builder, width int) {
+	if a.tab == registry.AccountsTab {
+		a.renderAccountDetail(out, width)
+		return
+	}
 	fmt.Fprintf(out, "%s\n", titleStyle.Render("Job detail: "+a.detailJob.DisplayID()))
 	if a.detail == nil && a.detailError != nil {
 		fmt.Fprintln(out, errorStyle.Render(fitStatusLine("Could not load job details: "+a.detailError.Error(), width, a.statusMessageHint())))
@@ -1009,6 +1016,9 @@ func (a *App) renderDetail(out *strings.Builder, width int) {
 }
 
 func (a *App) detailContentLines(width int) []string {
+	if a.tab == registry.AccountsTab {
+		return a.accountDetailLines()
+	}
 	if a.detail == nil {
 		return nil
 	}
