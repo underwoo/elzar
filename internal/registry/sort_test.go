@@ -84,3 +84,38 @@ func TestJobIDComparatorUsesArrayAndHetComponents(t *testing.T) {
 		}
 	}
 }
+
+func TestPluginColumnRegistrationAndComparator(t *testing.T) {
+	values := map[int64]string{1: "gpu:2", 2: "gpu:8", 3: "—", 4: "…"}
+	col := NewPluginColumn("metrics", "gpu", "GPU", 10, []Tab{QueueTab}, func(job model.Job) string {
+		return values[job.ID]
+	})
+	if col.ID != "plugin.metrics.gpu" || col.DefaultVisible {
+		t.Fatalf("unexpected plugin column metadata: %+v", col)
+	}
+	if !col.Less(model.Job{ID: 1}, model.Job{ID: 2}) || col.Less(model.Job{ID: 2}, model.Job{ID: 1}) {
+		t.Fatal("plugin comparator did not order lower cell text before higher cell text")
+	}
+	for _, unsetID := range []int64{3, 4} {
+		if !col.Less(model.Job{ID: 2}, model.Job{ID: unsetID}) || col.Less(model.Job{ID: unsetID}, model.Job{ID: 2}) {
+			t.Fatalf("unset value %q did not sort last", values[unsetID])
+		}
+	}
+	queueAll := AllColumns(QueueTab, col)
+	if queueAll[len(queueAll)-1].ID != "plugin.metrics.gpu" {
+		t.Fatalf("plugin column missing from QueueTab AllColumns: %+v", queueAll)
+	}
+	for _, c := range AllColumns(RecentTab, col) {
+		if c.ID == "plugin.metrics.gpu" {
+			t.Fatal("queue-only plugin column appeared in RecentTab AllColumns")
+		}
+	}
+	resolved, unknown := ColumnsForIDs(QueueTab, []string{"job_id", "plugin.metrics.gpu", "plugin.missing.col"}, col)
+	if len(resolved) != 2 || resolved[1].ID != "plugin.metrics.gpu" || len(unknown) != 1 || unknown[0] != "plugin.missing.col" {
+		t.Fatalf("ColumnsForIDs = %+v, unknown = %v", resolved, unknown)
+	}
+	sections := DetailSections(DetailSection{ID: "plugin.metrics.notes", Title: "Plugin Notes"})
+	if len(sections) < 2 || sections[len(sections)-2].ID != "plugin.metrics.notes" || sections[len(sections)-1].ID != "all" {
+		t.Fatalf("plugin section was not placed immediately before All fields: %+v", sections)
+	}
+}

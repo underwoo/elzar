@@ -18,16 +18,17 @@ type DetailSection struct {
 	Render  func(model.JobDetail, time.Time, *time.Location) []string
 }
 
-func DetailSections() []DetailSection {
-	return []DetailSection{
+func DetailSections(extra ...DetailSection) []DetailSection {
+	sections := []DetailSection{
 		{ID: "summary", Title: "Summary", Applies: alwaysDetail, Render: renderSummary},
 		{ID: "resources", Title: "Resources", Applies: alwaysDetail, Render: renderResources},
 		{ID: "timing", Title: "Timing", Applies: alwaysDetail, Render: renderTiming},
 		{ID: "paths", Title: "Paths", Applies: alwaysDetail, Render: renderPaths},
 		{ID: "steps", Title: "Steps", Applies: func(d model.JobDetail) bool { return len(d.Steps) > 0 }, Render: renderSteps},
 		{ID: "reason", Title: "Reason / Dependency", Applies: alwaysDetail, Render: renderReason},
-		{ID: "all", Title: "All fields", Applies: alwaysDetail, Render: renderAllFields},
 	}
+	sections = append(sections, extra...)
+	return append(sections, DetailSection{ID: "all", Title: "All fields", Applies: alwaysDetail, Render: renderAllFields})
 }
 
 func alwaysDetail(model.JobDetail) bool { return true }

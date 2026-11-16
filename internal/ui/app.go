@@ -27,6 +27,7 @@ const minTerminalWidth = 20
 
 type Options struct {
 	Plugins                plugin.Options
+	PluginExecutor         plugin.Executor
 	RefreshInterval        time.Duration
 	RecentWindow           time.Duration
 	Scope                  slurm.Scope
@@ -44,12 +45,15 @@ type Options struct {
 }
 
 type App struct {
-	plugins       []plugin.Plugin
-	pendingPlugin *pluginInvocation
-	accounts      accountsState
-	runner        slurm.Runner
-	options       Options
-	clock         func() time.Time
+	plugins          []plugin.Plugin
+	execPlugins      []*execPlugin
+	pluginTabColumns map[registry.Tab][]registry.Column
+	pluginSections   []registry.DetailSection
+	pendingPlugin    *pluginInvocation
+	accounts         accountsState
+	runner           slurm.Runner
+	options          Options
+	clock            func() time.Time
 
 	width, height      int
 	mode               mode
@@ -157,8 +161,8 @@ func NewWithOptions(runner slurm.Runner, options Options) *App {
 	if notice != "" {
 		app.addMessage(notice, messageInfo)
 	}
-	app.refreshColumnWarnings()
 	app.loadPlugins()
+	app.refreshColumnWarnings()
 	return app
 }
 
@@ -201,6 +205,7 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			a.lastRefresh = msg.at
 			a.keepAllCursorsVisible()
+			return a, a.startPluginColumnsFetch(registry.QueueTab, a.queueJobs)
 		}
 	case recentResult:
 		a.recentLoading = false
@@ -223,6 +228,7 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			a.lastRefresh = msg.at
 			a.keepAllCursorsVisible()
+			return a, a.startPluginColumnsFetch(registry.RecentTab, a.recentJobs)
 		}
 	case detailResult:
 		if msg.request != a.detailRequest {
@@ -238,6 +244,8 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if a.editAfterDetail {
 				a.editAfterDetail = false
 				a.beginEditForm(detail.Job, detail.Comment, modeList)
+			} else {
+				return a, a.startPluginDetailFetch(detail, a.detailRequest)
 			}
 		}
 		if msg.err != nil && a.editAfterDetail {
@@ -247,6 +255,10 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	case pluginResult:
 		a.acceptPluginResult(msg)
+	case pluginColumnsResult:
+		a.acceptPluginColumnsResult(msg)
+	case pluginDetailResult:
+		a.acceptPluginDetailResult(msg)
 	case actionResult:
 		if msg.err != nil {
 			a.setActionStatus("action failed: " + msg.err.Error())
@@ -477,7 +489,7 @@ func (a *App) beginSort() {
 }
 
 func (a *App) beginColumnPicker() {
-	all := registry.AllColumns(a.tab)
+	all := a.allColumns(a.tab)
 	visible := a.columnsFor(a.tab)
 	visibleIDs := make(map[string]bool, len(visible))
 	for _, column := range visible {
@@ -499,12 +511,20 @@ func (a *App) beginColumnPicker() {
 	a.mode = modePicker
 }
 
+func (a *App) allColumns(tab registry.Tab) []registry.Column {
+	return registry.AllColumns(tab, a.pluginColumnsFor(tab)...)
+}
+
+func (a *App) columnsForIDs(tab registry.Tab, ids []string) ([]registry.Column, []string) {
+	return registry.ColumnsForIDs(tab, ids, a.pluginColumnsFor(tab)...)
+}
+
 func (a *App) columnsFor(tab registry.Tab) []registry.Column {
 	ids := a.options.QueueColumns
 	if tab == registry.RecentTab {
 		ids = a.options.RecentColumns
 	}
-	columns, _ := registry.ColumnsForIDs(tab, ids)
+	columns, _ := a.columnsForIDs(tab, ids)
 	if ids == nil && a.autoClusterVisible {
 		return withClusterColumn(columns)
 	}
@@ -562,6 +582,7 @@ func (a *App) refreshAfterClusterColumnChange(oldQueue, oldRecent []model.Job) {
 }
 
 func (a *App) refreshColumnWarnings() {
+	previous := a.columnWarning
 	a.columnWarning = ""
 	var unknown []string
 	for _, tab := range []registry.Tab{registry.QueueTab, registry.RecentTab} {
@@ -569,13 +590,22 @@ func (a *App) refreshColumnWarnings() {
 		if tab == registry.RecentTab {
 			ids = a.options.RecentColumns
 		}
-		_, skipped := registry.ColumnsForIDs(tab, ids)
+		_, skipped := a.columnsForIDs(tab, ids)
 		unknown = append(unknown, skipped...)
 	}
 	_, skippedAccounts := registry.AccountColumnsForIDs(a.options.AccountColumns)
 	unknown = append(unknown, skippedAccounts...)
-	if len(unknown) != 0 {
-		a.columnWarning = "unknown column IDs skipped: " + strings.Join(uniqueStrings(unknown), ", ")
+	if len(unknown) == 0 {
+		if previous != "" {
+			a.removeMessage(previous)
+		}
+		return
+	}
+	a.columnWarning = "unknown column IDs skipped: " + strings.Join(uniqueStrings(unknown), ", ")
+	if a.columnWarning != previous {
+		if previous != "" {
+			a.removeMessage(previous)
+		}
 		a.addMessage(a.columnWarning, messageError)
 	}
 }
@@ -1067,7 +1097,7 @@ func (a *App) detailContentLines(width int) []string {
 		return nil
 	}
 	lines := make([]string, 0, 64)
-	for _, section := range registry.DetailSections() {
+	for _, section := range registry.DetailSections(a.pluginDetailSections()...) {
 		if section.ID == "all" && !a.showAllFields {
 			continue
 		}

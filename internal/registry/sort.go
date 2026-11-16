@@ -50,8 +50,8 @@ func lessForColumn(id string) func(model.Job, model.Job) bool {
 }
 
 func lessText(a, b string) bool {
-	aMissing := a == "" || a == "—"
-	bMissing := b == "" || b == "—"
+	aMissing := a == "" || a == "—" || a == "…"
+	bMissing := b == "" || b == "—" || b == "…"
 	if aMissing != bMissing {
 		return !aMissing
 	}

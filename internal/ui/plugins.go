@@ -2,16 +2,19 @@ package ui
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os/exec"
 	"slices"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 
+	"github.com/underwoo/elzar/internal/model"
 	"github.com/underwoo/elzar/internal/plugin"
 	"github.com/underwoo/elzar/internal/registry"
 )
@@ -28,6 +31,72 @@ type pluginResult struct {
 	err          error
 }
 
+type execPlugin struct {
+	plugin      plugin.Plugin
+	session     *plugin.Session
+	description plugin.Description
+	columns     map[registry.Tab]*pluginTabState
+	detail      pluginDetailState
+	mu          sync.Mutex
+	breakerErrs []error
+}
+
+func (e *execPlugin) recordBreakerError(err error) {
+	e.mu.Lock()
+	e.breakerErrs = append(e.breakerErrs, err)
+	e.mu.Unlock()
+}
+
+func (e *execPlugin) takeBreakerErrors() []error {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	errs := e.breakerErrs
+	e.breakerErrs = nil
+	return errs
+}
+
+func (e *execPlugin) hasColumnsForTab(tab registry.Tab) bool {
+	for _, col := range e.description.Columns {
+		if slices.Contains(col.Tabs, string(tab)) {
+			return true
+		}
+	}
+	return false
+}
+
+type pluginTabState struct {
+	request uint64
+	loading bool
+	loaded  bool
+	err     error
+	values  plugin.ColumnValues
+}
+
+type pluginDetailState struct {
+	request  uint64
+	loading  bool
+	loaded   bool
+	err      error
+	sections plugin.DetailSections
+}
+
+type pluginColumnsResult struct {
+	plugin  string
+	tab     registry.Tab
+	request uint64
+	values  plugin.ColumnValues
+	err     error
+	breaker []error
+}
+
+type pluginDetailResult struct {
+	plugin   string
+	request  uint64
+	sections plugin.DetailSections
+	err      error
+	breaker  []error
+}
+
 func (a *App) loadPlugins() {
 	plugins, errs := plugin.Discover(a.options.Plugins)
 	for _, err := range errs {
@@ -38,7 +107,26 @@ func (a *App) loadPlugins() {
 
 func (a *App) installPlugins(plugins []plugin.Plugin) {
 	a.plugins = nil
+	a.execPlugins = nil
 	for _, p := range plugins {
+		if p.Type == "exec" {
+			ep := &execPlugin{
+				plugin: p,
+				columns: map[registry.Tab]*pluginTabState{
+					registry.QueueTab:  {},
+					registry.RecentTab: {},
+				},
+			}
+			session, err := plugin.LoadExec(context.Background(), p, a.options.PluginExecutor, a.options.Plugins, ep.recordBreakerError)
+			if err != nil {
+				a.addMessage("Plugin load failed: "+err.Error(), messageError)
+				continue
+			}
+			ep.session = session
+			ep.description = session.Description()
+			a.execPlugins = append(a.execPlugins, ep)
+			continue
+		}
 		if a.pluginKeyReserved(p.Key) {
 			a.addMessage(fmt.Sprintf("Plugin %s disabled: key %q conflicts with a built-in binding", p.Name, p.Key), messageError)
 			continue
@@ -59,6 +147,250 @@ func (a *App) installPlugins(plugins []plugin.Plugin) {
 			continue
 		}
 		a.plugins = append(a.plugins, p)
+	}
+	a.pluginTabColumns = map[registry.Tab][]registry.Column{
+		registry.QueueTab:  a.buildPluginColumnsFor(registry.QueueTab),
+		registry.RecentTab: a.buildPluginColumnsFor(registry.RecentTab),
+	}
+	a.pluginSections = a.buildPluginDetailSections()
+	a.refreshColumnWarnings()
+}
+
+func (a *App) findExecPlugin(name string) *execPlugin {
+	for _, ep := range a.execPlugins {
+		if ep.plugin.Name == name {
+			return ep
+		}
+	}
+	return nil
+}
+
+func (a *App) pluginColumnsFor(tab registry.Tab) []registry.Column {
+	return a.pluginTabColumns[tab]
+}
+
+func (a *App) buildPluginColumnsFor(tab registry.Tab) []registry.Column {
+	if len(a.execPlugins) == 0 {
+		return nil
+	}
+	var columns []registry.Column
+	for _, ep := range a.execPlugins {
+		state := ep.columns[tab]
+		for _, col := range ep.description.Columns {
+			tabs := make([]registry.Tab, 0, len(col.Tabs))
+			for _, t := range col.Tabs {
+				tabs = append(tabs, registry.Tab(t))
+			}
+			if !slices.Contains(tabs, tab) {
+				continue
+			}
+			ep := ep
+			state := state
+			colID := col.ID
+			columns = append(columns, registry.NewPluginColumn(ep.plugin.Name, colID, col.Header, col.Width, tabs, func(job model.Job) string {
+				return ep.cellValue(state, colID, job.DisplayID())
+			}))
+		}
+	}
+	return columns
+}
+
+func (e *execPlugin) cellValue(state *pluginTabState, colID, jobID string) string {
+	if state == nil {
+		return "…"
+	}
+	if byCol, ok := state.values[jobID]; ok {
+		if val, ok := byCol[colID]; ok {
+			return val
+		}
+	}
+	if state.loading || (!state.loaded && state.err == nil && !e.session.Disabled()) {
+		return "…"
+	}
+	return "—"
+}
+
+func (a *App) startPluginColumnsFetch(tab registry.Tab, jobs []model.Job) tea.Cmd {
+	if len(a.execPlugins) == 0 {
+		return nil
+	}
+	var jobFields []plugin.Fields
+	var cmds []tea.Cmd
+	for _, ep := range a.execPlugins {
+		if !ep.hasColumnsForTab(tab) {
+			continue
+		}
+		if jobFields == nil {
+			jobFields = make([]plugin.Fields, len(jobs))
+			for i, job := range jobs {
+				jobFields[i] = jobPluginFields(job)
+			}
+		}
+		state := ep.columns[tab]
+		state.request++
+		state.loading = !ep.session.Disabled()
+		req := state.request
+		ep := ep
+		fields := jobFields
+		cmds = append(cmds, func() tea.Msg {
+			values, err := ep.session.Columns(context.Background(), string(tab), fields)
+			return pluginColumnsResult{
+				plugin:  ep.plugin.Name,
+				tab:     tab,
+				request: req,
+				values:  values,
+				err:     err,
+				breaker: ep.takeBreakerErrors(),
+			}
+		})
+	}
+	if len(cmds) == 0 {
+		return nil
+	}
+	return tea.Batch(cmds...)
+}
+
+func (a *App) acceptPluginColumnsResult(msg pluginColumnsResult) {
+	for _, err := range msg.breaker {
+		a.addMessage(err.Error(), messageError)
+	}
+	ep := a.findExecPlugin(msg.plugin)
+	if ep == nil {
+		return
+	}
+	state := ep.columns[msg.tab]
+	if state == nil || msg.request != state.request {
+		return
+	}
+	state.loading = false
+	state.err = msg.err
+	if msg.err == nil {
+		state.loaded = true
+		state.values = msg.values
+	}
+	if msg.tab == registry.RecentTab {
+		oldRecent := a.visibleRecent()
+		sortJobs(a.recentJobs, a.columnsFor(registry.RecentTab), a.recentSort)
+		a.recomputeRecentFilter()
+		a.recentCursor = restoreCursor(oldRecent, a.visibleRecent(), a.recentCursor)
+	} else {
+		oldQueue := a.visibleQueue()
+		sortJobs(a.queueJobs, a.columnsFor(registry.QueueTab), a.queueSort)
+		a.recomputeQueueFilter()
+		a.queueCursor = restoreCursor(oldQueue, a.visibleQueue(), a.queueCursor)
+	}
+	a.keepAllCursorsVisible()
+}
+
+func (a *App) pluginDetailSections() []registry.DetailSection {
+	return a.pluginSections
+}
+
+func (a *App) buildPluginDetailSections() []registry.DetailSection {
+	if len(a.execPlugins) == 0 {
+		return nil
+	}
+	var sections []registry.DetailSection
+	for _, ep := range a.execPlugins {
+		for _, sec := range ep.description.Sections {
+			ep := ep
+			sec := sec
+			sections = append(sections, registry.DetailSection{
+				ID:    "plugin." + ep.plugin.Name + "." + sec.ID,
+				Title: sec.Title,
+				Render: func(_ model.JobDetail, _ time.Time, _ *time.Location) []string {
+					return a.renderPluginDetailSection(ep, sec.ID)
+				},
+			})
+		}
+	}
+	return sections
+}
+
+func (a *App) renderPluginDetailSection(ep *execPlugin, sectionID string) []string {
+	state := ep.detail
+	if state.request == a.detailRequest {
+		if state.err != nil {
+			return []string{errorStyle.Render(oneLinePluginError(state.err))}
+		}
+		if state.loaded {
+			lines := state.sections[sectionID]
+			if len(lines) == 0 {
+				return []string{"—"}
+			}
+			return lines
+		}
+	}
+	if ep.session.Disabled() {
+		return []string{errorStyle.Render(oneLinePluginError(plugin.ErrDisabled))}
+	}
+	return []string{"loading…"}
+}
+
+func oneLinePluginError(err error) string {
+	text := strings.Join(strings.Fields(err.Error()), " ")
+	if strings.HasPrefix(strings.ToLower(text), "error:") {
+		return text
+	}
+	return "error: " + text
+}
+
+func (a *App) startPluginDetailFetch(detail model.JobDetail, request uint64) tea.Cmd {
+	if len(a.execPlugins) == 0 {
+		return nil
+	}
+	var fields plugin.Fields
+	var cmds []tea.Cmd
+	for _, ep := range a.execPlugins {
+		if len(ep.description.Sections) == 0 {
+			continue
+		}
+		if fields == nil {
+			fields = jobPluginFields(detail.Job)
+			if detail.Comment != "" {
+				fields["Comment"] = detail.Comment
+			}
+		}
+		ep.detail = pluginDetailState{
+			request: request,
+			loading: !ep.session.Disabled(),
+		}
+		ep := ep
+		jobFields := fields
+		raw := detail.RawJSON
+		cmds = append(cmds, func() tea.Msg {
+			sections, err := ep.session.Detail(context.Background(), jobFields, raw)
+			return pluginDetailResult{
+				plugin:   ep.plugin.Name,
+				request:  request,
+				sections: sections,
+				err:      err,
+				breaker:  ep.takeBreakerErrors(),
+			}
+		})
+	}
+	if len(cmds) == 0 {
+		return nil
+	}
+	return tea.Batch(cmds...)
+}
+
+func (a *App) acceptPluginDetailResult(msg pluginDetailResult) {
+	for _, err := range msg.breaker {
+		a.addMessage(err.Error(), messageError)
+	}
+	if msg.err != nil && len(msg.breaker) == 0 && !errors.Is(msg.err, context.Canceled) && !errors.Is(msg.err, plugin.ErrDisabled) {
+		a.addMessage("Plugin detail failed: "+msg.err.Error(), messageError)
+	}
+	ep := a.findExecPlugin(msg.plugin)
+	if ep == nil || msg.request != a.detailRequest {
+		return
+	}
+	ep.detail.loading = false
+	ep.detail.err = msg.err
+	if msg.err == nil {
+		ep.detail.loaded = true
+		ep.detail.sections = msg.sections
 	}
 }
 
