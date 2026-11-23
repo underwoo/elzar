@@ -151,11 +151,12 @@ type EnvLookup func(string) (string, bool)
 
 // ResolvedField holds the effective value and provenance of one field.
 type ResolvedField struct {
-	Spec   FieldSpec
-	Value  string
-	Flag   string // "--gres" or "--gpus" for FieldGresGPUs; Spec.LongFlag otherwise
-	Source Source
-	Edited bool
+	Spec           FieldSpec
+	Value          string
+	Flag           string // "--gres" or "--gpus" for FieldGresGPUs; Spec.LongFlag otherwise
+	Source         Source
+	Edited         bool
+	ClearRequested bool
 }
 
 // Edits holds user modifications made in the submit form.
@@ -230,11 +231,19 @@ func Resolve(scriptPath string, parsed ParsedScript, env EnvLookup, edits Edits)
 		editedVal, hasVal := edits.Values[spec.ID]
 		isEdited := edits.Edited[spec.ID] || (hasVal && editedVal != baseVal)
 		if isEdited {
-			rf.Value = editedVal
-			rf.Source = Source{Kind: SourceForm}
-			rf.Edited = true
-			if spec.ID == FieldGresGPUs {
-				rf.Flag = gresOrGPUsFlag(editedVal, baseFlag)
+			if strings.TrimSpace(editedVal) == "" {
+				// The sbatch CLI cannot unset a #SBATCH directive or SBATCH_*
+				// environment variable, so an empty edit resets to the base
+				// script/env/default value and source, while flagging
+				// ClearRequested when a non-empty base value was present.
+				rf.ClearRequested = baseVal != ""
+			} else {
+				rf.Value = editedVal
+				rf.Source = Source{Kind: SourceForm}
+				rf.Edited = true
+				if spec.ID == FieldGresGPUs {
+					rf.Flag = gresOrGPUsFlag(editedVal, baseFlag)
+				}
 			}
 		}
 

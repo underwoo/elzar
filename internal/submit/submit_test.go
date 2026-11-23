@@ -426,4 +426,40 @@ func TestArgvOnlyEditedFieldsAndWorkingDir(t *testing.T) {
 	if got := plan.Argv(false); !reflect.DeepEqual(got, wantEdited) {
 		t.Fatalf("edited Argv(false) =\n  %v\nwant:\n  %v", got, wantEdited)
 	}
+
+	// 3. Clearing a script/env field resets to script/env/default with ClearRequested=true and emits no flag.
+	clearScript, err := ParseScript("#!/bin/sh\n#SBATCH -t 10\n")
+	if err != nil {
+		t.Fatal(err)
+	}
+	clearPlan, err := Resolve("/scratch/user/jobs/run.sh", clearScript, env, Edits{
+		Values: map[FieldID]string{
+			FieldTime:    "",
+			FieldQOS:     "",
+			FieldJobName: "",
+		},
+		Edited: map[FieldID]bool{
+			FieldTime:    true,
+			FieldQOS:     true,
+			FieldJobName: true,
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	timeField, _ := clearPlan.Field(FieldTime)
+	if timeField.Edited || !timeField.ClearRequested || timeField.Value != "10" || timeField.Source.Label() != "script:2" {
+		t.Fatalf("cleared script field = %+v (label=%q), want Value=10 Source=script:2 Edited=false ClearRequested=true", timeField, timeField.Source.Label())
+	}
+	qosField, _ := clearPlan.Field(FieldQOS)
+	if qosField.Edited || !qosField.ClearRequested || qosField.Value != "high" || qosField.Source.Label() != "env SBATCH_QOS" {
+		t.Fatalf("cleared env field = %+v (label=%q), want Value=high Source='env SBATCH_QOS' Edited=false ClearRequested=true", qosField, qosField.Source.Label())
+	}
+	nameField, _ := clearPlan.Field(FieldJobName)
+	if nameField.Edited || nameField.ClearRequested || nameField.Value != "" || nameField.Source.Label() != "default" {
+		t.Fatalf("cleared default field = %+v (label=%q), want Value='' Source=default Edited=false ClearRequested=false", nameField, nameField.Source.Label())
+	}
+	if got := clearPlan.Argv(false); !reflect.DeepEqual(got, wantUnedited) {
+		t.Fatalf("cleared Argv(false) = %v, want %v (no --time or --qos flag)", got, wantUnedited)
+	}
 }
