@@ -18,6 +18,12 @@ type helpGroup struct {
 }
 
 func (a *App) builtinHelpGroups() []helpGroup {
+	if a.mode == modeForm && a.submitForm.active {
+		return []helpGroup{
+			{title: "Submit form", bindings: []key.Binding{submitKeys.up, submitKeys.down, submitKeys.reset, submitKeys.dryRun, submitKeys.submit, submitKeys.cancel}},
+			{title: "App", bindings: []key.Binding{appKeys.help, appKeys.quit}},
+		}
+	}
 	if a.tab == filesTab {
 		return a.filesHelpGroups()
 	}
@@ -35,6 +41,10 @@ func (a *App) builtinHelpGroups() []helpGroup {
 		}
 	}
 	switch a.mode {
+	case modeForm:
+		return []helpGroup{
+			{title: "Edit job", bindings: []key.Binding{appKeys.up, appKeys.down, appKeys.enter, appKeys.back}},
+		}
 	case modeDetail:
 		return []helpGroup{
 			{title: "Navigation", bindings: []key.Binding{appKeys.scroll, appKeys.pageUp, appKeys.pageDown, appKeys.count, appKeys.top, appKeys.bottom, appKeys.back}},

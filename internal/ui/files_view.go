@@ -15,7 +15,7 @@ import (
 
 // Files actions are intentionally absent from allAppBindings: they do not
 // reserve keys in the job/account plugin scopes.
-var filesKeys = struct{ open, collapse, parent, hidden, refresh, pager, editor, filter key.Binding }{
+var filesKeys = struct{ open, collapse, parent, hidden, refresh, pager, editor, submit, filter key.Binding }{
 	key.NewBinding(key.WithKeys("enter", "l", "right"), key.WithHelp("enter/l", "expand directory")),
 	key.NewBinding(key.WithKeys("h", "left"), key.WithHelp("h", "collapse/parent")),
 	key.NewBinding(key.WithKeys("backspace"), key.WithHelp("backspace", "parent directory")),
@@ -23,13 +23,14 @@ var filesKeys = struct{ open, collapse, parent, hidden, refresh, pager, editor, 
 	key.NewBinding(key.WithKeys("r"), key.WithHelp("r", "refresh files")),
 	key.NewBinding(key.WithKeys("v"), key.WithHelp("v", "pager")),
 	key.NewBinding(key.WithKeys("e"), key.WithHelp("e", "editor")),
+	key.NewBinding(key.WithKeys("S"), key.WithHelp("S", "submit script")),
 	key.NewBinding(key.WithKeys("/"), key.WithHelp("/", "filter names")),
 }
 
 func (a *App) filesHelpGroups() []helpGroup {
 	return []helpGroup{
 		{title: "Navigation", bindings: []key.Binding{appKeys.up, appKeys.down, appKeys.count, appKeys.top, appKeys.bottom, appKeys.pageUp, appKeys.pageDown}},
-		{title: "Files", bindings: []key.Binding{filesKeys.open, filesKeys.collapse, filesKeys.parent, filesKeys.hidden, filesKeys.refresh, filesKeys.pager, filesKeys.editor, filesKeys.filter}},
+		{title: "Files", bindings: []key.Binding{filesKeys.open, filesKeys.collapse, filesKeys.parent, filesKeys.hidden, filesKeys.refresh, filesKeys.pager, filesKeys.editor, filesKeys.submit, filesKeys.filter}},
 		{title: "App", bindings: []key.Binding{appKeys.tab, appKeys.shiftTab, key.NewBinding(key.WithHelp(formatKeyLabel(a.options.TabPrefix)+" 1/2/3/4", "queue/recent/accounts/files")), appKeys.help, appKeys.quit}},
 	}
 }
@@ -110,6 +111,17 @@ func (a *App) handleFilesKey(msg tea.KeyMsg) tea.Cmd {
 		return a.openFileExternal("PAGER", "less")
 	case key.Matches(msg, filesKeys.editor):
 		return a.openFileExternal("EDITOR", "vi")
+	case key.Matches(msg, filesKeys.submit):
+		path := a.selectedFile()
+		if path == "" {
+			return nil
+		}
+		if err := a.openSubmitForm(path); err != nil {
+			f.err = err.Error()
+		} else {
+			f.err = ""
+		}
+		return nil
 	}
 	return nil
 }

@@ -17,7 +17,7 @@ Queue  Recent  Accounts ╭─────────────────�
                         │ r         refresh files                                              │
                         │ v         pager                                                      │
                         │ e         editor                                                     │
-                        │ /         filter names                                               │
-2 entries               │ App                                                                  │
+                        │ S         submit script                                              │
+2 entries               │ /         filter names                                               │
 enter/l expand · h colla│ ↑/↓ or j/k scroll • ?/esc close                                      │
                         ╰──────────────────────────────────────────────────────────────────────╯

@@ -1,0 +1,27 @@
+Submit batch script  /scratch/alice/climate/run.sh
+
+Job name:        climate-sim                                    [script:2]
+Account:         gfdl                                           [script:3]
+Partition:       gpu                                            [form]
+QOS:             high                                           [env SBATCH_QOS]
+Time:            02:00:00                                       [script:5]
+Nodes:           4                                              [script:6]
+NTasks:                                                         [default]
+CPUs/task:                                                      [default]
+Mem:                                                            [default]
+GRES/GPUs:                                                      [default]
+Array:                                                          [default]
+Output:                                                         [default]
+Error:                                                          [default]
+Chdir:                                                          [default]
+Extra options:                                                  [default]
+Script args:                                                    [default]
+
+  [ Submit (Enter)  •  Dry run (t) ]
+
+Passed through by sbatch: --exclusive --constraint=rome (script:7)
+Working directory: /scratch/alice/climate
+Command: sbatch --parsable --partition=gpu /scratch/alice/climate/run.sh
+Dry run (--test-only):
+  sbatch: Job 9001 to start at 2026-11-23T04:00:00 using 128 processors on nodes nid00[10-13] in partition gpu
+↑/↓/tab field  ctrl+r reset  t/ctrl+t dry run  enter next/submit  esc cancel  ? help
