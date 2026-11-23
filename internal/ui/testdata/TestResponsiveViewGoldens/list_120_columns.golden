@@ -1,7 +1,7 @@
 elzar  scope: me
-[Queue]  Recent  Accounts  Files
+[1 Queue] │ 2 Recent │ 3 Accounts │ 4 Files
 JobID        Name         User         Account      Partition  QOS       State        Elapsed/Lim… Nodes   NodeList(Rea…
 ──────────── ──────────── ──────────── ──────────── ────────── ───────── ──────────── ──────────── ─────── ─────────────
 12345        sample-job   tester       science      compute              RUNNING      1:00:00/—    —       node-01      
 Queue: 1 jobs
-tab views  / filter  s sort  c columns  enter details  x cancel  h hold  R requeue  e edit  r refresh  u scope  ? help
+tab views  / filter  s sort  c columns  enter details  x cancel  e edit  r refresh  u scope  q quit  ? help

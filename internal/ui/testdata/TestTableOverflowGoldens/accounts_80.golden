@@ -1,5 +1,5 @@
 elzar  all accounts
-Queue  Recent  [Accounts]  Files
+1 Queue │ 2 Recent │ [3 Accounts] │ 4 Files
 Clust… Account   Parent You    RawSh… NormS… RawUs… Effec… FairS… Level  QOS
 ────── ───────── ────── ────── ────── ────── ────── ────── ────── ────── ───────
 c1     account-0 root   defau… 1      0.2    0      —      0.6    0.8    normal

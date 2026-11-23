@@ -412,6 +412,9 @@ func (a *App) handleListKey(msg tea.KeyMsg) tea.Cmd {
 	case key.Matches(msg, appKeys.edit):
 		_, jobs, cursor, _, _ := a.activeData()
 		if cursor >= 0 && cursor < len(jobs) {
+			if !a.requireJobAction(actionEdit, jobs[cursor]) {
+				return nil
+			}
 			a.detailJob = jobs[cursor]
 			a.detailError, a.detail = nil, nil
 			a.detailRequest++
@@ -441,6 +444,9 @@ func (a *App) handleDetailKey(msg tea.KeyMsg) tea.Cmd {
 	case key.Matches(msg, appKeys.requeue):
 		a.beginJobAction(actionRequeue, a.detailJob, modeDetail)
 	case key.Matches(msg, appKeys.edit):
+		if !a.requireJobAction(actionEdit, a.detailJob) {
+			return nil
+		}
 		if a.detail != nil {
 			a.beginEditForm(a.detail.Job, a.detail.Comment, modeDetail)
 		}
@@ -1095,7 +1101,7 @@ func (a *App) View() string {
 	} else {
 		fmt.Fprintln(&out, mutedStyle.Render(status))
 	}
-	fmt.Fprint(&out, mutedStyle.Render(fitFooter(width, []string{"tab views", "/ filter", "s sort", "c columns", "enter details", "x cancel", "h hold", "R requeue", "e edit", "r refresh", "u scope", "q quit", a.statusMessageHint() + " messages", "↑/↓ move", "space page", "G bottom", "1G top"})))
+	fmt.Fprint(&out, mutedStyle.Render(fitFooter(width, a.jobActionFooter([]string{"tab views", "/ filter", "s sort", "c columns", "enter details", "x cancel", "h hold", "R requeue", "e edit", "r refresh", "u scope", "q quit", a.statusMessageHint() + " messages", "↑/↓ move", "space page", "G bottom", "1G top"}))))
 	return fitOutput(out.String(), width)
 }
 
@@ -1128,7 +1134,7 @@ func (a *App) renderDetail(out *strings.Builder, width int) {
 	if nav := a.navigationStatus(); nav != "" {
 		fmt.Fprintln(out, errorStyle.Render(nav))
 	}
-	fmt.Fprintln(out, mutedStyle.Render(fitFooter(width, []string{"esc back", "x cancel", "h hold", "R requeue", "e edit", "a all fields", "q quit", a.statusMessageHint() + " messages", "↑/↓ scroll", "space page", "G bottom", "1G top"})))
+	fmt.Fprintln(out, mutedStyle.Render(fitFooter(width, a.jobActionFooter([]string{"esc back", "x cancel", "h hold", "R requeue", "e edit", "a all fields", "q quit", a.statusMessageHint() + " messages", "↑/↓ scroll", "space page", "G bottom", "1G top"}))))
 }
 
 func (a *App) detailContentLines(width int) []string {

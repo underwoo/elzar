@@ -17,4 +17,4 @@ Requested TRES:
   —
 Allocated TRES:
   —
-esc back  x cancel  h hold  R requeue  e edit  a all fields  q quit  ^T s messages  ↑/↓ scroll  space page  ? help
+esc back  x cancel  e edit  a all fields  q quit  ^T s messages  ↑/↓ scroll  space page  G bottom  1G top  ? help

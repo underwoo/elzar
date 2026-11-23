@@ -1,7 +1,7 @@
 elzar  scope: me
-[Queue]  Recent  Accounts  Files
+[1 Queue] │ 2 Recent │ 3 Accounts │ 4 Files
 JobID  Name    User   Accou… Partit… QOS     State   Elapsed/L… Nodes   NodeLis…
 ────── ─────── ────── ────── ─────── ─────── ─────── ────────── ─────── ────────
 12345  sample… tester scien… compute normal  RUNNING 0:00/—     —       node-01
 Queue: 1 jobs
-tab views  / filter  s sort  c columns  enter details  x cancel  h hold  ? help
+tab views  / filter  s sort  c columns  enter details  x cancel  e edit  ? help

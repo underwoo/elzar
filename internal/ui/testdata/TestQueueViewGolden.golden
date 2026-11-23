@@ -1,5 +1,5 @@
 elzar  scope: me
-[Queue]  Recent  Accounts  Files
+[1 Queue] │ 2 Recent │ 3 Accounts │ 4 Files
 JobID       Name        User        Account     Partition  QOS       State       Elapsed/Li… Nodes   NodeList(R…
 ─────────── ─────────── ─────────── ─────────── ────────── ───────── ─────────── ─────────── ─────── ───────────
 34827745    job-01      user-01     account-01  partition… qos-01    PENDING     —/3:00:00   1       (None)     
@@ -8,4 +8,4 @@ JobID       Name        User        Account     Partition  QOS       State      
 34818463    job-04      user-02     account-03  partition… qos-01    RUNNING     20:22:13/1… 1       node-03    
 34818476    job-05      user-02     account-03  partition… qos-01    RUNNING     20:21:33/1… 1       node-05    
 Queue: 5 jobs
-tab views  / filter  s sort  c columns  enter details  x cancel  h hold  R requeue  e edit  r refresh  ? help
+tab views  / filter  s sort  c columns  enter details  x cancel  h hold  e edit  r refresh  u scope  ? help

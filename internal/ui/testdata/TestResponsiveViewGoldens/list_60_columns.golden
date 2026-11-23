@@ -1,5 +1,5 @@
 elzar  scope: me
-[Queue]  Recent  Accounts  Files
+[1 Queue] │ 2 Recent │ 3 Accounts │ 4 Files
 JobID  Name    User   Accou… Partit… QOS     State   +3 cols
 ────── ─────── ────── ────── ─────── ─────── ───────
 12345  sample… tester scien… compute         RUNNING

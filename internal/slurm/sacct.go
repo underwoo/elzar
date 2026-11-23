@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strings"
 	"time"
 
 	"github.com/underwoo/elzar/internal/model"
@@ -83,6 +84,8 @@ type sacctResponse struct {
 }
 
 type sacctJob struct {
+	Batch   *bool       `json:"batch_flag"`
+	Steps   []sacctStep `json:"steps"`
 	Comment struct {
 		Job *string `json:"job"`
 	} `json:"comment"`
@@ -132,6 +135,7 @@ type sacctJob struct {
 
 func (record sacctJob) job() model.Job {
 	job := model.Job{
+		Batch:   record.Batch,
 		Comment: record.Comment.Job, ID: record.ID, Name: record.Name, UserName: record.User,
 		UserID: record.UserID, GroupName: record.Group, GroupID: record.GroupID,
 		Account: record.Account, Cluster: record.Cluster, Partition: record.Partition, QOS: record.QOS,
@@ -144,6 +148,15 @@ func (record sacctJob) job() model.Job {
 		ExitCode:         record.ExitCode,
 		WorkingDirectory: record.WorkingDirectory, Command: firstNonEmpty(record.SubmitLine, record.Command),
 		Stdout: record.StdoutExpanded, Stderr: record.StderrExpanded, Stdin: record.Stdin,
+	}
+	if job.Batch == nil {
+		for _, step := range record.Steps {
+			if step.Step.Name == "batch" || strings.HasSuffix(step.Step.ID, ".batch") {
+				batch := true
+				job.Batch = &batch
+				break
+			}
+		}
 	}
 	if record.Array.JobID > 0 {
 		job.ArrayJobID = present(record.Array.JobID)

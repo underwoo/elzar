@@ -117,8 +117,7 @@ type sacctDetailJob struct {
 		Requested []model.TRES `json:"requested"`
 		Allocated []model.TRES `json:"allocated"`
 	} `json:"tres"`
-	Steps []sacctStep `json:"steps"`
-	raw   json.RawMessage
+	raw json.RawMessage
 }
 
 func (record *sacctDetailJob) UnmarshalJSON(data []byte) error {

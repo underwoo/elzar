@@ -31,6 +31,7 @@ const (
 // Job contains the fields needed by the queue and selected-job views.
 // Unknown fields in Slurm's JSON are intentionally ignored.
 type Job struct {
+	Batch                    *bool       `json:"batch_flag"`
 	Comment                  *string     `json:"comment"`
 	ID                       int64       `json:"job_id"`
 	Name                     string      `json:"name"`

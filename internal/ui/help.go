@@ -49,7 +49,7 @@ func (a *App) builtinHelpGroups() []helpGroup {
 		return []helpGroup{
 			{title: "Navigation", bindings: []key.Binding{appKeys.scroll, appKeys.pageUp, appKeys.pageDown, appKeys.count, appKeys.top, appKeys.bottom, appKeys.back}},
 			{title: "View", bindings: []key.Binding{appKeys.allFields}},
-			{title: "Job actions", bindings: []key.Binding{appKeys.cancel, appKeys.hold, appKeys.requeue, appKeys.edit}},
+			{title: "Job actions", bindings: a.jobActionBindings()},
 			{title: "App", bindings: []key.Binding{appKeys.help, appKeys.quit}},
 		}
 	case modePicker:
@@ -76,7 +76,7 @@ func (a *App) builtinHelpGroups() []helpGroup {
 		return []helpGroup{
 			{title: "Navigation", bindings: []key.Binding{appKeys.up, appKeys.down, appKeys.pageUp, appKeys.pageDown, appKeys.count, appKeys.top, appKeys.bottom, appKeys.enter}},
 			{title: "View", bindings: viewBindings},
-			{title: "Job actions", bindings: []key.Binding{appKeys.cancel, appKeys.hold, appKeys.requeue, appKeys.edit}},
+			{title: "Job actions", bindings: a.jobActionBindings()},
 			{title: "App", bindings: []key.Binding{appKeys.refresh, appKeys.scope, appKeys.help, appKeys.quit}},
 		}
 	}
