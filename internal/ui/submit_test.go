@@ -288,13 +288,13 @@ func TestSubmitFormDryRunConfirmAbortSuccessJumpAndErrorRetention(t *testing.T) 
 		}
 	})
 
-	t.Run("submit success logs Submitted job N on cluster switches to Queue refreshes and selects job N on cluster", func(t *testing.T) {
+	t.Run("submit success on local cluster jumps to Queue refreshes and selects job", func(t *testing.T) {
 		runner := &submitTestRunner{stdout: "9005;es\n"}
 		app := NewWithOptions(runner, Options{})
 		app.width, app.height = 120, 32
-		app.tab = registry.AccountsTab
+		app.tab = filesTab
 		app.queueJobs = []model.Job{
-			{ID: 9005, Cluster: "c1", Name: "other-cluster"},
+			{ID: 9001, Cluster: "es", Name: "existing"},
 			{ID: 9005, Cluster: "es", Name: "climate-sim"},
 		}
 
@@ -307,7 +307,7 @@ func TestSubmitFormDryRunConfirmAbortSuccessJumpAndErrorRetention(t *testing.T) 
 		_, refreshCmd := app.Update(submitCmd())
 
 		if app.mode != modeList || app.tab != registry.QueueTab {
-			t.Fatalf("after submit: mode=%v tab=%v, want modeList QueueTab", app.mode, app.tab)
+			t.Fatalf("after local submit: mode=%v tab=%v, want modeList QueueTab", app.mode, app.tab)
 		}
 		if app.actionStatus != "Submitted job 9005 on es" {
 			t.Fatalf("actionStatus = %q, want 'Submitted job 9005 on es'", app.actionStatus)
@@ -315,8 +315,8 @@ func TestSubmitFormDryRunConfirmAbortSuccessJumpAndErrorRetention(t *testing.T) 
 		if len(app.messageLog) == 0 || app.messageLog[len(app.messageLog)-1].Text != "Submitted job 9005 on es" {
 			t.Fatalf("messageLog = %+v", app.messageLog)
 		}
-		if app.queueCursor != 1 || app.visibleQueue()[app.queueCursor].Cluster != "es" {
-			t.Fatalf("queueCursor = %d (job %+v), want index 1 on cluster es", app.queueCursor, app.visibleQueue()[app.queueCursor])
+		if app.queueCursor != 1 || app.visibleQueue()[app.queueCursor].ID != 9005 {
+			t.Fatalf("queueCursor = %d (job %+v), want index 1 (job 9005)", app.queueCursor, app.visibleQueue()[app.queueCursor])
 		}
 		if refreshCmd == nil {
 			t.Fatal("submit success did not trigger queue refresh")
@@ -324,7 +324,7 @@ func TestSubmitFormDryRunConfirmAbortSuccessJumpAndErrorRetention(t *testing.T) 
 
 		// Deliver refreshed queue jobs and verify job 9005 on cluster es is selected.
 		jobs := []model.Job{
-			{ID: 9001, Cluster: "c1", Name: "older"},
+			{ID: 9001, Cluster: "es", Name: "older"},
 			{ID: 9005, Cluster: "es", Name: "climate-sim"},
 			{ID: 9009, Cluster: "es", Name: "newer"},
 		}
@@ -333,6 +333,91 @@ func TestSubmitFormDryRunConfirmAbortSuccessJumpAndErrorRetention(t *testing.T) 
 			t.Fatalf("queueCursor = %d (job %+v), want index 1 (job 9005 on es)", app.queueCursor, app.visibleQueue()[app.queueCursor])
 		}
 		assertScriptUnchanged(t, scriptPath, origBytes, origMtime)
+	})
+
+	t.Run("submit to non-local cluster stays in Files and logs Queue shows local only", func(t *testing.T) {
+		runner := &submitTestRunner{stdout: "9006;es\n"}
+		app := NewWithOptions(runner, Options{})
+		app.width, app.height = 120, 32
+		app.tab = filesTab
+		app.files.dir = dir
+		app.queueJobs = []model.Job{
+			{ID: 9001, Cluster: "c1", Name: "local-job"},
+		}
+
+		if err := app.openSubmitForm(scriptPath); err != nil {
+			t.Fatal(err)
+		}
+		app.submitForm.inputs[14].SetValue("es")
+		app.submitForm.edited[submit.FieldClusters] = true
+		app.focusSubmitField(submitActionButtonRow)
+		app.Update(tea.KeyMsg{Type: tea.KeyEnter})
+		_, submitCmd := app.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'y'}})
+		app.Update(submitCmd())
+
+		wantStatus := "Submitted job 9006 on es. Queue shows c1 only (see #34)"
+		if app.mode != modeList || app.tab != filesTab {
+			t.Fatalf("after remote submit: mode=%v tab=%v, want modeList filesTab", app.mode, app.tab)
+		}
+		if app.actionStatus != wantStatus {
+			t.Fatalf("actionStatus = %q, want %q", app.actionStatus, wantStatus)
+		}
+		if len(app.messageLog) == 0 || app.messageLog[len(app.messageLog)-1].Text != wantStatus {
+			t.Fatalf("messageLog = %+v, want last message %q", app.messageLog, wantStatus)
+		}
+		if !strings.Contains(app.View(), wantStatus) {
+			t.Fatalf("Files status bar missing %q:\n%s", wantStatus, app.View())
+		}
+		assertScriptUnchanged(t, scriptPath, origBytes, origMtime)
+	})
+
+	t.Run("submit when local cluster is unknown treats parsable cluster as remote and bare jobid as local", func(t *testing.T) {
+		// Unknown local cluster + parsable returned a cluster -> treated as remote, stays in Files.
+		remoteRunner := &submitTestRunner{stdout: "9007;es\n"}
+		remoteApp := NewWithOptions(remoteRunner, Options{})
+		remoteApp.width, remoteApp.height = 120, 32
+		remoteApp.tab = filesTab
+		remoteApp.files.dir = dir
+
+		if err := remoteApp.openSubmitForm(scriptPath); err != nil {
+			t.Fatal(err)
+		}
+		remoteApp.focusSubmitField(submitActionButtonRow)
+		remoteApp.Update(tea.KeyMsg{Type: tea.KeyEnter})
+		_, submitCmd := remoteApp.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'y'}})
+		remoteApp.Update(submitCmd())
+
+		wantRemote := "Submitted job 9007 on es. Queue shows local only (see #34)"
+		if remoteApp.mode != modeList || remoteApp.tab != filesTab {
+			t.Fatalf("after unknown-local parsable-cluster submit: mode=%v tab=%v, want modeList filesTab", remoteApp.mode, remoteApp.tab)
+		}
+		if remoteApp.actionStatus != wantRemote {
+			t.Fatalf("actionStatus = %q, want %q", remoteApp.actionStatus, wantRemote)
+		}
+		if len(remoteApp.messageLog) == 0 || remoteApp.messageLog[len(remoteApp.messageLog)-1].Text != wantRemote {
+			t.Fatalf("messageLog = %+v, want last message %q", remoteApp.messageLog, wantRemote)
+		}
+
+		// Unknown local cluster + bare jobid -> treated as local, jumps to Queue.
+		localRunner := &submitTestRunner{stdout: "9008\n"}
+		localApp := NewWithOptions(localRunner, Options{})
+		localApp.width, localApp.height = 120, 32
+		localApp.tab = filesTab
+
+		if err := localApp.openSubmitForm(scriptPath); err != nil {
+			t.Fatal(err)
+		}
+		localApp.focusSubmitField(submitActionButtonRow)
+		localApp.Update(tea.KeyMsg{Type: tea.KeyEnter})
+		_, submitCmd = localApp.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'y'}})
+		localApp.Update(submitCmd())
+
+		if localApp.mode != modeList || localApp.tab != registry.QueueTab {
+			t.Fatalf("after unknown-local bare-jobid submit: mode=%v tab=%v, want modeList QueueTab", localApp.mode, localApp.tab)
+		}
+		if localApp.actionStatus != "Submitted job 9008" {
+			t.Fatalf("actionStatus = %q, want 'Submitted job 9008'", localApp.actionStatus)
+		}
 	})
 }
 

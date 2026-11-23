@@ -13,13 +13,6 @@ import (
 )
 
 func (a *App) localSubmitCluster() string {
-	if len(a.accounts.clusters) == 1 {
-		for c := range a.accounts.clusters {
-			if c = strings.TrimSpace(c); c != "" {
-				return c
-			}
-		}
-	}
 	for _, job := range a.queueJobs {
 		if c := strings.TrimSpace(job.Cluster); c != "" {
 			return c
@@ -28,6 +21,13 @@ func (a *App) localSubmitCluster() string {
 	for _, job := range a.recentJobs {
 		if c := strings.TrimSpace(job.Cluster); c != "" {
 			return c
+		}
+	}
+	if len(a.accounts.clusters) == 1 {
+		for c := range a.accounts.clusters {
+			if c = strings.TrimSpace(c); c != "" {
+				return c
+			}
 		}
 	}
 	partClusters := make(map[string]bool)

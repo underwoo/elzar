@@ -359,17 +359,46 @@ func (a *App) acceptSubmitJobResult(msg submitJobResult) tea.Cmd {
 	}
 
 	jobID := strconv.FormatInt(msg.result.JobID, 10)
-	status := "Submitted job " + jobID
-	if msg.result.Cluster != "" {
-		status = fmt.Sprintf("Submitted job %s on %s", jobID, msg.result.Cluster)
+	local := a.localSubmitCluster()
+	parsedCluster := strings.TrimSpace(msg.result.Cluster)
+	fieldCluster := a.effectiveSubmitFieldValue(submit.FieldClusters)
+	targetCluster := parsedCluster
+	if targetCluster == "" {
+		targetCluster = fieldCluster
 	}
+
+	remote := false
+	if local != "" {
+		remote = targetCluster != "" && targetCluster != local
+	} else {
+		remote = parsedCluster != ""
+	}
+
 	a.submitForm.active = false
 	a.submitForm.confirming = false
 	a.submitForm.pickerActive = false
 	a.mode = modeList
+
+	if remote {
+		localLabel := local
+		if localLabel == "" {
+			localLabel = "local"
+		}
+		status := fmt.Sprintf("Submitted job %s on %s. Queue shows %s only (see #34)", jobID, targetCluster, localLabel)
+		a.tab = filesTab
+		a.files.err = status
+		a.actionStatus = status
+		a.addMessage(status, messageInfo)
+		return nil
+	}
+
+	status := "Submitted job " + jobID
+	if targetCluster != "" {
+		status = fmt.Sprintf("Submitted job %s on %s", jobID, targetCluster)
+	}
 	a.tab = registry.QueueTab
 	a.pendingSelectJobID = jobID
-	a.selectSubmittedJob(jobID, msg.result.Cluster)
+	a.selectSubmittedJob(jobID, targetCluster)
 	a.actionStatus = status
 	a.addMessage(status, messageInfo)
 	return tea.Batch(a.startQueueFetch(), a.startRecentFetch())
