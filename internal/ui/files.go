@@ -21,6 +21,7 @@ type fileRow struct {
 	depth int
 }
 type filesState struct {
+	authoritative                  map[string]bool
 	dir                            string
 	hidden                         bool
 	children                       map[string]files.Listing
@@ -77,6 +78,7 @@ func (a *App) resetFiles(dir string) tea.Cmd {
 	f.expanded = map[string]bool{dir: true}
 	f.loading = map[string]bool{}
 	f.scripts = map[string]bool{}
+	f.authoritative = map[string]bool{}
 	f.rows = nil
 	f.cursor = 0
 	f.scroll = 0
@@ -174,7 +176,7 @@ func (a *App) updateFiles(msg tea.Msg) (tea.Cmd, bool) {
 			return nil, true
 		}
 		path := filepath.Join(m.dir, m.result.Name)
-		if path != f.previewPath && m.result.Err == nil {
+		if !f.authoritative[path] && m.result.Err == nil {
 			f.scripts[path] = m.result.IsScript
 		}
 		return nextFileScan(m.generation, m.dir, m.stream), true
@@ -198,6 +200,7 @@ func (a *App) updateFiles(msg tea.Msg) (tea.Cmd, bool) {
 		} else {
 			f.previewError = ""
 			f.scripts[m.path] = m.preview.IsScript
+			f.authoritative[m.path] = true
 		}
 		return nil, true
 	case filesExternalDone:

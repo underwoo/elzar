@@ -31,7 +31,7 @@ func (a *App) builtinHelpGroups() []helpGroup {
 		return []helpGroup{
 			{title: "Navigation", bindings: []key.Binding{appKeys.up, appKeys.down, appKeys.pageUp, appKeys.pageDown, appKeys.count, appKeys.top, appKeys.bottom, appKeys.enter}},
 			{title: "Accounts", bindings: []key.Binding{appKeys.tab, appKeys.shiftTab, appKeys.filter, appKeys.sort, appKeys.columns, key.NewBinding(key.WithKeys("M"), key.WithHelp("M", "clusters")), appKeys.refresh}},
-			{title: "App", bindings: []key.Binding{key.NewBinding(key.WithHelp(formatKeyLabel(a.options.TabPrefix)+" 1/2/3", "queue/recent/accounts")), key.NewBinding(key.WithHelp(a.statusMessageHint(), "messages")), appKeys.help, appKeys.quit}},
+			{title: "App", bindings: []key.Binding{key.NewBinding(key.WithHelp(formatKeyLabel(a.options.TabPrefix)+" 1/2/3/4", "queue/recent/accounts/files")), key.NewBinding(key.WithHelp(a.statusMessageHint(), "messages")), appKeys.help, appKeys.quit}},
 		}
 	}
 	switch a.mode {

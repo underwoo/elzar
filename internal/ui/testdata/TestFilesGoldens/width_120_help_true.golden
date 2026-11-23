@@ -1,0 +1,23 @@
+elzar
+Queue  Recent  Accounts ╭──────────────────────────────────────────────────────────────────────╮
+/work                   │ Key bindings                                                         │
+> * job.sh              │ Navigation                                                           │
+    notes               │ ↑/k              select previous                                     │
+                        │ ↓/j              select next                                         │
+                        │ 0-9              motion count                                        │
+                        │ gg/1G/Home/M-<   top                                                 │
+                        │ G/End/M->        bottom                                              │
+                        │ b/^b/M-v/PgUp    page up                                             │
+                        │ space/^v/^f/PgDn page down                                           │
+                        │ Files                                                                │
+                        │ enter/l   expand directory                                           │
+                        │ h         collapse/parent                                            │
+                        │ backspace parent directory                                           │
+                        │ .         hidden files                                               │
+                        │ r         refresh files                                              │
+                        │ v         pager                                                      │
+                        │ e         editor                                                     │
+                        │ /         filter names                                               │
+2 entries               │ App                                                                  │
+enter/l expand · h colla│ ↑/↓ or j/k scroll • ?/esc close                                      │
+                        ╰──────────────────────────────────────────────────────────────────────╯

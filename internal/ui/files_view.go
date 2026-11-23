@@ -211,7 +211,13 @@ func (a *App) renderFiles(width int) string {
 	}
 	status := f.err
 	if status == "" {
-		status = f.children[f.dir].Marker()
+		omitted := 0
+		for _, listing := range f.children {
+			omitted += listing.Omitted
+		}
+		if omitted > 0 {
+			status = fmt.Sprintf("%d more not shown in loaded directories", omitted)
+		}
 	}
 	if status == "" {
 		status = fmt.Sprintf("%d entries", len(f.rows))

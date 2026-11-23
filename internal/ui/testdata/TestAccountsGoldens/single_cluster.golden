@@ -1,5 +1,5 @@
 elzar  all accounts
-Queue  Recent  [Accounts]
+Queue  Recent  [Accounts]  Files
 Cluster      Account         Parent          You      RawShares    NormShares   RawUsage       EffectvUsage FairShare    Level        QOS             
 ──────────── ─────────────── ─────────────── ──────── ──────────── ──────────── ────────────── ──────────── ──────────── ──────────── ────────────────
 c1           account-0       root            default  1            0.2          0              —            0.6          0.8          normal          

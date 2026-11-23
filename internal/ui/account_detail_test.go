@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/underwoo/elzar/internal/model"
-	"github.com/underwoo/elzar/internal/registry"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -74,7 +73,7 @@ func TestAccountDetailNavigationAndIsolation(t *testing.T) {
 	}
 	a.Update(tea.KeyMsg{Type: tea.KeyEnter})
 	a.Update(tea.KeyMsg{Type: tea.KeyTab})
-	if a.mode != modeList || a.tab != registry.QueueTab {
+	if a.mode != modeList || a.tab != filesTab {
 		t.Fatal("tab did not leave detail")
 	}
 }

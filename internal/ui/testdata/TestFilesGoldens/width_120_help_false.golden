@@ -1,0 +1,22 @@
+elzar
+Queue  Recent  Accounts  [Files]
+/work
+> * job.sh                                                   │ 49 bytes · 2026-11-23 00:00:00
+    notes                                                    │ #!/bin/sh
+                                                             │ #SBATCH --job-name=sample
+                                                             │ echo hello
+                                                             │ 
+                                                             │ 
+                                                             │ 
+                                                             │ 
+                                                             │ 
+                                                             │ 
+                                                             │ 
+                                                             │ 
+                                                             │ 
+                                                             │ 
+                                                             │ 
+                                                             │ 
+                                                             │ 
+2 entries
+enter/l expand · h collapse · . hidden · / filter · v pager · e editor · ? help
