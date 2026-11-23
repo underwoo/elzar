@@ -18,6 +18,9 @@ type helpGroup struct {
 }
 
 func (a *App) builtinHelpGroups() []helpGroup {
+	if a.tab == filesTab {
+		return a.filesHelpGroups()
+	}
 	if a.tab == registry.AccountsTab && a.mode == modeDetail {
 		return []helpGroup{
 			{title: "Navigation", bindings: []key.Binding{appKeys.scroll, appKeys.pageUp, appKeys.pageDown, appKeys.count, appKeys.top, appKeys.bottom, appKeys.back}},

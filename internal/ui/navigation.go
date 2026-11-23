@@ -141,6 +141,7 @@ func (a *App) tabPrefixCommands() []tabPrefixCommand {
 			a.leaveDetailForTabSwitch()
 		}},
 		{key: "3", description: "accounts view", run: func() { a.tab = registry.AccountsTab; a.leaveDetailForTabSwitch() }},
+		{key: "4", description: "files view", run: func() { a.tab = filesTab; a.leaveDetailForTabSwitch() }},
 		{key: "s", description: "messages", run: func() {
 			a.showMessages = true
 			a.messageScroll = 0
@@ -299,5 +300,33 @@ func (a *App) leaveDetailForTabSwitch() {
 		a.mode = modeList
 		a.detail, a.detailError = nil, nil
 		a.detailRequest++
+	}
+}
+
+func (a *App) tabLine() string {
+	labels := []string{}
+	for _, item := range []struct {
+		tab   registry.Tab
+		label string
+	}{{registry.QueueTab, "Queue"}, {registry.RecentTab, "Recent"}, {registry.AccountsTab, "Accounts"}, {filesTab, "Files"}} {
+		if a.tab == item.tab {
+			labels = append(labels, titleStyle.Render("["+item.label+"]"))
+		} else {
+			labels = append(labels, mutedStyle.Render(item.label))
+		}
+	}
+	return strings.Join(labels, "  ")
+}
+func (a *App) toggleTabKey(key string) {
+	tabs := []registry.Tab{registry.QueueTab, registry.RecentTab, registry.AccountsTab, filesTab}
+	for i, t := range tabs {
+		if a.tab == t {
+			delta := 1
+			if key == "shift+tab" {
+				delta = len(tabs) - 1
+			}
+			a.tab = tabs[(i+delta)%len(tabs)]
+			return
+		}
 	}
 }

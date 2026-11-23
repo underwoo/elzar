@@ -555,30 +555,3 @@ func (a *App) renderAccounts(width int) string {
 	fmt.Fprint(&out, mutedStyle.Render(fitFooter(width, []string{"enter details", "tab views", "/ filter", "s sort", "c columns", "M clusters", "r refresh", "q quit", a.statusMessageHint() + " messages", "↑/↓ move", "space page", "G bottom", "1G top"})))
 	return fitOutput(out.String(), width)
 }
-func (a *App) tabLine() string {
-	labels := []string{}
-	for _, item := range []struct {
-		tab   registry.Tab
-		label string
-	}{{registry.QueueTab, "Queue"}, {registry.RecentTab, "Recent"}, {registry.AccountsTab, "Accounts"}} {
-		if a.tab == item.tab {
-			labels = append(labels, titleStyle.Render("["+item.label+"]"))
-		} else {
-			labels = append(labels, mutedStyle.Render(item.label))
-		}
-	}
-	return strings.Join(labels, "  ")
-}
-func (a *App) toggleTabKey(key string) {
-	tabs := []registry.Tab{registry.QueueTab, registry.RecentTab, registry.AccountsTab}
-	for i, t := range tabs {
-		if a.tab == t {
-			delta := 1
-			if key == "shift+tab" {
-				delta = 2
-			}
-			a.tab = tabs[(i+delta)%3]
-			return
-		}
-	}
-}
