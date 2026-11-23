@@ -21,6 +21,7 @@ import (
 	"github.com/underwoo/elzar/internal/plugin"
 	"github.com/underwoo/elzar/internal/registry"
 	"github.com/underwoo/elzar/internal/slurm"
+	"github.com/underwoo/elzar/internal/submit"
 )
 
 const minTerminalWidth = 20
@@ -28,6 +29,7 @@ const minTerminalWidth = 20
 type Options struct {
 	Plugins                plugin.Options
 	PluginExecutor         plugin.Executor
+	Env                    submit.EnvLookup
 	RefreshInterval        time.Duration
 	RecentWindow           time.Duration
 	Scope                  slurm.Scope
@@ -45,16 +47,18 @@ type Options struct {
 }
 
 type App struct {
-	files            filesState
-	plugins          []plugin.Plugin
-	execPlugins      []*execPlugin
-	pluginTabColumns map[registry.Tab][]registry.Column
-	pluginSections   []registry.DetailSection
-	pendingPlugin    *pluginInvocation
-	accounts         accountsState
-	runner           slurm.Runner
-	options          Options
-	clock            func() time.Time
+	files              filesState
+	plugins            []plugin.Plugin
+	execPlugins        []*execPlugin
+	pluginTabColumns   map[registry.Tab][]registry.Column
+	pluginSections     []registry.DetailSection
+	pendingPlugin      *pluginInvocation
+	submitForm         submitFormState
+	pendingSelectJobID string
+	accounts           accountsState
+	runner             slurm.Runner
+	options            Options
+	clock              func() time.Time
 
 	width, height      int
 	mode               mode
@@ -209,6 +213,15 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				a.recomputeQueueFilter()
 				a.queueCursor = restoreCursor(oldQueue, a.visibleQueue(), a.queueCursor)
 			}
+			if a.pendingSelectJobID != "" {
+				for i, job := range a.visibleQueue() {
+					if job.DisplayID() == a.pendingSelectJobID {
+						a.queueCursor = i
+						break
+					}
+				}
+				a.pendingSelectJobID = ""
+			}
 			a.lastRefresh = msg.at
 			a.keepAllCursorsVisible()
 			return a, a.startPluginColumnsFetch(registry.QueueTab, a.queueJobs)
@@ -265,6 +278,8 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		a.acceptPluginColumnsResult(msg)
 	case pluginDetailResult:
 		a.acceptPluginDetailResult(msg)
+	case submitJobResult:
+		return a, a.acceptSubmitJobResult(msg)
 	case actionResult:
 		if msg.err != nil {
 			a.setActionStatus("action failed: " + msg.err.Error())
@@ -310,7 +325,7 @@ func (a *App) handleKey(msg tea.KeyMsg) tea.Cmd {
 		}
 		return nil
 	}
-	if a.tab == filesTab && a.files.filtering {
+	if a.mode == modeList && a.tab == filesTab && a.files.filtering {
 		return a.handleFilesKey(msg)
 	}
 	if a.mode == modeList || a.mode == modeDetail {
@@ -895,6 +910,9 @@ func (a *App) handlePickerKey(msg tea.KeyMsg) tea.Cmd {
 }
 
 func (a *App) handleConfirmKey(msg tea.KeyMsg) tea.Cmd {
+	if a.submitForm.active && a.submitForm.confirming {
+		return a.handleSubmitConfirmKey(msg)
+	}
 	if a.pendingPlugin != nil {
 		return a.confirmPlugin(msg)
 	}
@@ -921,6 +939,9 @@ func (a *App) handleConfirmKey(msg tea.KeyMsg) tea.Cmd {
 }
 
 func (a *App) handleFormKey(msg tea.KeyMsg) tea.Cmd {
+	if a.submitForm.active {
+		return a.handleSubmitFormKey(msg)
+	}
 	if key.Matches(msg, appKeys.back) {
 		a.mode = a.editReturn
 		return nil
@@ -968,16 +989,15 @@ func (a *App) View() string {
 		panel, panelWidth, panelTop := a.renderMessagesOverlay(width, a.height)
 		return fitOutput(compositeOverlay(background, panel, width, panelWidth, panelTop), width)
 	}
-	if a.tab == filesTab {
-		return a.renderFiles(width)
-	}
 	var out strings.Builder
 	if a.mode == modeDetail {
 		a.renderDetail(&out, width)
 		return fitOutput(out.String(), width)
 	}
 	if a.mode == modeConfirm {
-		if a.editConfirm {
+		if a.submitForm.active && a.submitForm.confirming {
+			a.renderSubmitConfirm(&out)
+		} else if a.editConfirm {
 			a.renderEditConfirm(&out)
 		} else {
 			a.renderConfirm(&out)
@@ -985,12 +1005,19 @@ func (a *App) View() string {
 		return fitOutput(out.String(), width)
 	}
 	if a.mode == modeForm {
-		a.renderEditForm(&out)
+		if a.submitForm.active {
+			a.renderSubmitForm(&out, width)
+		} else {
+			a.renderEditForm(&out)
+		}
 		return fitOutput(out.String(), width)
 	}
 	if a.mode == modePicker {
 		a.renderPicker(&out, width)
 		return fitOutput(out.String(), width)
+	}
+	if a.tab == filesTab {
+		return a.renderFiles(width)
 	}
 	if a.tab == registry.AccountsTab {
 		return a.renderAccounts(width)

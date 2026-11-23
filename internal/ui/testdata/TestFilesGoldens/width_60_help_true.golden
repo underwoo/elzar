@@ -17,7 +17,7 @@ Qu╭─────────────────────────
   │ r         refresh files                              │
   │ v         pager                                      │
   │ e         editor                                     │
-  │ /         filter names                               │
-2 │ App                                                  │
+  │ S         submit script                              │
+2 │ /         filter names                               │
 en│ ↑/↓ or j/k scroll • ?/esc close                      │r…
   ╰──────────────────────────────────────────────────────╯
