@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 	"slices"
+	"sort"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/key"
@@ -11,14 +12,118 @@ import (
 	"github.com/underwoo/elzar/internal/submit"
 )
 
-func (a *App) submitHints() submit.HintData {
-	cluster := ""
+func (a *App) localSubmitCluster() string {
 	if len(a.accounts.clusters) == 1 {
 		for c := range a.accounts.clusters {
-			cluster = c
+			if c = strings.TrimSpace(c); c != "" {
+				return c
+			}
 		}
 	}
-	return submit.Hints(a.options.Username, cluster, a.accounts.associations, a.accounts.partitions, a.accounts.qos)
+	for _, job := range a.queueJobs {
+		if c := strings.TrimSpace(job.Cluster); c != "" {
+			return c
+		}
+	}
+	for _, job := range a.recentJobs {
+		if c := strings.TrimSpace(job.Cluster); c != "" {
+			return c
+		}
+	}
+	partClusters := make(map[string]bool)
+	firstPartCluster := ""
+	for _, p := range a.accounts.partitions {
+		if c := strings.TrimSpace(p.Cluster); c != "" {
+			partClusters[c] = true
+			if firstPartCluster == "" {
+				firstPartCluster = c
+			}
+		}
+	}
+	if len(partClusters) == 1 {
+		return firstPartCluster
+	}
+	for _, assoc := range a.accounts.associations {
+		if a.options.Username != "" && assoc.User != "" && assoc.User != a.options.Username {
+			continue
+		}
+		if c := strings.TrimSpace(assoc.Cluster); c != "" {
+			return c
+		}
+	}
+	if firstPartCluster != "" {
+		return firstPartCluster
+	}
+	for _, r := range a.accounts.rows {
+		if c := strings.TrimSpace(r.Cluster); c != "" {
+			return c
+		}
+	}
+	for _, s := range a.accounts.shares {
+		if c := strings.TrimSpace(s.Cluster); c != "" {
+			return c
+		}
+	}
+	if len(a.accounts.clusters) > 0 {
+		names := make([]string, 0, len(a.accounts.clusters))
+		for c := range a.accounts.clusters {
+			if c = strings.TrimSpace(c); c != "" {
+				names = append(names, c)
+			}
+		}
+		sort.Strings(names)
+		if len(names) > 0 {
+			return names[0]
+		}
+	}
+	return ""
+}
+
+func (a *App) effectiveSubmitCluster() string {
+	if c := a.effectiveSubmitFieldValue(submit.FieldClusters); c != "" {
+		return c
+	}
+	return a.localSubmitCluster()
+}
+
+func (a *App) knownSubmitClusters(hints submit.HintData) []string {
+	seen := make(map[string]bool)
+	add := func(c string) {
+		if c = strings.TrimSpace(c); c != "" {
+			seen[c] = true
+		}
+	}
+	for _, c := range hints.Clusters {
+		add(c)
+	}
+	for c := range a.accounts.clusters {
+		add(c)
+	}
+	for c := range a.accounts.partitionClusters {
+		add(c)
+	}
+	for _, r := range a.accounts.rows {
+		add(r.Cluster)
+	}
+	for _, s := range a.accounts.shares {
+		add(s.Cluster)
+	}
+	for _, assoc := range a.accounts.associations {
+		add(assoc.Cluster)
+	}
+	for _, p := range a.accounts.partitions {
+		add(p.Cluster)
+	}
+	out := make([]string, 0, len(seen))
+	for c := range seen {
+		out = append(out, c)
+	}
+	sort.Strings(out)
+	return out
+}
+
+func (a *App) submitHints() submit.HintData {
+	return submit.Hints(a.options.Username, a.effectiveSubmitCluster(), a.accounts.associations, a.accounts.partitions, a.accounts.qos)
 }
 
 func (a *App) effectiveSubmitFieldValue(id submit.FieldID) string {
@@ -77,6 +182,9 @@ func (a *App) openSubmitPicker() bool {
 			a.effectiveSubmitFieldValue(submit.FieldAccount),
 			a.effectiveSubmitFieldValue(submit.FieldPartition),
 		)
+	case submit.FieldClusters:
+		title = "Pick cluster"
+		items = a.knownSubmitClusters(hints)
 	default:
 		return false
 	}
@@ -87,6 +195,9 @@ func (a *App) openSubmitPicker() bool {
 	}
 
 	current := a.effectiveSubmitFieldValue(spec.ID)
+	if current == "" && spec.ID == submit.FieldClusters {
+		current = a.localSubmitCluster()
+	}
 	cursor := 0
 	if pos := slices.Index(items, current); pos >= 0 {
 		cursor = pos

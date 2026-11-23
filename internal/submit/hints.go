@@ -14,8 +14,11 @@ import (
 // optional target cluster, pre-organized for form pickers (`ctrl+p`) and
 // non-blocking limit checks (`Check`).
 type HintData struct {
-	User           string
-	Cluster        string
+	User    string
+	Cluster string
+	// Clusters lists all known cluster names across the user's associations and
+	// loaded partitions, sorted alphabetically.
+	Clusters       []string
 	Accounts       []string
 	DefaultAccount string
 	// PartitionsByAccount maps an account name to the allowed partition names
@@ -31,9 +34,12 @@ type HintData struct {
 	// AllQOS lists all allowed QOS names across the user's associations.
 	AllQOS []string
 
-	associations []model.Association
-	partitions   map[string][]model.Partition
-	qosByName    map[string]model.QOS
+	associations    []model.Association
+	partitions      map[string][]model.Partition
+	qosByName       map[string]model.QOS
+	allAssociations []model.Association
+	allPartitions   []model.Partition
+	allQOS          []model.QOS
 }
 
 // Warning is a non-blocking advisory on a submit form field (sbatch remains
@@ -43,19 +49,67 @@ type Warning struct {
 	Message string
 }
 
-// Hints builds picker options and limit lookup tables for user and cluster
-// (when cluster is empty, all clusters in associations/partitions are considered).
+// Hints builds picker options and limit lookup tables for user and cluster.
+// When cluster is empty, Hints scopes to the local cluster inferred from
+// partitions/associations so multi-cluster sites never mix partitions or
+// association defaults across clusters.
 // The user's default account (`Association.IsDefault`) is placed first in
 // Accounts, followed by remaining member accounts in alphabetical order.
 func Hints(user, cluster string, associations []model.Association, partitions []model.Partition, qosList []model.QOS) HintData {
+	cluster = strings.TrimSpace(cluster)
+	clusterSet := make(map[string]bool)
+	firstAssocCluster := ""
+	for _, a := range associations {
+		if user != "" && a.User != "" && a.User != user {
+			continue
+		}
+		if c := strings.TrimSpace(a.Cluster); c != "" {
+			clusterSet[c] = true
+			if firstAssocCluster == "" {
+				firstAssocCluster = c
+			}
+		}
+	}
+	partClusterSet := make(map[string]bool)
+	firstPartCluster := ""
+	for _, p := range partitions {
+		if c := strings.TrimSpace(p.Cluster); c != "" {
+			clusterSet[c] = true
+			partClusterSet[c] = true
+			if firstPartCluster == "" {
+				firstPartCluster = c
+			}
+		}
+	}
+	clusters := make([]string, 0, len(clusterSet))
+	for c := range clusterSet {
+		clusters = append(clusters, c)
+	}
+	sort.Strings(clusters)
+
+	if cluster == "" {
+		switch {
+		case len(partClusterSet) == 1:
+			cluster = firstPartCluster
+		case firstAssocCluster != "":
+			cluster = firstAssocCluster
+		case firstPartCluster != "":
+			cluster = firstPartCluster
+		}
+	}
+
 	h := HintData{
 		User:                user,
 		Cluster:             cluster,
+		Clusters:            clusters,
 		PartitionsByAccount: make(map[string][]string),
 		QOSByAccount:        make(map[string][]string),
 		DefaultQOSByAccount: make(map[string]string),
 		partitions:          make(map[string][]model.Partition),
 		qosByName:           make(map[string]model.QOS, len(qosList)),
+		allAssociations:     associations,
+		allPartitions:       partitions,
+		allQOS:              qosList,
 	}
 
 	for _, q := range qosList {
@@ -64,13 +118,13 @@ func Hints(user, cluster string, associations []model.Association, partitions []
 		}
 	}
 
-	// Filter associations by user (when specified) and cluster (when specified).
+	// Filter associations by user (when specified) and effective cluster.
 	var filteredAssocs []model.Association
 	for _, a := range associations {
 		if user != "" && a.User != "" && a.User != user {
 			continue
 		}
-		if cluster != "" && a.Cluster != "" && a.Cluster != cluster {
+		if cluster != "" && a.Cluster != "" && !clusterMatches(cluster, a.Cluster) {
 			continue
 		}
 		if a.Account == "" {
@@ -80,10 +134,10 @@ func Hints(user, cluster string, associations []model.Association, partitions []
 	}
 	h.associations = filteredAssocs
 
-	// Filter partitions by cluster (when specified).
+	// Filter partitions by effective cluster.
 	allPartSet := make(map[string]bool)
 	for _, p := range partitions {
-		if cluster != "" && p.Cluster != "" && p.Cluster != cluster {
+		if cluster != "" && p.Cluster != "" && !clusterMatches(cluster, p.Cluster) {
 			continue
 		}
 		if p.Name == "" {
@@ -243,15 +297,47 @@ func (h HintData) QOSFor(account, partition string) []string {
 	return filtered
 }
 
-// Check evaluates effective field values against hints and returns non-blocking
-// warnings (never errors — sbatch is the final authority):
-//   - account not in user's associations
-//   - partition not allowed for the effective account
+func clusterMatches(target, item string) bool {
+	if target == "" || strings.EqualFold(target, "all") {
+		return true
+	}
+	for _, c := range strings.Split(target, ",") {
+		if strings.TrimSpace(c) == item {
+			return true
+		}
+	}
+	return false
+}
+
+// Check evaluates effective field values against hints (scoped to the effective
+// cluster) and returns non-blocking warnings (never errors — sbatch is the
+// final authority):
+//   - cluster not in user's known association/partition clusters
+//   - account not in user's associations on the effective cluster
+//   - partition not in the effective cluster's partitions or not allowed for the effective account
 //   - QOS not allowed for the effective account or partition
 //   - time limit exceeds QOS MaxWall or partition MaxTime
 //   - node count exceeds partition MaxNodes or QOS MaxTRESPerJob node limit
 func Check(values map[FieldID]string, hints HintData) []Warning {
 	var warnings []Warning
+
+	reqCluster := strings.TrimSpace(values[FieldClusters])
+	if reqCluster != "" {
+		if reqCluster != hints.Cluster && (len(hints.allAssociations) > 0 || len(hints.allPartitions) > 0) {
+			hints = Hints(hints.User, reqCluster, hints.allAssociations, hints.allPartitions, hints.allQOS)
+		}
+		if len(hints.Clusters) > 0 && !strings.EqualFold(reqCluster, "all") {
+			for _, c := range strings.Split(reqCluster, ",") {
+				c = strings.TrimSpace(c)
+				if c != "" && !slices.Contains(hints.Clusters, c) {
+					warnings = append(warnings, Warning{
+						Field:   FieldClusters,
+						Message: fmt.Sprintf("cluster %q is not in your associations", c),
+					})
+				}
+			}
+		}
+	}
 
 	account := strings.TrimSpace(values[FieldAccount])
 	partition := strings.TrimSpace(values[FieldPartition])
@@ -276,7 +362,7 @@ func Check(values map[FieldID]string, hints HintData) []Warning {
 	}
 
 	// Partition access check.
-	if partition != "" && len(hints.partitions) > 0 {
+	if partition != "" && (len(hints.partitions) > 0 || len(hints.allPartitions) > 0) {
 		pList, exists := hints.partitions[partition]
 		if !exists {
 			warnings = append(warnings, Warning{

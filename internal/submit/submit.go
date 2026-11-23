@@ -37,6 +37,7 @@ const (
 	FieldOutput      FieldID = "output"
 	FieldError       FieldID = "error"
 	FieldChdir       FieldID = "chdir"
+	FieldClusters    FieldID = "clusters"
 
 	FieldExtraArgs  FieldID = "extra-sbatch-options"
 	FieldScriptArgs FieldID = "script-arguments"
@@ -82,7 +83,7 @@ type FieldSpec struct {
 	EnvVars   []string
 }
 
-// FixedFields lists the 14 sbatch option fields in form display order.
+// FixedFields lists the 15 sbatch option fields in form display order.
 //
 // Env variable mappings come directly from Slurm 25.11 src/sbatch/opt.c:182-248
 // (`env_vars[]`) and doc/man/man1/sbatch.1 ("INPUT ENVIRONMENT VARIABLES",
@@ -101,6 +102,7 @@ type FieldSpec struct {
 //   - output (-o, --output): SBATCH_OUTPUT
 //   - error (-e, --error): SBATCH_ERROR
 //   - chdir (-D, --chdir): none (SLURM_WORKING_DIR is not in sbatch env_vars[])
+//   - clusters (-M, --clusters, --cluster): SBATCH_CLUSTERS, SLURM_CLUSTERS (opt.c:189-190, sbatch.1:2856-2857)
 func FixedFields() []FieldSpec {
 	return slices.Clone(fixedFields)
 }
@@ -120,6 +122,7 @@ var fixedFields = []FieldSpec{
 	{ID: FieldOutput, Label: "Output", ShortFlag: "-o", LongFlag: "--output", EnvVars: []string{"SBATCH_OUTPUT"}},
 	{ID: FieldError, Label: "Error", ShortFlag: "-e", LongFlag: "--error", EnvVars: []string{"SBATCH_ERROR"}},
 	{ID: FieldChdir, Label: "Chdir", ShortFlag: "-D", LongFlag: "--chdir"},
+	{ID: FieldClusters, Label: "Clusters", ShortFlag: "-M", LongFlag: "--clusters", EnvVars: []string{"SBATCH_CLUSTERS", "SLURM_CLUSTERS"}},
 }
 
 // ScriptValue records a field value parsed from a `#SBATCH` directive line.

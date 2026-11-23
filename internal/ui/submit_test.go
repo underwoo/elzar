@@ -288,11 +288,15 @@ func TestSubmitFormDryRunConfirmAbortSuccessJumpAndErrorRetention(t *testing.T) 
 		}
 	})
 
-	t.Run("submit success logs Submitted job N switches to Queue refreshes and selects job N", func(t *testing.T) {
+	t.Run("submit success logs Submitted job N on cluster switches to Queue refreshes and selects job N on cluster", func(t *testing.T) {
 		runner := &submitTestRunner{stdout: "9005;es\n"}
 		app := NewWithOptions(runner, Options{})
 		app.width, app.height = 120, 32
 		app.tab = registry.AccountsTab
+		app.queueJobs = []model.Job{
+			{ID: 9005, Cluster: "c1", Name: "other-cluster"},
+			{ID: 9005, Cluster: "es", Name: "climate-sim"},
+		}
 
 		if err := app.openSubmitForm(scriptPath); err != nil {
 			t.Fatal(err)
@@ -305,25 +309,28 @@ func TestSubmitFormDryRunConfirmAbortSuccessJumpAndErrorRetention(t *testing.T) 
 		if app.mode != modeList || app.tab != registry.QueueTab {
 			t.Fatalf("after submit: mode=%v tab=%v, want modeList QueueTab", app.mode, app.tab)
 		}
-		if app.actionStatus != "Submitted job 9005" {
-			t.Fatalf("actionStatus = %q, want 'Submitted job 9005'", app.actionStatus)
+		if app.actionStatus != "Submitted job 9005 on es" {
+			t.Fatalf("actionStatus = %q, want 'Submitted job 9005 on es'", app.actionStatus)
 		}
-		if len(app.messageLog) == 0 || app.messageLog[len(app.messageLog)-1].Text != "Submitted job 9005" {
+		if len(app.messageLog) == 0 || app.messageLog[len(app.messageLog)-1].Text != "Submitted job 9005 on es" {
 			t.Fatalf("messageLog = %+v", app.messageLog)
+		}
+		if app.queueCursor != 1 || app.visibleQueue()[app.queueCursor].Cluster != "es" {
+			t.Fatalf("queueCursor = %d (job %+v), want index 1 on cluster es", app.queueCursor, app.visibleQueue()[app.queueCursor])
 		}
 		if refreshCmd == nil {
 			t.Fatal("submit success did not trigger queue refresh")
 		}
 
-		// Deliver refreshed queue jobs and verify job 9005 is selected.
+		// Deliver refreshed queue jobs and verify job 9005 on cluster es is selected.
 		jobs := []model.Job{
-			{ID: 9001, Name: "older"},
-			{ID: 9005, Name: "climate-sim"},
-			{ID: 9009, Name: "newer"},
+			{ID: 9001, Cluster: "c1", Name: "older"},
+			{ID: 9005, Cluster: "es", Name: "climate-sim"},
+			{ID: 9009, Cluster: "es", Name: "newer"},
 		}
 		app.Update(queueResult{scope: app.scope, result: slurm.ListResult{Jobs: jobs}})
-		if app.queueCursor != 1 || app.visibleQueue()[app.queueCursor].ID != 9005 {
-			t.Fatalf("queueCursor = %d (job %+v), want index 1 (job 9005)", app.queueCursor, app.visibleQueue()[app.queueCursor])
+		if app.queueCursor != 1 || app.visibleQueue()[app.queueCursor].ID != 9005 || app.visibleQueue()[app.queueCursor].Cluster != "es" {
+			t.Fatalf("queueCursor = %d (job %+v), want index 1 (job 9005 on es)", app.queueCursor, app.visibleQueue()[app.queueCursor])
 		}
 		assertScriptUnchanged(t, scriptPath, origBytes, origMtime)
 	})
