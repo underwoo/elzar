@@ -89,7 +89,7 @@ The **Queue** view shows active jobs. **Recent** shows jobs that completed withi
 | Key | Action |
 | --- | --- |
 | `Tab`, `Shift+Tab` | Cycle through views |
-| `Ctrl+T`, then `1`/`2`/`3` | Jump to Queue, Recent, or Accounts; the prefix is configurable |
+| `Ctrl+T`, then `1`/`2`/`3`/`4` | Jump to Queue, Recent, Accounts, or Files; the prefix is configurable |
 | `Ctrl+T`, then `s` | Open the status and error message log |
 | `↑`/`↓`, `j`/`k` | Move the selection or scroll details |
 | `Space`, `Ctrl+V`, `Ctrl+F`, `PgDn` | Page down |
@@ -163,6 +163,76 @@ shows unavailable access and a message-log diagnostic. This is an account/QOS
 check, not a guarantee that a job can run: other Slurm policies and resources
 still apply. Account lists include descendants, and explicit allow lists take
 precedence over deny lists, following [Slurm's partition rules](https://slurm.schedmd.com/slurm.conf.html).
+
+## Files and submit
+
+Use `Ctrl+T` then `4` to open Files, or cycle through views with `Tab` (`Shift+Tab` cycles backward). Files starts in the directory from which you launched elzar and can navigate up to any parent directory.
+
+The left pane shows a collapsible directory tree; the right pane previews the selected entry with a `size · mtime` header (on terminals narrower than 100 columns, the preview stacks below or hides). Directories sort first, followed by entries in alphabetical order. Symlink targets are displayed alongside the entry; symlinked directories expand only when you open them explicitly, preventing symlink loops. Each directory listing is capped at 5,000 entries with an `"N more not shown"` marker.
+
+Previews read **regular files only** (never opening FIFOs, sockets, or device nodes) and read at most **64 KiB**. A file containing a NUL byte in its first 8 KiB is shown as `"binary file, N bytes"`. Regular files that start with `#!` on line 1 and contain at least one `#SBATCH` directive before the first command line are marked as batch scripts in the tree.
+
+### Files view shortcuts
+
+| Key | Action |
+| --- | --- |
+| `↑`/`↓`, `j`/`k` | Move selection through the tree |
+| `Space`, `Ctrl+V`, `Ctrl+F`, `PgDn` | Page down |
+| `b`, `Ctrl+B`, `Alt+V`, `PgUp` | Page up |
+| `N` then motion, `gg`/`1G`, `G` | Counted motions, jump to top or bottom |
+| `Enter`, `l`, `→` | Expand a directory |
+| `h`, `←` | Collapse the current directory, move to its parent entry, or go to the parent directory |
+| `Backspace` | Go up to the parent directory |
+| `.` | Toggle hidden (dotfile) entries |
+| `/` | Filter entries in the current directory (`Enter` keeps, `Esc` clears) |
+| `r` | Re-read the current directory |
+| `v` | Open the selected file in `$PAGER` (default `less`) |
+| `e` | Open the selected file in `$EDITOR` (default `vi`), then refresh on return |
+| `S` | Open the sbatch submit form for the selected batch script |
+
+### Submit form (`S`)
+
+Pressing `S` on a batch script opens the submit form. **elzar never opens a script for writing and never modifies your script file** — edit scripts externally or with `e` (`$EDITOR`). Heterogeneous job scripts (`#SBATCH hetjob` or `#SBATCH packjob`) are refused with `"heterogeneous job scripts aren't supported yet"`.
+
+#### Precedence and source labels
+
+The form inspects `#SBATCH` directives (up to the first non-comment, non-blank line) and `SBATCH_*` input environment variables, displaying each field's effective value alongside a dim source label:
+
+1. **`form`** — edited in the submit form (highest precedence; passed on the `sbatch` command line).
+2. **`env SBATCH_<VAR>`** — set in the environment (overrides `#SBATCH` in the script). Only the `SBATCH_*` input variables documented in `man sbatch` (Slurm 25.11) apply (`SBATCH_JOB_NAME`, `SBATCH_ACCOUNT`, `SBATCH_PARTITION`, `SBATCH_QOS`, `SBATCH_TIMELIMIT`, `SBATCH_MEM_PER_NODE`, `SBATCH_GRES`, `SBATCH_GPUS`, `SBATCH_ARRAY_INX`, `SBATCH_OUTPUT`, `SBATCH_ERROR`; `nodes`, `ntasks`, `cpus-per-task`, and `chdir` have no sbatch input environment variable).
+3. **`script:<line>`** — set by a `#SBATCH` directive at line `<line>` in the script.
+4. **`default`** — unset in the form, environment, and script (Slurm or association defaults apply).
+
+#### Edited-only `argv` and empty-edit reset
+
+Because `sbatch` reads `#SBATCH` lines and `SBATCH_*` environment variables itself, **elzar passes only the fields you edit in the form**:
+
+```text
+sbatch --parsable [--test-only] <only edited form fields> [extra sbatch options] <abs-script-path> [script arguments]
+```
+
+If you submit without editing any fields, elzar invokes `sbatch --parsable /abs/path/to/script.sh`, preserving `CLI > SBATCH_* env > #SBATCH` precedence by construction. Directives outside the form's fixed field set are listed read-only under **Passed through by sbatch**.
+
+Because the `sbatch` CLI cannot unset an option already defined in `#SBATCH` or `SBATCH_*`, clearing a field to empty in the form resets it to its underlying `script:<line>`, `env SBATCH_X`, or `default` value and source (with a notice when a script or environment value is still in effect: `"can't unset from the form; edit the script"`). Press `Ctrl+R` on any field to reset it to its unedited script/env/default state.
+
+#### Working directory
+
+`sbatch` runs with its working directory set to **the script's directory** (as if you ran `cd <script-dir> && sbatch ...`), unless `--chdir` (`-D`) is set in the script or form (relative `--chdir` paths resolve relative to the script's directory). The effective working directory and a live `argv` preview are shown at the bottom of the form.
+
+#### Pickers, limit warnings, dry run, and submission
+
+| Key | Action |
+| --- | --- |
+| `↑`/`↓`, `Tab`/`Shift+Tab` | Move between form fields |
+| `Ctrl+P` | Open the list picker on **Account**, **Partition**, or **QOS** (populated from your M3 associations, allowed partitions, and allowed QOS, with your default account/QOS listed first) |
+| `Ctrl+R` | Reset the focused field to its script, environment, or default value |
+| `t`, `Ctrl+T` | Run a `--test-only` dry run (`Ctrl+T` from any field, or `t` on the submit/dry-run action row) and show `sbatch`'s start-time estimate (or error) inline in the form |
+| `Enter` | Move to the next field, or on the submit action row review the full `sbatch` command in the confirmation dialog (`y` to submit) |
+| `Esc` | Cancel and return to the Files view |
+
+Non-blocking warnings (yellow) appear beneath a field and in the confirmation dialog when a value conflicts with your loaded M3 association, partition, or QOS data — for example, an account not in your associations, a partition or QOS not allowed for that account, a time limit exceeding QOS `MaxWall` or partition `MaxTime`, or a node count exceeding partition `MaxNodes` or QOS `MaxTRESPerJob`. Warnings never block dry runs or submission (`sbatch` is the final authority).
+
+When a real submission succeeds, elzar logs `Submitted job <id>` to the status bar and `Ctrl+T s`, switches to **Queue**, refreshes, and selects the newly submitted job. If `sbatch` fails, the form stays open with `sbatch`'s error message so you can adjust options without re-entering your edits.
 
 
 ## Options

@@ -24,4 +24,4 @@ Working directory: /scratch/alice/climate
 Command: sbatch --parsable --partition=gpu /scratch/alice/climate/run.sh
 Dry run (--test-only):
   sbatch: Job 9001 to start at 2026-11-23T04:00:00 using 128 processors on nodes nid00[10-13] in partition gpu
-↑/↓/tab field  ctrl+r reset  t/ctrl+t dry run  enter next/submit  esc cancel  ? help
+↑/↓/tab field  ctrl+p pick  ctrl+r reset  t/ctrl+t dry run  enter next/submit  esc cancel  ? help

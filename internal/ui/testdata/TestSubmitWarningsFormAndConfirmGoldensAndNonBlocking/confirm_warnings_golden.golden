@@ -1,0 +1,14 @@
+Submit batch job?
+
+Script: /scratch/user-01/warn.sh
+Working directory: /scratch/user-01
+
+sbatch --parsable /scratch/user-01/warn.sh
+
+Warnings (non-blocking):
+  • account "unknown-acct" is not in your associations
+  • QOS "qos-01" is not allowed on partition "partition-04"
+  • time 20-00:00:00 (28800 min) exceeds partition "partition-04" MaxTime (960 min)
+  • nodes 999 exceeds partition "partition-04" MaxNodes (1)
+
+Press y to confirm; any other key returns to the form.

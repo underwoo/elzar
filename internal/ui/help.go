@@ -20,7 +20,7 @@ type helpGroup struct {
 func (a *App) builtinHelpGroups() []helpGroup {
 	if a.mode == modeForm && a.submitForm.active {
 		return []helpGroup{
-			{title: "Submit form", bindings: []key.Binding{submitKeys.up, submitKeys.down, submitKeys.reset, submitKeys.dryRun, submitKeys.submit, submitKeys.cancel}},
+			{title: "Submit form", bindings: []key.Binding{submitKeys.up, submitKeys.down, submitKeys.picker, submitKeys.reset, submitKeys.dryRun, submitKeys.submit, submitKeys.cancel}},
 			{title: "App", bindings: []key.Binding{appKeys.help, appKeys.quit}},
 		}
 	}
