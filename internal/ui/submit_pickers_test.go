@@ -75,7 +75,7 @@ srun ./run
 	}
 
 	app := NewWithOptions(nil, Options{Username: "user-01"})
-	app.width, app.height = 100, 26
+	app.width, app.height = 100, 28
 	loadM3AccountsIntoApp(t, app)
 	app.beginSubmitFormWithParsed("/scratch/user-01/job.sh", parsed, modeList)
 
@@ -146,6 +146,75 @@ srun ./run
 	}
 	if got := app.submitForm.inputs[3].Value(); got != "qos-02" {
 		t.Fatalf("Esc modified QOS input: got %q, want qos-02", got)
+	}
+}
+
+func TestSubmitClusterPickerAndTwoClusterScoping(t *testing.T) {
+	parsed, err := submit.ParseScript(`#!/bin/bash
+#SBATCH --job-name=multi-cluster
+#SBATCH --partition=part-c2
+
+srun ./run
+`)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	app := NewWithOptions(nil, Options{Username: "user-01"})
+	app.width, app.height = 110, 34
+	app.accounts.clusters = map[string]bool{"c1": true, "c2": true}
+	app.accounts.associations = []model.Association{
+		{Cluster: "c1", Account: "acct-c1", User: "user-01", IsDefault: true, DefaultQOS: "qos-01", QOS: []string{"qos-01"}},
+		{Cluster: "c2", Account: "acct-c2", User: "user-01", IsDefault: true, DefaultQOS: "qos-02", QOS: []string{"qos-02"}},
+	}
+	app.accounts.partitions = []model.Partition{
+		{Cluster: "c1", Name: "part-c1", State: []string{"UP"}},
+		{Cluster: "c2", Name: "part-c2", State: []string{"UP"}},
+	}
+	app.accounts.qos = []model.QOS{
+		{Name: "qos-01"},
+		{Name: "qos-02"},
+	}
+
+	app.beginSubmitFormWithParsed("/scratch/user-01/job.sh", parsed, modeList)
+
+	// With no cluster set in the script/env/form, the local cluster is "c1",
+	// where "part-c2" does not exist -> warning on Partition.
+	if !strings.Contains(app.View(), `warning: partition "part-c2" is not in cluster partitions`) {
+		t.Fatalf("expected warning on c1 for part-c2:\n%s", app.View())
+	}
+
+	// Focus Clusters (field 14), press ctrl+p, verify known clusters [c1, c2], and pick c2.
+	app.focusSubmitField(14)
+	app.Update(tea.KeyMsg{Type: tea.KeyCtrlP})
+	if !app.submitForm.pickerActive || app.submitForm.pickerField != submit.FieldClusters {
+		t.Fatalf("expected Clusters picker active, got active=%v field=%v", app.submitForm.pickerActive, app.submitForm.pickerField)
+	}
+	if got := app.submitForm.picker.Items(); len(got) != 2 || got[0] != "c1" || got[1] != "c2" {
+		t.Fatalf("Clusters picker items = %v, want [c1 c2]", got)
+	}
+	app.Update(tea.KeyMsg{Type: tea.KeyDown})
+	app.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	if app.submitForm.pickerActive {
+		t.Fatal("Enter did not close Clusters picker")
+	}
+	if got := app.submitForm.inputs[14].Value(); got != "c2" {
+		t.Fatalf("Clusters input = %q, want c2", got)
+	}
+	if !strings.Contains(app.View(), "--clusters=c2") {
+		t.Fatalf("expected --clusters=c2 in argv preview:\n%s", app.View())
+	}
+
+	// Now that effective cluster is c2, "part-c2" exists on c2 -> warning disappears!
+	if strings.Contains(app.View(), `warning: partition "part-c2" is not in cluster partitions`) {
+		t.Fatalf("unexpected partition warning after switching to c2:\n%s", app.View())
+	}
+
+	// Opening Partition picker (field 2) now shows only c2's partition ("part-c2").
+	app.focusSubmitField(2)
+	app.Update(tea.KeyMsg{Type: tea.KeyCtrlP})
+	if got := app.submitForm.picker.Items(); len(got) != 1 || got[0] != "part-c2" {
+		t.Fatalf("c2 Partition picker items = %v, want [part-c2]", got)
 	}
 }
 

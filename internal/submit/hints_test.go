@@ -124,6 +124,51 @@ func TestHintsFromCommittedM3Fixtures(t *testing.T) {
 			t.Fatalf("account-02 should NOT have access to partition-04: %v", partsAcct2)
 		}
 	})
+
+	t.Run("two-cluster fixture scopes pickers and warnings to effective or local cluster", func(t *testing.T) {
+		assocs2 := []model.Association{
+			{Cluster: "c1", Account: "acct-c1", User: "user-01", IsDefault: true, DefaultQOS: "qos-01", QOS: []string{"qos-01"}},
+			{Cluster: "c2", Account: "acct-c2", User: "user-01", IsDefault: true, DefaultQOS: "qos-02", QOS: []string{"qos-02"}},
+		}
+		parts2 := []model.Partition{
+			{Cluster: "c1", Name: "part-only-c1", State: []string{"UP"}},
+			{Cluster: "c2", Name: "part-only-c2", State: []string{"UP"}},
+		}
+		qos2 := []model.QOS{
+			{Name: "qos-01"},
+			{Name: "qos-02"},
+		}
+
+		// With no cluster set, Hints defaults to the local cluster ("c1").
+		hLocal := Hints("user-01", "", assocs2, parts2, qos2)
+		if hLocal.Cluster != "c1" {
+			t.Fatalf("local Cluster = %q, want c1", hLocal.Cluster)
+		}
+		if !reflect.DeepEqual(hLocal.Clusters, []string{"c1", "c2"}) {
+			t.Fatalf("Clusters = %v, want [c1 c2]", hLocal.Clusters)
+		}
+		if !reflect.DeepEqual(hLocal.PartitionsForAccount(""), []string{"part-only-c1"}) {
+			t.Fatalf("c1 PartitionsForAccount = %v, want [part-only-c1]", hLocal.PartitionsForAccount(""))
+		}
+		// part-only-c2 does not exist on c1 -> warning on c1.
+		wC1 := Check(map[FieldID]string{FieldPartition: "part-only-c2"}, hLocal)
+		if len(wC1) != 1 || wC1[0].Field != FieldPartition || !strings.Contains(wC1[0].Message, `"part-only-c2" is not in cluster partitions`) {
+			t.Fatalf("c1 check for part-only-c2 = %+v", wC1)
+		}
+
+		// Switching FieldClusters to "c2" scopes Check (and Hints("user-01", "c2", ...)) to c2.
+		hC2 := Hints("user-01", "c2", assocs2, parts2, qos2)
+		if !reflect.DeepEqual(hC2.PartitionsForAccount(""), []string{"part-only-c2"}) {
+			t.Fatalf("c2 PartitionsForAccount = %v, want [part-only-c2]", hC2.PartitionsForAccount(""))
+		}
+		if w := Check(map[FieldID]string{FieldClusters: "c2", FieldPartition: "part-only-c2"}, hLocal); len(w) != 0 {
+			t.Fatalf("c2 check for part-only-c2 = %+v, want 0 warnings", w)
+		}
+		wC2 := Check(map[FieldID]string{FieldClusters: "c2", FieldPartition: "part-only-c1"}, hLocal)
+		if len(wC2) != 1 || wC2[0].Field != FieldPartition || !strings.Contains(wC2[0].Message, `"part-only-c1" is not in cluster partitions`) {
+			t.Fatalf("c2 check for part-only-c1 = %+v", wC2)
+		}
+	})
 }
 
 func TestCheckWarningsWithM3Fixtures(t *testing.T) {

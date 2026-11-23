@@ -19,11 +19,11 @@ import (
 )
 
 const (
-	submitExtraFieldIndex = 14 // Extra sbatch options
-	submitScriptArgsIndex = 15 // Script arguments
-	submitActionButtonRow = 16 // [ Submit ] / [ Dry run (t) ] row
-	submitInputFieldCount = 16
-	submitTotalFocusable  = 17
+	submitExtraFieldIndex = 15 // Extra sbatch options
+	submitScriptArgsIndex = 16 // Script arguments
+	submitActionButtonRow = 17 // [ Submit ] / [ Dry run (t) ] row
+	submitInputFieldCount = 17
+	submitTotalFocusable  = 18
 )
 
 type submitKeyMap struct {
@@ -45,7 +45,7 @@ var submitKeys = submitKeyMap{
 	down:   key.NewBinding(key.WithKeys("down"), key.WithHelp("↓/tab", "next field")),
 	next:   key.NewBinding(key.WithKeys("tab"), key.WithHelp("tab", "next field")),
 	prev:   key.NewBinding(key.WithKeys("shift+tab"), key.WithHelp("shift+tab", "previous field")),
-	picker: key.NewBinding(key.WithKeys("ctrl+p"), key.WithHelp("ctrl+p", "pick account/partition/qos")),
+	picker: key.NewBinding(key.WithKeys("ctrl+p"), key.WithHelp("ctrl+p", "pick account/partition/qos/cluster")),
 	reset:  key.NewBinding(key.WithKeys("ctrl+r"), key.WithHelp("ctrl+r", "reset field")),
 	dryRun: key.NewBinding(key.WithKeys("t"), key.WithHelp("t", "dry run (--test-only)")),
 	submit: key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter", "next / confirm submit")),
@@ -359,22 +359,69 @@ func (a *App) acceptSubmitJobResult(msg submitJobResult) tea.Cmd {
 	}
 
 	jobID := strconv.FormatInt(msg.result.JobID, 10)
-	status := "Submitted job " + jobID
+	local := a.localSubmitCluster()
+	parsedCluster := strings.TrimSpace(msg.result.Cluster)
+	fieldCluster := a.effectiveSubmitFieldValue(submit.FieldClusters)
+	targetCluster := parsedCluster
+	if targetCluster == "" {
+		targetCluster = fieldCluster
+	}
+
+	remote := false
+	if local != "" {
+		remote = targetCluster != "" && targetCluster != local
+	} else {
+		remote = parsedCluster != ""
+	}
+
 	a.submitForm.active = false
 	a.submitForm.confirming = false
+	a.submitForm.pickerActive = false
 	a.mode = modeList
+
+	if remote {
+		localLabel := local
+		if localLabel == "" {
+			localLabel = "local"
+		}
+		status := fmt.Sprintf("Submitted job %s on %s. Queue shows %s only (see #34)", jobID, targetCluster, localLabel)
+		a.tab = filesTab
+		a.files.err = status
+		a.actionStatus = status
+		a.addMessage(status, messageInfo)
+		return nil
+	}
+
+	status := "Submitted job " + jobID
+	if targetCluster != "" {
+		status = fmt.Sprintf("Submitted job %s on %s", jobID, targetCluster)
+	}
 	a.tab = registry.QueueTab
 	a.pendingSelectJobID = jobID
-	for i := range a.visibleQueue() {
-		if a.visibleQueue()[i].DisplayID() == jobID {
-			a.queueCursor = i
-			a.keepActiveCursorVisible()
-			break
-		}
-	}
+	a.selectSubmittedJob(jobID, targetCluster)
 	a.actionStatus = status
 	a.addMessage(status, messageInfo)
 	return tea.Batch(a.startQueueFetch(), a.startRecentFetch())
+}
+
+func (a *App) selectSubmittedJob(jobID, cluster string) {
+	queue := a.visibleQueue()
+	if cluster != "" {
+		for i, job := range queue {
+			if job.DisplayID() == jobID && job.Cluster == cluster {
+				a.queueCursor = i
+				a.keepActiveCursorVisible()
+				return
+			}
+		}
+	}
+	for i, job := range queue {
+		if job.DisplayID() == jobID {
+			a.queueCursor = i
+			a.keepActiveCursorVisible()
+			return
+		}
+	}
 }
 
 func (a *App) renderSubmitForm(out *strings.Builder, width int) {

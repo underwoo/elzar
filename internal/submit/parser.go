@@ -320,6 +320,8 @@ func matchLongOption(name string) (FieldID, string, bool) {
 		return FieldError, "--error", true
 	case "chdir":
 		return FieldChdir, "--chdir", true
+	case "clusters", "cluster":
+		return FieldClusters, "--clusters", true
 	default:
 		return "", "", false
 	}
@@ -353,6 +355,8 @@ func matchShortOption(short byte) (FieldID, string, bool) {
 		return FieldError, "--error", true
 	case 'D':
 		return FieldChdir, "--chdir", true
+	case 'M':
+		return FieldClusters, "--clusters", true
 	default:
 		return "", "", false
 	}
@@ -363,10 +367,10 @@ func matchShortOption(short byte) (FieldID, string, bool) {
 //
 //	-b (--begin), -B (--extra-node-info), -C (--constraint), -d (--dependency),
 //	-F (--nodefile), -i (--input), -L (--licenses), -m (--distribution),
-//	-M (--clusters), -S (--core-spec), -w (--nodelist), -x (--exclude)
+//	-S (--core-spec), -w (--nodelist), -x (--exclude)
 func shortOptionTakesSeparateArg(short byte) bool {
 	switch short {
-	case 'b', 'B', 'C', 'd', 'F', 'i', 'L', 'm', 'M', 'S', 'w', 'x':
+	case 'b', 'B', 'C', 'd', 'F', 'i', 'L', 'm', 'S', 'w', 'x':
 		return true
 	default:
 		return false

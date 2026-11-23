@@ -57,6 +57,9 @@ func TestParseScriptRules(t *testing.T) {
 			"#SBATCH -o logs/%x-%j.out",
 			"#SBATCH -e logs/%x-%j.err",
 			"#SBATCH -D /scratch/work",
+			"#SBATCH -M c1",
+			"#SBATCH --cluster=c2",
+			"#SBATCH --clusters=c3",
 		}, "\n")
 
 		parsed, err := ParseScript(script)
@@ -83,6 +86,7 @@ func TestParseScriptRules(t *testing.T) {
 			{FieldOutput, "logs/%x-%j.out", "--output", 14},
 			{FieldError, "logs/%x-%j.err", "--error", 15},
 			{FieldChdir, "/scratch/work", "--chdir", 16},
+			{FieldClusters, "c3", "--clusters", 19},
 		}
 		for _, c := range checks {
 			got, ok := parsed.Fields[c.id]
@@ -213,6 +217,7 @@ func TestPrecedenceEveryFieldAndSourceCombination(t *testing.T) {
 		"#SBATCH --output=script.out",
 		"#SBATCH --error=script.err",
 		"#SBATCH --chdir=/script/dir",
+		"#SBATCH --clusters=script-cluster",
 	}, "\n")
 
 	parsed, err := ParseScript(script)
@@ -233,6 +238,7 @@ func TestPrecedenceEveryFieldAndSourceCombination(t *testing.T) {
 		FieldArray:     "SBATCH_ARRAY_INX",
 		FieldOutput:    "SBATCH_OUTPUT",
 		FieldError:     "SBATCH_ERROR",
+		FieldClusters:  "SBATCH_CLUSTERS",
 	}
 
 	// Non-input SLURM_* variables that must NOT be treated as sbatch env sources.
