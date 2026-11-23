@@ -10,14 +10,14 @@ Queue  Recent  Accounts ╭─────────────────�
                         │ b/^b/M-v/PgUp    page up                                             │
                         │ space/^v/^f/PgDn page down                                           │
                         │ Files                                                                │
-                        │ enter/l   expand directory                                           │
+                        │ enter     enter directory                                            │
+                        │ l/→       expand/collapse                                            │
                         │ h         collapse/parent                                            │
                         │ backspace parent directory                                           │
                         │ .         hidden files                                               │
                         │ r         refresh files                                              │
-                        │ v         pager                                                      │
-                        │ e         editor                                                     │
-                        │ S         submit script                                              │
-2 entries               │ /         filter names                                               │
-enter/l expand · h colla│ ↑/↓ or j/k scroll • ?/esc close                                      │
+                        │ v         view                                                       │
+                        │ e         edit                                                       │
+2 entries               │ S         submit script                                              │
+enter open · l expand · │ ↑/↓ or j/k scroll • ?/esc close                                      │
                         ╰──────────────────────────────────────────────────────────────────────╯

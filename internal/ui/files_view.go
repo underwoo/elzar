@@ -15,14 +15,15 @@ import (
 
 // Files actions are intentionally absent from allAppBindings: they do not
 // reserve keys in the job/account plugin scopes.
-var filesKeys = struct{ open, collapse, parent, hidden, refresh, pager, editor, submit, filter key.Binding }{
-	key.NewBinding(key.WithKeys("enter", "l", "right"), key.WithHelp("enter/l", "expand directory")),
+var filesKeys = struct{ enter, open, collapse, parent, hidden, refresh, pager, editor, submit, filter key.Binding }{
+	key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter", "enter directory")),
+	key.NewBinding(key.WithKeys("l", "right"), key.WithHelp("l/→", "expand/collapse")),
 	key.NewBinding(key.WithKeys("h", "left"), key.WithHelp("h", "collapse/parent")),
 	key.NewBinding(key.WithKeys("backspace"), key.WithHelp("backspace", "parent directory")),
 	key.NewBinding(key.WithKeys("."), key.WithHelp(".", "hidden files")),
 	key.NewBinding(key.WithKeys("r"), key.WithHelp("r", "refresh files")),
-	key.NewBinding(key.WithKeys("v"), key.WithHelp("v", "pager")),
-	key.NewBinding(key.WithKeys("e"), key.WithHelp("e", "editor")),
+	key.NewBinding(key.WithKeys("v"), key.WithHelp("v", "view")),
+	key.NewBinding(key.WithKeys("e"), key.WithHelp("e", "edit")),
 	key.NewBinding(key.WithKeys("S"), key.WithHelp("S", "submit script")),
 	key.NewBinding(key.WithKeys("/"), key.WithHelp("/", "filter names")),
 }
@@ -30,7 +31,7 @@ var filesKeys = struct{ open, collapse, parent, hidden, refresh, pager, editor, 
 func (a *App) filesHelpGroups() []helpGroup {
 	return []helpGroup{
 		{title: "Navigation", bindings: []key.Binding{appKeys.up, appKeys.down, appKeys.count, appKeys.top, appKeys.bottom, appKeys.pageUp, appKeys.pageDown}},
-		{title: "Files", bindings: []key.Binding{filesKeys.open, filesKeys.collapse, filesKeys.parent, filesKeys.hidden, filesKeys.refresh, filesKeys.pager, filesKeys.editor, filesKeys.submit, filesKeys.filter}},
+		{title: "Files", bindings: []key.Binding{filesKeys.enter, filesKeys.open, filesKeys.collapse, filesKeys.parent, filesKeys.hidden, filesKeys.refresh, filesKeys.pager, filesKeys.editor, filesKeys.submit, filesKeys.filter}},
 		{title: "App", bindings: []key.Binding{appKeys.tab, appKeys.shiftTab, key.NewBinding(key.WithHelp(formatKeyLabel(a.options.TabPrefix)+" 1/2/3/4", "queue/recent/accounts/files")), appKeys.help, appKeys.quit}},
 	}
 }
@@ -73,7 +74,7 @@ func (a *App) handleFilesKey(msg tea.KeyMsg) tea.Cmd {
 		return a.resetFiles(f.dir)
 	case key.Matches(msg, filesKeys.parent):
 		f.filter = ""
-		return a.resetFiles(filepath.Dir(f.dir))
+		return a.enterFiles(filepath.Dir(f.dir), f.dir)
 	case key.Matches(msg, filesKeys.collapse):
 		path := a.selectedFile()
 		if f.expanded[path] {
@@ -92,9 +93,9 @@ func (a *App) handleFilesKey(msg tea.KeyMsg) tea.Cmd {
 			a.keepFilesCursorVisible()
 		} else {
 			f.filter = ""
-			return a.resetFiles(filepath.Dir(f.dir))
+			return a.enterFiles(filepath.Dir(f.dir), f.dir)
 		}
-	case key.Matches(msg, filesKeys.open):
+	case key.Matches(msg, filesKeys.enter), key.Matches(msg, filesKeys.open):
 		path := a.selectedFile()
 		if path == "" {
 			return nil
@@ -103,7 +104,13 @@ func (a *App) handleFilesKey(msg tea.KeyMsg) tea.Cmd {
 		if r.entry.Kind != files.Directory && r.entry.Kind != files.Symlink {
 			return nil
 		}
-		if !f.expanded[path] {
+		if key.Matches(msg, filesKeys.enter) {
+			return a.enterFiles(path, "")
+		}
+		if f.expanded[path] {
+			delete(f.expanded, path)
+			a.rebuildFiles()
+		} else {
 			f.expanded[path] = true
 			return a.listFiles(path)
 		}
@@ -241,6 +248,6 @@ func (a *App) renderFiles(width int) string {
 		status += "  " + nav
 	}
 	fmt.Fprintln(&out, truncateLine(status, width))
-	fmt.Fprint(&out, truncateLine("enter/l expand · h collapse · . hidden · / filter · v pager · e editor · ? help", width))
+	fmt.Fprint(&out, truncateLine("enter open · l expand · h collapse · . hidden · / filter · v view · e edit · ? help", width))
 	return fitOutput(out.String(), width)
 }

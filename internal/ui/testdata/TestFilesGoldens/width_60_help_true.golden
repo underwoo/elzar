@@ -10,14 +10,14 @@ Qu╭─────────────────────────
   │ b/^b/M-v/PgUp    page up                             │
   │ space/^v/^f/PgDn page down                           │
   │ Files                                                │
-  │ enter/l   expand directory                           │
+  │ enter     enter directory                            │
+  │ l/→       expand/collapse                            │
   │ h         collapse/parent                            │
   │ backspace parent directory                           │
   │ .         hidden files                               │
   │ r         refresh files                              │
-  │ v         pager                                      │
-  │ e         editor                                     │
-  │ S         submit script                              │
-2 │ /         filter names                               │
-en│ ↑/↓ or j/k scroll • ?/esc close                      │r…
+  │ v         view                                       │
+  │ e         edit                                       │
+2 │ S         submit script                              │
+en│ ↑/↓ or j/k scroll • ?/esc close                      │ …
   ╰──────────────────────────────────────────────────────╯

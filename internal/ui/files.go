@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -151,6 +152,33 @@ func nextFileScan(generation uint64, dir string, stream <-chan files.ScriptResul
 func (a *App) updateFiles(msg tea.Msg) (tea.Cmd, bool) {
 	f := &a.files
 	switch m := msg.(type) {
+	case filesEntered:
+		if m.generation != f.generation {
+			return nil, true
+		}
+		if m.err != nil {
+			f.err = m.err.Error()
+			return nil, true
+		}
+		f.filter = ""
+		a.resetFiles(m.dir)
+		cmd, _ := a.updateFiles(filesListed{m.dir, f.generation, m.listing, nil})
+		a.selectFilePaths([]string{m.selectPath})
+		return tea.Batch(cmd, a.debounceFilePreview()), true
+	case filesRefreshed:
+		if m.generation != f.generation {
+			return nil, true
+		}
+		var cmds []tea.Cmd
+		for _, result := range m.results {
+			cmd, _ := a.updateFiles(result)
+			cmds = append(cmds, cmd)
+		}
+		a.selectFilePaths(m.paths)
+		f.scroll = m.scroll
+		a.keepFilesCursorVisible()
+		cmds = append(cmds, a.debounceFilePreview())
+		return tea.Batch(cmds...), true
 	case filesListed:
 		if m.generation != f.generation {
 			return nil, true
@@ -204,7 +232,7 @@ func (a *App) updateFiles(msg tea.Msg) (tea.Cmd, bool) {
 		}
 		return nil, true
 	case filesExternalDone:
-		cmd := a.resetFiles(f.dir)
+		cmd := a.refreshFiles()
 		if m.err != nil {
 			f.err = fmt.Sprintf("external command: %v", m.err)
 		}
@@ -239,4 +267,86 @@ func (a *App) filesAfterKey(oldTab registry.Tab, oldPath string, cmd tea.Cmd) te
 		return tea.Batch(cmd, a.debounceFilePreview())
 	}
 	return cmd
+}
+
+// Enter only changes the root after a successful asynchronous directory read.
+type filesEntered struct {
+	generation      uint64
+	dir, selectPath string
+	listing         files.Listing
+	err             error
+}
+
+func (a *App) enterFiles(dir, selectPath string) tea.Cmd {
+	f := &a.files
+	generation, hidden := f.generation, f.hidden
+	list := f.list
+	if list == nil {
+		list = files.List
+	}
+	return func() tea.Msg { l, err := list(dir, hidden); return filesEntered{generation, dir, selectPath, l, err} }
+}
+
+type filesRefreshed struct {
+	generation uint64
+	results    []filesListed
+	paths      []string
+	scroll     int
+}
+
+func (a *App) selectFilePaths(paths []string) {
+	for _, path := range paths {
+		for i, row := range a.files.rows {
+			if row.path == path {
+				a.files.cursor = i
+				a.keepFilesCursorVisible()
+				return
+			}
+		}
+	}
+	a.keepFilesCursorVisible()
+}
+
+// Preserve the visible tree while refreshing all expanded directories. Prefer
+// the previous path, then its nearest old siblings if an external tool removed it.
+func (a *App) refreshFiles() tea.Cmd {
+	f := &a.files
+	path := a.selectedFile()
+	paths := []string{path}
+	for distance := 1; distance < len(f.rows); distance++ {
+		for _, i := range []int{f.cursor + distance, f.cursor - distance} {
+			if i >= 0 && i < len(f.rows) && filepath.Dir(f.rows[i].path) == filepath.Dir(path) {
+				paths = append(paths, f.rows[i].path)
+			}
+		}
+	}
+	dirs := []string{}
+	for dir, expanded := range f.expanded {
+		if expanded {
+			dirs = append(dirs, dir)
+		}
+	}
+	sort.Strings(dirs)
+	if f.cancel != nil {
+		f.cancel()
+	}
+	f.ctx, f.cancel = context.WithCancel(context.Background())
+	f.generation++
+	f.previewID++
+	f.authoritative = map[string]bool{}
+	f.previewPath = ""
+	f.previewError = ""
+	generation, hidden, scroll := f.generation, f.hidden, f.scroll
+	list := f.list
+	if list == nil {
+		list = files.List
+	}
+	return func() tea.Msg {
+		results := make([]filesListed, 0, len(dirs))
+		for _, dir := range dirs {
+			l, err := list(dir, hidden)
+			results = append(results, filesListed{dir, generation, l, err})
+		}
+		return filesRefreshed{generation, results, paths, scroll}
+	}
 }

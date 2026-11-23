@@ -157,7 +157,7 @@ func TestFilesFIFOAndTree(t *testing.T) {
 	}
 	a.files.children[a.files.dir] = files.Listing{Entries: []files.Entry{{Name: "dir", Kind: files.Directory}}}
 	a.rebuildFiles()
-	cmd := a.handleFilesKey(tea.KeyMsg{Type: tea.KeyEnter})
+	cmd := a.handleFilesKey(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'l'}})
 	a.Update(cmd())
 	if len(a.files.rows) != 2 || a.files.rows[1].depth != 1 {
 		t.Fatal(a.files.rows)
@@ -209,26 +209,114 @@ func TestFilesGoldens(t *testing.T) {
 }
 
 func TestFilesEditorReturnsAndRefreshes(t *testing.T) {
+	for _, deleted := range []bool{false, true} {
+		t.Run(fmt.Sprint(deleted), func(t *testing.T) {
+			a := filesApp(t)
+			path := filepath.Join(a.files.dir, "job.sh")
+			if err := os.WriteFile(path, []byte("#!/bin/sh\n#SBATCH -J test\n"), 0600); err != nil {
+				t.Fatal(err)
+			}
+			sibling := filepath.Join(a.files.dir, "next")
+			if err := os.WriteFile(sibling, []byte("sibling preview"), 0600); err != nil {
+				t.Fatal(err)
+			}
+			script := "#!/bin/sh\nprintf '\n# edited\n' >> \"$1\"\n"
+			expected := "# edited"
+			if deleted {
+				script = "#!/bin/sh\nrm -- \"$1\"\n"
+				expected = "sibling preview"
+			}
+			tool := filepath.Join(t.TempDir(), "editor")
+			if err := os.WriteFile(tool, []byte(script), 0700); err != nil {
+				t.Fatal(err)
+			}
+			t.Setenv("EDITOR", tool)
+			a.files.rows = []fileRow{{path: path, entry: files.Entry{Name: "job.sh", Kind: files.Regular}}}
+			a.files.rows = append(a.files.rows, fileRow{path: sibling, entry: files.Entry{Name: "next", Kind: files.Regular}})
+			a.files.previewPath = path
+			a.files.preview = files.FilePreview{Text: "before"}
+			tm := teatest.NewTestModel(t, a, teatest.WithInitialTermSize(120, 20))
+			t.Cleanup(func() { _ = tm.Quit() })
+			tm.Send(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'e'}})
+			teatest.WaitFor(t, tm.Output(), func(out []byte) bool { return bytes.Contains(out, []byte(expected)) }, teatest.WithDuration(3*time.Second), teatest.WithCheckInterval(10*time.Millisecond))
+			tm.Type("q")
+			final := tm.FinalModel(t, teatest.WithFinalTimeout(time.Second)).(*App)
+			if final.tab != filesTab || !strings.Contains(final.files.preview.Text, expected) {
+				t.Fatal("editor failed to refresh Files")
+			}
+			want := path
+			if deleted {
+				want = sibling
+			}
+			if final.selectedFile() != want {
+				t.Fatalf("selection=%s", final.selectedFile())
+			}
+		})
+	}
+}
+
+func TestFilesEnterAndParentSelection(t *testing.T) {
 	a := filesApp(t)
-	path := filepath.Join(a.files.dir, "job.sh")
-	if err := os.WriteFile(path, []byte("#!/bin/sh\n#SBATCH -J test\n"), 0600); err != nil {
+	root := a.files.dir
+	dir := filepath.Join(root, "dir")
+	if err := os.Mkdir(dir, 0700); err != nil {
 		t.Fatal(err)
 	}
-	tool := filepath.Join(t.TempDir(), "editor")
-	if err := os.WriteFile(tool, []byte("#!/bin/sh\nprintf '\n# edited\n' >> \"$1\"\n"), 0700); err != nil {
-		t.Fatal(err)
+	cmd := a.handleFilesKey(tea.KeyMsg{Type: tea.KeyEnter})
+	a.Update(cmd())
+	if a.files.dir != dir {
+		t.Fatalf("root=%s", a.files.dir)
 	}
-	t.Setenv("EDITOR", tool)
-	a.files.rows = []fileRow{{path: path, entry: files.Entry{Name: "job.sh", Kind: files.Regular}}}
-	a.files.previewPath = path
-	a.files.preview = files.FilePreview{Text: "before"}
-	tm := teatest.NewTestModel(t, a, teatest.WithInitialTermSize(120, 20))
-	t.Cleanup(func() { _ = tm.Quit() })
-	tm.Send(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'e'}})
-	teatest.WaitFor(t, tm.Output(), func(out []byte) bool { return bytes.Contains(out, []byte("# edited")) }, teatest.WithDuration(3*time.Second), teatest.WithCheckInterval(10*time.Millisecond))
-	tm.Type("q")
-	final := tm.FinalModel(t, teatest.WithFinalTimeout(time.Second)).(*App)
-	if final.tab != filesTab || !strings.Contains(final.files.preview.Text, "# edited") {
-		t.Fatal("editor failed to refresh Files")
+	cmd = a.handleFilesKey(tea.KeyMsg{Type: tea.KeyBackspace})
+	a.Update(cmd())
+	if a.files.dir != root || a.selectedFile() != dir {
+		t.Fatalf("root=%s selected=%s", a.files.dir, a.selectedFile())
+	}
+}
+func TestFilesExternalRefreshRetainsTree(t *testing.T) {
+	for _, deleted := range []bool{false, true} {
+		t.Run(fmt.Sprint(deleted), func(t *testing.T) {
+			a := filesApp(t)
+			root := a.files.dir
+			dir := filepath.Join(root, "dir")
+			if err := os.Mkdir(dir, 0700); err != nil {
+				t.Fatal(err)
+			}
+			for _, name := range []string{"a", "b", "c"} {
+				if err := os.WriteFile(filepath.Join(dir, name), []byte(name), 0600); err != nil {
+					t.Fatal(err)
+				}
+			}
+			listing, err := files.List(root, false)
+			if err != nil {
+				t.Fatal(err)
+			}
+			a.files.children[root] = listing
+			listing, err = files.List(dir, false)
+			if err != nil {
+				t.Fatal(err)
+			}
+			a.files.children[dir] = listing
+			a.files.expanded[dir] = true
+			a.rebuildFiles()
+			a.selectFilePaths([]string{filepath.Join(dir, "b")})
+			a.height = 9
+			a.keepFilesCursorVisible()
+			scroll := a.files.scroll
+			if deleted {
+				if err := os.Remove(filepath.Join(dir, "b")); err != nil {
+					t.Fatal(err)
+				}
+			}
+			_, cmd := a.Update(filesExternalDone{})
+			a.Update(cmd())
+			want := filepath.Join(dir, "b")
+			if deleted {
+				want = filepath.Join(dir, "c")
+			}
+			if a.selectedFile() != want || !a.files.expanded[dir] || a.files.scroll != scroll {
+				t.Fatalf("selected=%s expanded=%v scroll=%d want=%d", a.selectedFile(), a.files.expanded[dir], a.files.scroll, scroll)
+			}
+		})
 	}
 }
