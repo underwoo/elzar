@@ -180,14 +180,15 @@ Previews read **regular files only** (never opening FIFOs, sockets, or device no
 | `Space`, `Ctrl+V`, `Ctrl+F`, `PgDn` | Page down |
 | `b`, `Ctrl+B`, `Alt+V`, `PgUp` | Page up |
 | `N` then motion, `gg`/`1G`, `G` | Counted motions, jump to top or bottom |
-| `Enter`, `l`, `→` | Expand a directory |
+| `Enter` | Enter a directory as the tree root |
+| `l`, `→` | Expand or collapse a directory in place |
 | `h`, `←` | Collapse the current directory, move to its parent entry, or go to the parent directory |
 | `Backspace` | Go up to the parent directory |
 | `.` | Toggle hidden (dotfile) entries |
 | `/` | Filter entries in the current directory (`Enter` keeps, `Esc` clears) |
 | `r` | Re-read the current directory |
-| `v` | Open the selected file in `$PAGER` (default `less`) |
-| `e` | Open the selected file in `$EDITOR` (default `vi`), then refresh on return |
+| `v` | View the selected file in `$PAGER` (default `less`) |
+| `e` | Edit the selected file in `$EDITOR` (default `vi`), keeping selection and tree state on return |
 | `S` | Open the sbatch submit form for the selected batch script |
 
 ### Submit form (`S`)
