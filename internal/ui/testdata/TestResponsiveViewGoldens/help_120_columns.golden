@@ -1,10 +1,10 @@
 elzar  scope: me
-[Queue]  Recent  Account╭──────────────────────────────────────────────────────────────────────╮
+[1 Queue] │ 2 Recent │ 3╭──────────────────────────────────────────────────────────────────────╮
 JobID        Name       │ Key bindings                                                         │m… Nodes   NodeList(Rea…
 ──────────── ───────────│ Navigation                                                           │── ─────── ─────────────
 12345        sample-job │ ↑/k              select previous                                     │   —       node-01
 Queue: 1 jobs           │ ↓/j              select next                                         │
-tab views  / filter  s s│ b/^b/M-v/PgUp    page up                                             │fresh  u scope  ? help
+tab views  / filter  s s│ b/^b/M-v/PgUp    page up                                             │uit  ? help
                         │ space/^v/^f/PgDn page down                                           │
                         │ 0-9              motion count                                        │
                         │ gg/1G/Home/M-<   top                                                 │

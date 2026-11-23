@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -305,17 +306,21 @@ func (a *App) leaveDetailForTabSwitch() {
 
 func (a *App) tabLine() string {
 	labels := []string{}
-	for _, item := range []struct {
+	for i, item := range []struct {
 		tab   registry.Tab
 		label string
 	}{{registry.QueueTab, "Queue"}, {registry.RecentTab, "Recent"}, {registry.AccountsTab, "Accounts"}, {filesTab, "Files"}} {
+		item.label = fmt.Sprintf("%d %s", i+1, item.label)
+		if a.width > 0 && a.width < 48 {
+			item.label = strconv.Itoa(i + 1)
+		}
 		if a.tab == item.tab {
 			labels = append(labels, titleStyle.Render("["+item.label+"]"))
 		} else {
 			labels = append(labels, mutedStyle.Render(item.label))
 		}
 	}
-	return strings.Join(labels, "  ")
+	return strings.Join(labels, " │ ")
 }
 func (a *App) toggleTabKey(key string) {
 	tabs := []registry.Tab{registry.QueueTab, registry.RecentTab, registry.AccountsTab, filesTab}

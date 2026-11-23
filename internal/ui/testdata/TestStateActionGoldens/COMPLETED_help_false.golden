@@ -1,0 +1,7 @@
+elzar  scope: me
+1 Queue │ [2 Recent] │ 3 Accounts │ 4 Files
+JobID      Name       User       Account    Partition  QOS       State       Elapsed/Li… Nodes   NodeList(R… End        
+────────── ────────── ────────── ────────── ────────── ───────── ─────────── ─────────── ─────── ─────────── ───────────
+1          sample                                                COMPLETED   0:00/—      —       —           —          
+Recent: 1 jobs
+tab views  / filter  s sort  c columns  enter details  r refresh  u scope  q quit  ^T s messages  ↑/↓ move  ? help

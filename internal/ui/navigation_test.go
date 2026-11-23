@@ -19,6 +19,7 @@ func navigationApp(options Options, count int) *App {
 	app.queueJobs = make([]model.Job, count)
 	for i := range app.queueJobs {
 		app.queueJobs[i].ID = int64(i + 1)
+		app.queueJobs[i].States = []model.State{model.StateRunning}
 	}
 	return app
 }

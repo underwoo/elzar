@@ -1,5 +1,5 @@
 elzar
-Queue  Recent  Accounts ╭──────────────────────────────────────────────────────────────────────╮
+1 Queue │ 2 Recent │ 3 A╭──────────────────────────────────────────────────────────────────────╮
 /work                   │ Key bindings                                                         │
 > * job.sh              │ Navigation                                                           │
     notes               │ ↑/k              select previous                                     │

@@ -22,10 +22,6 @@
 │ s         sort                                                       │
 │ c         columns                                                    │
 │ Job actions                                                          │
-│ x cancel                                                             │
-│ h hold/release                                                       │
-│ R requeue                                                            │
-│ e edit job                                                           │
 │ App                                                                  │
 │ r refresh                                                            │
 │ u toggle scope                                                       │

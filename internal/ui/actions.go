@@ -7,6 +7,7 @@ import (
 	"os/user"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 
 	"github.com/underwoo/elzar/internal/model"
@@ -20,6 +21,7 @@ const (
 	actionHold
 	actionRelease
 	actionRequeue
+	actionEdit
 )
 
 func (action jobAction) label() string {
@@ -30,6 +32,8 @@ func (action jobAction) label() string {
 		return "Hold"
 	case actionRelease:
 		return "Release"
+	case actionEdit:
+		return "Edit"
 	case actionRequeue:
 		return "Requeue"
 	default:
@@ -125,7 +129,9 @@ func (a *App) beginActionFromSelection(action jobAction) {
 func (a *App) beginJobAction(action jobAction, job model.Job, returnMode mode) {
 	a.editConfirm = false
 	if action == actionNone {
-		a.setActionStatus("hold/release is only available for pending jobs")
+		action = actionHold
+	}
+	if !a.requireJobAction(action, job) {
 		return
 	}
 	a.confirmAction, a.confirmJob, a.confirmReturn = action, job, returnMode
@@ -191,4 +197,77 @@ type actionResult struct {
 	action jobAction
 	job    model.Job
 	err    error
+}
+
+// These are UI availability rules; Slurm remains authoritative for permissions
+// and site policy. Unknown batch metadata must not hide a valid requeue.
+func jobActionAllowed(action jobAction, job model.Job) bool {
+	switch action {
+	case actionCancel:
+		return hasState(job, model.StatePending) || hasState(job, model.StateRunning) || hasState(job, model.StateSuspended) || hasState(job, model.StateConfiguring)
+	case actionHold, actionRelease:
+		return hasState(job, model.StatePending)
+	case actionEdit:
+		return hasState(job, model.StatePending) || hasState(job, model.StateRunning)
+	case actionRequeue:
+		if job.Batch != nil && !*job.Batch {
+			return false
+		}
+		for _, state := range []model.State{model.StateRunning, model.StateSuspended, model.StateCompleted, model.StateFailed, model.StateCancelled, model.StateTimeout, model.StateNodeFail, model.StatePreempted} {
+			if hasState(job, state) {
+				return true
+			}
+		}
+	}
+	return false
+}
+func (a *App) requireJobAction(action jobAction, job model.Job) bool {
+	if jobActionAllowed(action, job) {
+		return true
+	}
+	reason := fmt.Sprintf("can't %s a %s job", strings.ToLower(action.label()), jobStateText(job))
+	if action == actionRequeue && job.Batch != nil && !*job.Batch {
+		reason = "can't requeue a non-batch job"
+	}
+	a.setActionStatus(reason)
+	return false
+}
+func (a *App) actionJob() model.Job {
+	if a.mode == modeDetail {
+		return a.detailJob
+	}
+	return a.selectedJob()
+}
+func (a *App) jobActionBindings() []key.Binding {
+	job := a.actionJob()
+	var bindings []key.Binding
+	for _, item := range []struct {
+		action  jobAction
+		binding key.Binding
+	}{{actionCancel, appKeys.cancel}, {actionHold, appKeys.hold}, {actionRequeue, appKeys.requeue}, {actionEdit, appKeys.edit}} {
+		if jobActionAllowed(item.action, job) {
+			bindings = append(bindings, item.binding)
+		}
+	}
+	return bindings
+}
+func (a *App) jobActionFooter(items []string) []string {
+	out := []string{}
+	for _, item := range items {
+		action := actionNone
+		switch item {
+		case "x cancel":
+			action = actionCancel
+		case "h hold":
+			action = actionHold
+		case "e edit":
+			action = actionEdit
+		case "R requeue":
+			continue
+		}
+		if action == actionNone || jobActionAllowed(action, a.actionJob()) {
+			out = append(out, item)
+		}
+	}
+	return out
 }

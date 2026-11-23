@@ -89,7 +89,7 @@ func TestHoldOnlyAppliesToPendingJobsAndRecognizesBothHeldReasons(t *testing.T) 
 	app := NewWithOptions(nil, Options{})
 	app.queueJobs = []model.Job{{ID: 3, States: []model.State{model.StateRunning}}}
 	app.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'h'}})
-	if app.mode != modeList || !strings.Contains(app.actionStatus, "only available for pending") {
+	if app.mode != modeList || !strings.Contains(app.actionStatus, "can't hold a RUNNING job") {
 		t.Fatalf("non-pending hold state: mode=%v status=%q", app.mode, app.actionStatus)
 	}
 }
