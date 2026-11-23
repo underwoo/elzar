@@ -1,0 +1,29 @@
+Submit batch script  /scratch/user-01/warn.sh
+
+Job name:        warn-check                                     [script:2]
+Account:         unknown-acct                                   [script:3]
+                 warning: account "unknown-acct" is not in your associations
+Partition:       partition-04                                   [script:4]
+QOS:             qos-01                                         [script:5]
+                 warning: QOS "qos-01" is not allowed on partition "partition-04"
+Time:            20-00:00:00                                    [script:6]
+                 warning: time 20-00:00:00 (28800 min) exceeds partition "partition-04" MaxTime (960 min)
+Nodes:           999                                            [script:7]
+                 warning: nodes 999 exceeds partition "partition-04" MaxNodes (1)
+NTasks:                                                         [default]
+CPUs/task:                                                      [default]
+Mem:                                                            [default]
+GRES/GPUs:                                                      [default]
+Array:                                                          [default]
+Output:                                                         [default]
+Error:                                                          [default]
+Chdir:                                                          [default]
+Extra options:                                                  [default]
+Script args:                                                    [default]
+
+  [ Submit (Enter)  •  Dry run (t) ]
+
+Passed through by sbatch: (none)
+Working directory: /scratch/user-01
+Command: sbatch --parsable /scratch/user-01/warn.sh
+↑/↓/tab field  ctrl+p pick  ctrl+r reset  t/ctrl+t dry run  enter next/submit  esc cancel  ? help

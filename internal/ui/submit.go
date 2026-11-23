@@ -31,6 +31,7 @@ type submitKeyMap struct {
 	down   key.Binding
 	next   key.Binding
 	prev   key.Binding
+	picker key.Binding
 	reset  key.Binding
 	dryRun key.Binding
 	submit key.Binding
@@ -44,6 +45,7 @@ var submitKeys = submitKeyMap{
 	down:   key.NewBinding(key.WithKeys("down"), key.WithHelp("↓/tab", "next field")),
 	next:   key.NewBinding(key.WithKeys("tab"), key.WithHelp("tab", "next field")),
 	prev:   key.NewBinding(key.WithKeys("shift+tab"), key.WithHelp("shift+tab", "previous field")),
+	picker: key.NewBinding(key.WithKeys("ctrl+p"), key.WithHelp("ctrl+p", "pick account/partition/qos")),
 	reset:  key.NewBinding(key.WithKeys("ctrl+r"), key.WithHelp("ctrl+r", "reset field")),
 	dryRun: key.NewBinding(key.WithKeys("t"), key.WithHelp("t", "dry run (--test-only)")),
 	submit: key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter", "next / confirm submit")),
@@ -53,6 +55,9 @@ var submitKeys = submitKeyMap{
 type submitFormState struct {
 	active        bool
 	confirming    bool
+	pickerActive  bool
+	pickerField   submit.FieldID
+	picker        listPicker
 	returnMode    mode
 	scriptPath    string
 	parsed        submit.ParsedScript
@@ -215,11 +220,18 @@ func (a *App) resetFocusedSubmitField() {
 }
 
 func (a *App) handleSubmitFormKey(msg tea.KeyMsg) tea.Cmd {
+	if a.submitForm.pickerActive {
+		return a.handleSubmitPickerKey(msg)
+	}
 	switch {
 	case key.Matches(msg, submitKeys.cancel):
 		a.submitForm.active = false
 		a.submitForm.confirming = false
+		a.submitForm.pickerActive = false
 		a.mode = a.submitForm.returnMode
+		return nil
+	case key.Matches(msg, submitKeys.picker):
+		a.openSubmitPicker()
 		return nil
 	case key.Matches(msg, submitKeys.reset):
 		a.resetFocusedSubmitField()
@@ -366,10 +378,15 @@ func (a *App) acceptSubmitJobResult(msg submitJobResult) tea.Cmd {
 }
 
 func (a *App) renderSubmitForm(out *strings.Builder, width int) {
+	if a.submitForm.pickerActive {
+		a.renderSubmitPicker(out, width)
+		return
+	}
 	plan := a.submitForm.plan
 	fmt.Fprintf(out, "%s  %s\n\n", titleStyle.Render("Submit batch script"), mutedStyle.Render(a.submitForm.scriptPath))
 
 	var lines []string
+	focusLine := 0
 	const labelWidth = 16
 	for i, rf := range plan.Fields {
 		label := pad(rf.Spec.Label+":", labelWidth)
@@ -383,6 +400,12 @@ func (a *App) renderSubmitForm(out *strings.Builder, width int) {
 		}
 		line := fmt.Sprintf("%s %s  %s", label, valView, mutedStyle.Render(srcText))
 		lines = append(lines, line)
+		if a.submitForm.focus == i {
+			focusLine = len(lines) - 1
+		}
+		for _, w := range a.submitWarningsForField(rf.Spec.ID) {
+			lines = append(lines, strings.Repeat(" ", labelWidth+1)+warningStyle.Render("warning: "+w.Message))
+		}
 	}
 
 	extraRows := []struct {
@@ -402,6 +425,9 @@ func (a *App) renderSubmitForm(out *strings.Builder, width int) {
 			src = "[form]"
 		}
 		lines = append(lines, fmt.Sprintf("%s %s  %s", label, a.submitForm.inputs[row.index].View(), mutedStyle.Render(src)))
+		if a.submitForm.focus == row.index {
+			focusLine = len(lines) - 1
+		}
 	}
 
 	submitBtn := "[ Submit (Enter)  •  Dry run (t) ]"
@@ -409,6 +435,9 @@ func (a *App) renderSubmitForm(out *strings.Builder, width int) {
 		submitBtn = selectedStyle.Render(submitBtn)
 	}
 	lines = append(lines, "", "  "+submitBtn)
+	if a.submitForm.focus == submitActionButtonRow {
+		focusLine = len(lines) - 1
+	}
 
 	// Read-only "Passed through by sbatch" directives.
 	lines = append(lines, "")
@@ -447,10 +476,10 @@ func (a *App) renderSubmitForm(out *strings.Builder, width int) {
 	if a.height <= 0 {
 		available = len(lines)
 	}
-	if a.submitForm.focus < available/2 {
+	if focusLine < available/2 {
 		a.submitForm.scroll = 0
-	} else if a.submitForm.focus >= a.submitForm.scroll+available-6 {
-		a.submitForm.scroll = max(0, min(len(lines)-available, a.submitForm.focus-(available-8)))
+	} else if focusLine >= a.submitForm.scroll+available-6 {
+		a.submitForm.scroll = max(0, min(len(lines)-available, focusLine-(available-8)))
 	}
 	maxScroll := max(0, len(lines)-available)
 	a.submitForm.scroll = max(0, min(maxScroll, a.submitForm.scroll))
@@ -459,7 +488,7 @@ func (a *App) renderSubmitForm(out *strings.Builder, width int) {
 		fmt.Fprintln(out, truncateLine(line, width))
 	}
 
-	fmt.Fprint(out, mutedStyle.Render(fitFooter(width, []string{"↑/↓/tab field", "ctrl+r reset", "t/ctrl+t dry run", "enter next/submit", "esc cancel"})))
+	fmt.Fprint(out, mutedStyle.Render(fitFooter(width, []string{"↑/↓/tab field", "ctrl+p pick", "ctrl+r reset", "t/ctrl+t dry run", "enter next/submit", "esc cancel"})))
 }
 
 func (a *App) renderSubmitConfirm(out *strings.Builder) {
@@ -467,6 +496,7 @@ func (a *App) renderSubmitConfirm(out *strings.Builder) {
 	fmt.Fprintf(out, "%s\n\n", titleStyle.Render("Submit batch job?"))
 	fmt.Fprintf(out, "Script: %s\nWorking directory: %s\n\n", plan.ScriptPath, plan.WorkingDir)
 	fmt.Fprintln(out, formatArgvPreview(plan.Argv(false)))
+	a.renderSubmitConfirmWarnings(out)
 	fmt.Fprintf(out, "\n%s\n", mutedStyle.Render("Press y to confirm; any other key returns to the form."))
 }
 
