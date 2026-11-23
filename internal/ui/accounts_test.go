@@ -171,7 +171,7 @@ func TestAccountsNavigationAndActionIsolation(t *testing.T) {
 		}
 	}
 	a.Update(tea.KeyMsg{Type: tea.KeyTab})
-	if a.tab != registry.QueueTab {
+	if a.tab != filesTab {
 		t.Fatal(a.tab)
 	}
 	a.Update(tea.KeyMsg{Type: tea.KeyShiftTab})

@@ -45,6 +45,7 @@ type Options struct {
 }
 
 type App struct {
+	files            filesState
 	plugins          []plugin.Plugin
 	execPlugins      []*execPlugin
 	pluginTabColumns map[registry.Tab][]registry.Column
@@ -171,13 +172,18 @@ func (a *App) Init() tea.Cmd {
 }
 
 func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	if cmd, ok := a.updateFiles(msg); ok {
+		return a, cmd
+	}
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		a.width, a.height = msg.Width, msg.Height
 		a.filterInput.Width = max(1, msg.Width-35)
 		a.keepAllCursorsVisible()
 	case tea.KeyMsg:
-		return a, a.handleKey(msg)
+		oldTab, oldPath := a.tab, a.selectedFile()
+		cmd := a.handleKey(msg)
+		return a, a.filesAfterKey(oldTab, oldPath, cmd)
 	case accountsTick:
 		return a, tea.Batch(a.startAccountsFetch(), a.scheduleAccountsTick())
 	case accountsResult:
@@ -304,6 +310,9 @@ func (a *App) handleKey(msg tea.KeyMsg) tea.Cmd {
 		}
 		return nil
 	}
+	if a.tab == filesTab && a.files.filtering {
+		return a.handleFilesKey(msg)
+	}
 	if a.mode == modeList || a.mode == modeDetail {
 		if cmd, handled := a.handleNavigationKey(msg); handled {
 			return cmd
@@ -331,6 +340,9 @@ func (a *App) handleKey(msg tea.KeyMsg) tea.Cmd {
 }
 
 func (a *App) handleListKey(msg tea.KeyMsg) tea.Cmd {
+	if a.tab == filesTab {
+		return a.handleFilesKey(msg)
+	}
 	if a.tab == registry.AccountsTab {
 		return a.handleAccountsList(msg)
 	}
@@ -956,6 +968,9 @@ func (a *App) View() string {
 		panel, panelWidth, panelTop := a.renderMessagesOverlay(width, a.height)
 		return fitOutput(compositeOverlay(background, panel, width, panelWidth, panelTop), width)
 	}
+	if a.tab == filesTab {
+		return a.renderFiles(width)
+	}
 	var out strings.Builder
 	if a.mode == modeDetail {
 		a.renderDetail(&out, width)
@@ -1293,6 +1308,11 @@ func (a *App) otherData() (string, []model.Job, int, bool, error) {
 }
 
 func (a *App) moveCursor(delta int) {
+	if a.tab == filesTab {
+		a.files.cursor += delta
+		a.keepFilesCursorVisible()
+		return
+	}
 	if a.tab == registry.AccountsTab {
 		a.accounts.cursor += delta
 		a.keepAccountsCursorVisible()
@@ -1335,6 +1355,9 @@ func (a *App) tableRowCapacity() int {
 }
 
 func (a *App) activeScroll() int {
+	if a.tab == filesTab {
+		return a.files.scroll
+	}
 	if a.tab == registry.AccountsTab {
 		return a.accounts.scroll
 	}
@@ -1345,6 +1368,9 @@ func (a *App) activeScroll() int {
 }
 
 func (a *App) activeScrollPointer() *int {
+	if a.tab == filesTab {
+		return &a.files.scroll
+	}
 	if a.tab == registry.AccountsTab {
 		return &a.accounts.scroll
 	}
@@ -1362,6 +1388,10 @@ func (a *App) activeJobsAndCursor() ([]model.Job, *int) {
 }
 
 func (a *App) keepActiveCursorVisible() {
+	if a.tab == filesTab {
+		a.keepFilesCursorVisible()
+		return
+	}
 	if a.tab == registry.AccountsTab {
 		a.keepAccountsCursorVisible()
 		return
@@ -1371,6 +1401,7 @@ func (a *App) keepActiveCursorVisible() {
 }
 
 func (a *App) keepAllCursorsVisible() {
+	a.keepFilesCursorVisible()
 	a.keepAccountsCursorVisible()
 	keepCursorVisible(a.visibleQueue(), &a.queueCursor, &a.queueScroll, a.tableRowCapacity())
 	keepCursorVisible(a.visibleRecent(), &a.recentCursor, &a.recentScroll, a.tableRowCapacity())
@@ -1492,6 +1523,9 @@ type detailResult struct {
 }
 
 func (a *App) activeRowCountAndCursor() (int, *int) {
+	if a.tab == filesTab {
+		return len(a.files.rows), &a.files.cursor
+	}
 	if a.tab == registry.AccountsTab {
 		return len(a.accounts.visible), &a.accounts.cursor
 	}

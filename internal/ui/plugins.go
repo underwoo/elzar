@@ -425,6 +425,9 @@ func allAppBindings() []key.Binding {
 }
 
 func (a *App) pluginScope() string {
+	if a.tab == filesTab {
+		return ""
+	}
 	if a.mode != modeList && a.mode != modeDetail {
 		return ""
 	}

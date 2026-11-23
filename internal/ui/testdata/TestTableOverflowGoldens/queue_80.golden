@@ -1,5 +1,5 @@
 elzar  scope: me
-[Queue]  Recent  Accounts
+[Queue]  Recent  Accounts  Files
 JobID  Name    User   Accou… Partit… QOS     State   Elapsed/L… Nodes   NodeLis…
 ────── ─────── ────── ────── ─────── ─────── ─────── ────────── ─────── ────────
 12345  sample… tester scien… compute normal  RUNNING 0:00/—     —       node-01

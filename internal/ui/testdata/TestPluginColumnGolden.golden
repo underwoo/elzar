@@ -1,5 +1,5 @@
 elzar  scope: me
-[Queue]  Recent  Accounts
+[Queue]  Recent  Accounts  Files
 JobID        Name                   User         State          GPU       
 ──────────── ────────────────────── ──────────── ────────────── ──────────
 101          train-llm              alice        RUNNING        4x H100   
